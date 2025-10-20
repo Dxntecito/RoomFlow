@@ -4,8 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="../../Static/CSS/Booking.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+
 </head>
 <body>
+    <div><h2 class="booking_tittle">RESERVA DE HABITACIONES</h2></div>
+    <div id="booking_date" class="green_round_div">
+        <h3 class="Booking_web_subheaders" id="leftTittleG">Fechas de reserva</h3>
+    <div class="booking_column">
+        <label for="Start_booking_date" class="booking_label">Fecha entrada</label>
+        <input type="date" id="Start_booking_date" name="Start_booking_date">
+    </div>
+
+    <div id="divider"></div>
+
+    <div class="booking_column">
+        <label for="End_booking_date" class="booking_label">Fecha salida</label>
+        <input type="date" id="End_booking_date" name="End_booking_date">
+        
+    </div>
+    <button><img id="search_button_img" src="../../Static/Img/search_button.png" alt="search_icon"></button>
     
+</div>
+
+    </div>
+    <div id="Booking_Filters">
+        <h2 class="Booking_web_subheaders" style>Filtros</h2>
+        <label for="floor_number" class="booking_label">Nro. de Piso</label>
+            <select id="floor_number" name="floor_number">
+                <!-- Extraer numero de piso de tabla PISO  -->
+                <option value="">-- Selecciona una opción --</option>
+            </select>
+        <label for="room_category" class="booking_label">Nro. de Piso</label>
+            <select id="room_category" name="turno">
+                <!-- Extraer numero de piso de tabla PISO  -->
+                <option value="">-- Selecciona una opción --</option>
+            </select>
+    </div>
+    <div>
+        <h3 class="Booking_web_subheaders"> Habitaciones elegidas</h3>
+        <div class="green_round_div">
+            <!-- Aqui apareceran las habitaciones seleccionadas -->
+             <p id="Total_sum">Total:</p>
+             <p><a href="">Siguiente</a></p>
+        </div>
+    </div>
+    <table id="booking_room_available" border="1">
+        <thead>
+            <tr>
+            <th>Piso</th>
+            <th>N° Habitcaion</th>
+            <th>Precio</th>
+            <th>Capacidad</th>
+            <th>RESERVAR</th>
+        </tr>
+        </thead>
+        <!-- Generar filas mediante Jinja llamando a la tabla Habitacion -->
+        <tbody>
+
+        </tbody>
+        
+    </table>
+
 </body>
 </html>
