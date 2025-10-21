@@ -1,0 +1,113 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+<link rel="stylesheet" href="../../Static/CSS/Empleados.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&display=swap"
+    rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="empleados-container">
+    <!-- Header con título y botón regresar -->
+    <div class="page-header-simple">
+        <h1 class="page-title">Asignar turno</h1>
+        <a href="{{ url_for('empleados.Empleados') }}" class="back-link">
+            <i class="fas fa-plus"></i>
+            Regresar
+        </a>
+    </div>
+
+    <!-- Formulario principal -->
+    <div class="form-container-large">
+        <div class="form-section-header">
+            <h3 class="form-section-title">DATOS DE EMPLEADO</h3>
+        </div>
+
+        <form method="POST" class="empleado-form-large">
+            <div class="form-row-large">
+                <div class="form-group-large">
+                    <label for="num_documento" class="form-label-large">Nro. de documento</label>
+                    <div class="search-container">
+                        <input type="text" id="num_documento" name="num_documento" class="form-input-large"
+                            value="{{ empleado[2] if empleado else '' }}" required>
+                        <button type="button" class="search-button-large" onclick="buscarEmpleado()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group-large">
+                    <label for="nombre_empleado" class="form-label-large">Empleado</label>
+                    <input type="text" id="nombre_empleado" name="nombre_empleado" class="form-input-large"
+                        value="{{ empleado[5] + ' ' + empleado[3] + ' ' + empleado[4] if empleado else '' }}" readonly>
+                </div>
+                <div class="form-group-large">
+                    <label for="turno_id" class="form-label-large">Turno</label>
+                    <select id="turno_id" name="turno_id" class="form-select-large" required>
+                        <option value="">Seleccione turno</option>
+                        {% for turno in turnos %}
+                        <option value="{{ turno[0] }}">{{ turno[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-actions-large">
+                <button type="submit" class="save-button-large">
+                    <i class="fas fa-save"></i>
+                    Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Mensajes flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-messages">
+    {% for category, message in messages %}
+    <div class="flash-message flash-{{ category }}">
+        <i
+            class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<script>
+    // Auto-hide flash messages
+    document.addEventListener('DOMContentLoaded', function () {
+        const flashMessages = document.querySelectorAll('.flash-message');
+        flashMessages.forEach(function (message) {
+            setTimeout(function () {
+                message.style.opacity = '0';
+                setTimeout(function () {
+                    message.remove();
+                }, 300);
+            }, 5000);
+        });
+    });
+
+    // Validación de número de documento (solo números)
+    document.getElementById('num_documento').addEventListener('input', function (e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    // Función para buscar empleado por DNI
+    function buscarEmpleado() {
+        const dni = document.getElementById('num_documento').value;
+        if (dni.length >= 8) {
+            // Aquí podrías hacer una llamada AJAX para buscar el empleado
+            // Por ahora, simularemos la búsqueda
+            console.log('Buscando empleado con DNI:', dni);
+            // En una implementación real, harías una petición al servidor
+        } else {
+            alert('Por favor ingrese un DNI válido (mínimo 8 dígitos)');
+        }
+    }
+</script>
+{% endblock content %}

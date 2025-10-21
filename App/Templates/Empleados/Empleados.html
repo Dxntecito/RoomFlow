@@ -1,0 +1,186 @@
+{% extends "Master.html" %}
+
+<!-- Para estilos exclusivamente para esta pagina -->
+{% block stiles %}
+<link rel="stylesheet" href="../../Static/CSS/Empleados.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&display=swap"
+    rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="empleados-container">
+    <!-- Título principal -->
+    <div class="page-header">
+        <h1 class="page-title">MÓDULO DE EMPLEADOS</h1>
+    </div>
+
+    <!-- Barra de búsqueda y filtros -->
+    <div class="search-filters-section">
+        <div class="search-section">
+            <label for="search-input" class="search-label">Buscar</label>
+            <form method="GET" class="search-form">
+                <input type="text" id="search-input" name="search" class="search-input"
+                    placeholder="Buscar por nombre, apellido o DNI..." value="{{ search_term }}">
+
+                <button type="submit" class="search-button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+
+        <div class="filters-section">
+            <label for="rol-filter" class="filter-label">Rol</label>
+            <form method="GET" class="filter-form">
+                <input type="hidden" name="search" value="{{ search_term }}">
+                <select id="rol-filter" name="rol" class="rol-select" onchange="this.form.submit()">
+                    <option value="">Seleccione rol</option>
+                    {% for tipo in tipos_empleado %}
+                    <option value="{{ tipo[0] }}" {% if rol_filter==tipo[0]|string %}selected{% endif %}>
+                        {{ tipo[1] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+
+        <div class="actions-section">
+            <a href="{{ url_for('empleados.RegistroEmpleado') }}" class="create-button">
+                <i class="fas fa-plus"></i>
+                Crear
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabla de empleados -->
+    <div class="table-container">
+        <table class="empleados-table">
+            <thead>
+                <tr>
+                    <th>Teléfono</th>
+                    <th>Nombre completo</th>
+                    <th>Turno</th>
+                    <th>ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if empleados %}
+                {% for empleado in empleados %}
+                <tr>
+                    <td class="phone-cell">{{ empleado[7] }}</td>
+                    <td class="name-cell">{{ empleado[10] }}</td>
+                    <td class="shift-cell">
+                        <!-- TODO: Implementar lógica de turnos -->
+                        <span class="shift-badge">Tarde</span>
+                    </td>
+                    <td class="actions-cell">
+                        <div class="action-buttons">
+                            <a href="{{ url_for('empleados.AsignarTurno', empleado_id=empleado[0]) }}"
+                                class="action-btn calendar-btn" title="Asignar turno">
+                                <i class="fas fa-calendar"></i>
+                            </a>
+                            <a href="{{ url_for('empleados.ActualizarEmpleado', empleado_id=empleado[0]) }}"
+                                class="action-btn edit-btn" title="Actualizar empleado">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="4" class="no-data">
+                        <div class="no-data-content">
+                            <i class="fas fa-users"></i>
+                            <p>No se encontraron empleados</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if total_pages > 1 %}
+    <div class="pagination-container">
+        <div class="pagination">
+            <!-- Primera página -->
+            <a href="{{ url_for('empleados.Empleados', page=1, search=search_term, rol=rol_filter) }}"
+                class="pagination-btn {% if current_page == 1 %}disabled{% endif %}">
+                <i class="fas fa-angle-double-left"></i>
+            </a>
+
+            <!-- Página anterior -->
+            <a href="{{ url_for('empleados.Empleados', page=current_page-1, search=search_term, rol=rol_filter) }}"
+                class="pagination-btn {% if current_page == 1 %}disabled{% endif %}">
+                <i class="fas fa-angle-left"></i>
+            </a>
+
+            <!-- Números de página -->
+            {% for page_num in range(1, total_pages + 1) %}
+            {% if page_num <= 3 or page_num> total_pages - 3 or (page_num >= current_page - 1 and page_num <=
+                    current_page + 1) %} <a
+                    href="{{ url_for('empleados.Empleados', page=page_num, search=search_term, rol=rol_filter) }}"
+                    class="pagination-btn {% if page_num == current_page %}active{% endif %}">
+                    {{ page_num }}
+                    </a>
+                    {% elif page_num == 4 and current_page > 5 %}
+                    <span class="pagination-ellipsis">...</span>
+                    {% elif page_num == total_pages - 3 and current_page < total_pages - 4 %} <span
+                        class="pagination-ellipsis">...</span>
+                        {% endif %}
+                        {% endfor %}
+
+                        <!-- Página siguiente -->
+                        <a href="{{ url_for('empleados.Empleados', page=current_page+1, search=search_term, rol=rol_filter) }}"
+                            class="pagination-btn {% if current_page == total_pages %}disabled{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+
+                        <!-- Última página -->
+                        <a href="{{ url_for('empleados.Empleados', page=total_pages, search=search_term, rol=rol_filter) }}"
+                            class="pagination-btn {% if current_page == total_pages %}disabled{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+        </div>
+
+        <div class="pagination-info">
+            <span>Mostrando {{ ((current_page - 1) * 10) + 1 }} - {{ ((current_page - 1) * 10) + empleados|length }} de
+                {{ total_empleados }} empleados</span>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Mensajes flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-messages">
+    {% for category, message in messages %}
+    <div class="flash-message flash-{{ category }}">
+        <i
+            class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<script>
+    // Auto-hide flash messages
+    document.addEventListener('DOMContentLoaded', function () {
+        const flashMessages = document.querySelectorAll('.flash-message');
+        flashMessages.forEach(function (message) {
+            setTimeout(function () {
+                message.style.opacity = '0';
+                setTimeout(function () {
+                    message.remove();
+                }, 300);
+            }, 5000);
+        });
+    });
+</script>
+{% endblock %}
