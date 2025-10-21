@@ -1,0 +1,197 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+    <link rel="stylesheet" href="/App/Static/CSS/Events.css">
+    <link rel="stylesheet" href="../Static/Fonts/Arimo/static/Arimo-Medium.ttf">
+    <link rel="stylesheet" href="/App/Static/CSS/style.css">
+    <link rel="stylesheet" href="/App/Static/CSS/home.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>RESERVA PARA EVENTOS</h1>
+
+    <div class="search-bar">
+        <div>
+            <label style="font-weight: 600;font-size: 20px; color: #64cc4f;">Hora y fecha para la reserva</label>
+        </div>
+        <div>
+            <label style="font-size: 12px; color: #999;">Fecha de reserva</label>
+            <input id="search-fecha" type="date" value="2025-02-20" style="color: #328336; font-weight: 500;">
+        </div>
+        <div class="divider"></div>
+        <div>
+            <label style="font-size: 12px; color: #999;">Hora de entrada</label>
+            <input id="search-hora-entrada" type="time" value="19:00">
+        </div>
+        <div class="divider"></div>
+        <div>
+            <label style="font-size: 12px; color: #999;">Hora de salida</label>
+            <input id="search-hora-salida" type="time" value="23:00">
+        </div>
+        <button id="search-button" class="search-button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="main-content">
+        <div class="form-card">
+            <h3 class="section-title-events">DATOS DEL EVENTO</h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input id="evento-fecha" type="date" readonly style="background-color: #efefef;">
+                </div>
+                <div class="form-group">
+                    <label>Hora entrada</label>
+                    <input id="evento-hora-entrada" type="time" readonly style="background-color: #efefef;">
+                </div>
+                <div class="form-group">
+                    <label>Hora salida</label>
+                    <input id="evento-hora-salida" type="time" readonly style="background-color: #efefef;">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tipo de evento</label>
+                    <select>
+                        <option value="">Seleccionar</option>
+                        <option value="cumpleaños">Cumpleaños</option>
+                        <option value="boda">Boda</option>
+                        <option value="corporativo">Corporativo</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nombre de evento</label>
+                    <input type="text">
+                </div>
+            </div>
+
+            <h2 class="section-title-events">DATOS PERSONALES</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Apellido paterno</label>
+                    <input type="text">
+                </div>
+                <div class="form-group">
+                    <label>Apellido materno</label>
+                    <input type="text">
+                </div>
+                <div class="form-group">
+                    <label>Nombres</label>
+                    <input type="text">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel">
+                </div>
+                <div class="form-group">
+                    <label>Sexo</label>
+                    <select>
+                        <option value="">Seleccionar</option>
+                        <option value="masculino">Masculino</option>
+                        <option value="femenino">Femenino</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de documento</label>
+                    <select>
+                        <option value="">Seleccionar</option>
+                        <option value="dni">DNI</option>
+                        <option value="pasaporte">Pasaporte</option>
+                        <option value="ce">Carnet de Extranjería</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nro. de documento</label>
+                    <input type="text">
+                </div>
+            </div>
+
+            <h2 class="section-title-events" >MÉTODO DE PAGO</h2>
+
+            <div class="radio-group">
+                <label>
+                    <input type="radio" name="payment" value="tarjeta" checked>
+                    Tarjeta
+                </label>
+                <label>
+                    <input type="radio" name="payment" value="billetera">
+                    Billetera digital
+                </label>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nro. de tarjeta</label>
+                    <input type="text" maxlength="16" placeholder="1234 5678 9012 3456">
+                </div>
+                <div class="form-group">
+                    <label>Código de seguridad</label>
+                    <input type="text" maxlength="3" placeholder="123">
+                </div>
+            </div>
+
+        </div>
+
+        <div class="summary-card">
+            <h2 class="section-title-events">Resumen de pago</h2>
+
+            <div class="summary-row">
+                <span style="color: #666;">Datos de evento</span>
+            </div>
+            <div class="summary-row">
+                <span style="color: #666;">Nro. Horas</span>
+                <span>4 × S/ 100</span>
+            </div>
+
+            <div class="summary-row total">
+                <span>Total</span>
+                <span>S/ 400</span>
+            </div>
+
+            <button class="pay-button">Pagar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const paymentRadios = document.querySelectorAll('input[name="payment"]');
+    const cardFields = document.querySelectorAll('.form-row:last-of-type .form-group');
+
+    paymentRadios.forEach(radio => {
+        radio.addEventListener('change', function () {
+            if (this.value === 'billetera') {
+                cardFields.forEach(field => field.style.display = 'none');
+            } else {
+                cardFields.forEach(field => field.style.display = 'flex');
+            }
+        });
+    });
+
+    document.getElementById("search-button").addEventListener("click", function () {
+        const fecha = document.getElementById("search-fecha").value;
+        const horaEntrada = document.getElementById("search-hora-entrada").value;
+        const horaSalida = document.getElementById("search-hora-salida").value;
+
+        document.getElementById("evento-fecha").value = fecha;
+        document.getElementById("evento-hora-entrada").value = horaEntrada;
+        document.getElementById("evento-hora-salida").value = horaSalida;
+    });
+</script>
+{% endblock %}
