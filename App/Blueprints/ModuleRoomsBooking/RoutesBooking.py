@@ -2,7 +2,7 @@ from flask import render_template, Blueprint, request, jsonify, session, redirec
 
 import App.Models.controller_room as controller_room
 
-bookingroom_bp = Blueprint('bookingroom', __name__, template_folder='Templates', url_prefix='/BookingRoom')
+bookingroom_bp = Blueprint('bookingroom', __name__, template_folder='Templates', url_prefix='/ModuleRoomsBooking')
 
 @bookingroom_bp.route('/', methods=['GET'])
 @bookingroom_bp.route('/BookingRoom', methods=['GET'])
