@@ -58,16 +58,19 @@ CREATE TABLE EMPLEADO (
   estado           int(10) NOT NULL, 
   PRIMARY KEY (empleado_id));
 CREATE TABLE EVENTO (
-  id_evento              int(10) NOT NULL AUTO_INCREMENT, 
-  nombre_evento          varchar(100) NOT NULL, 
-  fecha                  date NOT NULL, 
-  hora_inicio            time(4) NOT NULL, 
-  hora_fin               time(4) NOT NULL, 
-  estado                 tinyint(1) NOT NULL, 
-  tipo_evento_id         int(11) NOT NULL, 
-  tipo_reserva_id        int(10) NOT NULL, 
-  detalle_comprobante_id int(10) NOT NULL, 
-  PRIMARY KEY (id_evento));
+  id_evento              INT(10) NOT NULL AUTO_INCREMENT, 
+  nombre_evento          VARCHAR(100) NOT NULL, 
+  fecha                  DATE NOT NULL, 
+  hora_inicio            TIME(4) NOT NULL, 
+  hora_fin               TIME(4) NOT NULL, 
+  numero_horas           INT(10) NOT NULL, 
+  precio_final           DECIMAL(10,2) NOT NULL, 
+  estado                 TINYINT(1) NOT NULL, 
+  tipo_evento_id         INT(11) NOT NULL, 
+  tipo_reserva_id        INT(10) NOT NULL, 
+  detalle_comprobante_id INT(10) NOT NULL, 
+  PRIMARY KEY (id_evento)
+);
 CREATE TABLE PISO(
   piso_id int(10) NOT NULL AUTO_INCREMENT,
   numero char (2) NOT NULL,

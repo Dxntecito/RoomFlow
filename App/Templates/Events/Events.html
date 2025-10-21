@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserva para Eventos</title>
+    <link rel="stylesheet" href="../../Static/CSS/Events.css">
+    <link rel="stylesheet" href="../../Static/Fonts/Arimo/static/Arimo-Medium.ttf">
+    <link rel="stylesheet" href="../../Static/CSS/style.css">
+    <link rel="stylesheet" href="../../Static/CSS/home.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>HOSTAL BOLÍVAR</h1>
+                </div>
+                <nav class="nav">
+                    <a href="#" class="nav-link">Nuestras habitaciones</a>
+                    <button class="btn btn-primary">Servicios</button>
+                    <div class="header-icons">
+                        <button class="icon-btn menu-toggle" id="menuToggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <button class="icon-btn user-toggle" id="userToggle">
+                            <i class="fas fa-user"></i>
+                        </button>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+    <div class="separar"></div>
+    <div class="container">
+        <h1>RESERVA PARA EVENTOS</h1>
+
+        <div class="search-bar">
+            <div>
+                <label style="font-weight: 600;font-size: 20px; color: #64cc4f;">Hora y fecha para la reserva</label>
+            </div>
+            <div>
+                <label style="font-size: 12px; color: #999;">Fecha de reserva</label>
+                <input id="search-fecha" type="date" value="2025-02-20" style="color: #328336; font-weight: 500;">
+            </div>
+            <div class="divider"></div>
+            <div>
+                <label style="font-size: 12px; color: #999;">Hora de entrada</label>
+                <input id="search-hora-entrada" type="time" value="19:00">
+            </div>
+            <div class="divider"></div>
+            <div>
+                <label style="font-size: 12px; color: #999;">Hora de salida</label>
+                <input id="search-hora-salida" type="time" value="23:00">
+            </div>
+            <button id="search-button" class="search-button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="main-content">
+            <div class="form-card">
+                <h3 class="section-title-events">DATOS DEL EVENTO</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input id="evento-fecha" type="date" readonly style="background-color: #efefef;">
+                    </div>
+                    <div class="form-group">
+                        <label>Hora entrada</label>
+                        <input id="evento-hora-entrada" type="time" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora salida</label>
+                        <input id="evento-hora-salida" type="time" readonly>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo de evento</label>
+                        <select>
+                            <option value="">Seleccionar</option>
+                            <option value="cumpleaños">Cumpleaños</option>
+                            <option value="boda">Boda</option>
+                            <option value="corporativo">Corporativo</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre de evento</label>
+                        <input type="text">
+                    </div>
+                </div>
+
+                <h2 class="section-title-events">DATOS PERSONALES</h2>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Apellido paterno</label>
+                        <input type="text">
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido materno</label>
+                        <input type="text">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombres</label>
+                        <input type="text">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel">
+                    </div>
+                    <div class="form-group">
+                        <label>Sexo</label>
+                        <select>
+                            <option value="">Seleccionar</option>
+                            <option value="masculino">Masculino</option>
+                            <option value="femenino">Femenino</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de documento</label>
+                        <select>
+                            <option value="">Seleccionar</option>
+                            <option value="dni">DNI</option>
+                            <option value="pasaporte">Pasaporte</option>
+                            <option value="ce">Carnet de Extranjería</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nro. de documento</label>
+                        <input type="text">
+                    </div>
+                </div>
+
+                <h2 class="section-title-events" >MÉTODO DE PAGO</h2>
+
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="payment" value="tarjeta" checked>
+                        Tarjeta
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="billetera">
+                        Billetera digital
+                    </label>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nro. de tarjeta</label>
+                        <input type="text" maxlength="16" placeholder="1234 5678 9012 3456">
+                    </div>
+                    <div class="form-group">
+                        <label>Código de seguridad</label>
+                        <input type="text" maxlength="3" placeholder="123">
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="summary-card">
+                <h2 class="section-title-events">Resumen de pago</h2>
+
+                <div class="summary-row">
+                    <span style="color: #666;">Datos de evento</span>
+                </div>
+                <div class="summary-row">
+                    <span style="color: #666;">Nro. Horas</span>
+                    <span>4 × S/ 100</span>
+                </div>
+
+                <div class="summary-row total">
+                    <span>Total</span>
+                    <span>S/ 400</span>
+                </div>
+
+                <button class="pay-button">Pagar</button>
+            </div>
+        </div>
+    </div><div class="separar"></div>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>HOSTAL BOLÍVAR</h3>
+                    <p>Visita el Hostal Bolivar, los mejores y a tu servicio</p>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Conócenos</h4>
+                    <ul>
+                        <li><a href="#">Hostal Bolivar</a></li>
+                        <li><a href="#">Términos y condiciones</a></li>
+                        <li><a href="#">Únete</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Soporte</h4>
+                    <ul>
+                        <li><a href="#">Feedback</a></li>
+                        <li><a href="#">Roomflow</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Contáctanos</h4>
+                    <div class="contact-info">
+                        <p><i class="fas fa-phone"></i> Telefóno: 952 225 506</p>
+                        <p><i class="fas fa-envelope"></i> Email: hostalbolivar@gmail.com</p>
+                        <p><i class="fas fa-map-marker-alt"></i> Ubicación: 363 Uruguay, José Leonardo Ortiz</p>
+                    </div>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2025 Feedback - Derechos reservados</p>
+                <p>Sistema implementado: Roomflow</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const paymentRadios = document.querySelectorAll('input[name="payment"]');
+        const cardFields = document.querySelectorAll('.form-row:last-of-type .form-group');
+
+        paymentRadios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === 'billetera') {
+                    cardFields.forEach(field => field.style.display = 'none');
+                } else {
+                    cardFields.forEach(field => field.style.display = 'flex');
+                }
+            });
+        });
+    </script>
+    <script>
+        document.getElementById("search-button").addEventListener("click", function () {
+            // Obtener valores de la barra de búsqueda
+            const fecha = document.getElementById("search-fecha").value;
+            const horaEntrada = document.getElementById("search-hora-entrada").value;
+            const horaSalida = document.getElementById("search-hora-salida").value;
+
+            // Colocar los valores en los inputs del formulario
+            document.getElementById("evento-fecha").value = fecha;
+            document.getElementById("evento-hora-entrada").value = horaEntrada;
+            document.getElementById("evento-hora-salida").value = horaSalida;
+        });
+    </script>
+    <script src="../Static/JS/main.js"></script>
+    <script src="../Static/JS/home.js"></script>
+</body>
+
+
+</html>
