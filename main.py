@@ -2,10 +2,15 @@ from flask import Flask, render_template,request,session,redirect,url_for,g
 from bd import get_connection
 from flask_socketio import SocketIO
 
+from App.Blueprints.ModuleRoomsBooking.RoutesBooking import bookingroom_bp
+
+
 app = Flask(__name__, template_folder="./App/Templates", static_folder="./App/Static")
 app.secret_key = 'clave_super_secreta_123'
 
 socketio = SocketIO(app)
+
+app.register_blueprint(bookingroom_bp)
 
 @app.route("/")
 @app.route("/RoomFlow")

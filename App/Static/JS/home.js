@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM cargado, inicializando...');
     initBookingForm();
     initSmoothScroll();
     initAnimations();
@@ -21,37 +20,6 @@ function initBookingForm() {
     dateInputs[0].value = tomorrow.toISOString().split('T')[0];
     dateInputs[1].value = dayAfter.toISOString().split('T')[0];
     
-    // Event listener para el botón de búsqueda
-    if (searchBtn) {
-        searchBtn.addEventListener('click', function() {
-            const checkIn = dateInputs[0].value;
-            const checkOut = dateInputs[1].value;
-            
-            if (!checkIn || !checkOut) {
-                RoomFlow.showNotification('Por favor, selecciona las fechas de entrada y salida', 'warning');
-                return;
-            }
-            
-            if (new Date(checkIn) >= new Date(checkOut)) {
-                RoomFlow.showNotification('La fecha de salida debe ser posterior a la fecha de entrada', 'error');
-                return;
-            }
-            
-            // Simular búsqueda
-            RoomFlow.showLoading('Buscando habitaciones disponibles...');
-            
-            setTimeout(() => {
-                RoomFlow.hideLoading();
-                RoomFlow.showNotification('Redirigiendo a la página de reservas...', 'success');
-                
-                // Aquí podrías redirigir a la página de reservas
-                setTimeout(() => {
-                    // window.location.href = 'pages/reservas.html';
-                    console.log('Redirigiendo a reservas con fechas:', checkIn, checkOut);
-                }, 1500);
-            }, 2000);
-        });
-    }
     
     // Event listener para el botón de reserva
     if (bookingBtn) {
