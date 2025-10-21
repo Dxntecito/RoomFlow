@@ -1,5 +1,5 @@
-body{
-    margin: 2.5em;
+#booking_room_page{
+    margin: 5em;
 }
 .booking_tittle {
   font-family: "Arimo", sans-serif;
@@ -217,4 +217,9 @@ input[type="checkbox"]:checked {
     align-items: center;
     justify-content: center;
     padding: 0;
+}
+
+#booking_room_available{
+    margin-top: 2em;
+    margin-bottom: 2em;
 }
