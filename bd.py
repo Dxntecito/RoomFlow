@@ -6,7 +6,7 @@ def get_connection():
         user='root',
         port=3306,
         password='',
-        db='roomflowdb',
+        db='roomflow',
         charset='utf8mb4'
     )
     with conexion.cursor() as cursor:
