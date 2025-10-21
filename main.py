@@ -3,7 +3,7 @@ from bd import get_connection
 from flask_socketio import SocketIO
 
 from App.Blueprints.ModuleRoomsBooking.RoutesBooking import bookingroom_bp
-from App.Blueprints.ModuleEmpleados.RoutesEmpleados import empleados_bp
+from App.Blueprints.ModuleEmployees.RoutesEmpleados import empleados_bp
 
 
 app = Flask(__name__, template_folder="./App/Templates", static_folder="./App/Static")
