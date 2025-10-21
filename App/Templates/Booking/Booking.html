@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
-
+<link rel="stylesheet" href="../../Static/CSS/style.css">
 </head>
 <body>
     <div><h2 class="booking_tittle">RESERVA DE HABITACIONES</h2></div>
@@ -32,31 +32,39 @@
 
     </div>
     <div id="Booking_Filters">
-        <h2 class="Booking_web_subheaders" style>Filtros</h2>
+        <h2 class="Booking_web_subheaders" id="block_titles">Filtros</h2>
         <label for="floor_number" class="booking_label">Nro. de Piso</label>
-            <select id="floor_number" name="floor_number">
+            <select class="select_design" id="floor_number" name="floor_number">
                 <!-- Extraer numero de piso de tabla PISO  -->
                 <option value="">-- Selecciona una opción --</option>
             </select>
         <label for="room_category" class="booking_label">Nro. de Piso</label>
-            <select id="room_category" name="turno">
+            <select class="select_design" id="room_category" name="turno">
                 <!-- Extraer numero de piso de tabla PISO  -->
                 <option value="">-- Selecciona una opción --</option>
             </select>
     </div>
     <div>
-        <h3 class="Booking_web_subheaders"> Habitaciones elegidas</h3>
-        <div class="green_round_div">
+        <h2 class="Booking_web_subheaders" id="block_titles"> Habitaciones elegidas</h2>
+        <div class="green_round_div_2" id="summary_booking">
             <!-- Aqui apareceran las habitaciones seleccionadas -->
-             <p id="Total_sum">Total:</p>
-             <p><a href="">Siguiente</a></p>
+             <div id="selected_rooms">
+                <div class="room_selected_style">
+                    <p>Hab. 101</p>
+                    <button>x</button>
+                </div>
+             </div>
+             <div id="summary_footer">
+                <p id="Total_sum">Total:</p>
+                <p><a href="" class="booking_label" id="next_booking_link">→ Siguiente</a></p>
+            </div> 
         </div>
     </div>
-    <table id="booking_room_available" border="1">
+    <table id="booking_room_available" class="booking_label" border="1">
         <thead>
             <tr>
             <th>Piso</th>
-            <th>N° Habitcaion</th>
+            <th>N° Habitacion</th>
             <th>Precio</th>
             <th>Capacidad</th>
             <th>RESERVAR</th>
@@ -64,9 +72,14 @@
         </thead>
         <!-- Generar filas mediante Jinja llamando a la tabla Habitacion -->
         <tbody>
-
+            <tr>
+                <td>Primer Piso</td>
+                <td>101</td>
+                <td>S/120</td>
+                <td>1 Persona</td>
+                <td><input type="checkbox" name="booking_YN" value="booking_yn" id="checkbox_booking"></td>
+            </tr>
         </tbody>
-        
     </table>
 
 </body>

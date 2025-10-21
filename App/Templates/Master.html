@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hostal Bolívar - Tu estancia, nuestra máxima prioridad</title>
+    <link rel="stylesheet" href="../Static/CSS/style.css">
+    <link rel="stylesheet" href="../Static/CSS/home.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% block stiles %} 
+
+    {% endblock stiles %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>HOSTAL BOLÍVAR</h1>
+                </div>
+                <nav class="nav">
+                    <a href="#" class="nav-link">Nuestras habitaciones</a>
+                    <button class="btn btn-primary">Servicios</button>
+                    <div class="header-icons">
+                        <button class="icon-btn menu-toggle" id="menuToggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <button class="icon-btn user-toggle active" id="userToggle">
+                            <i class="fas fa-user"></i>
+                        </button>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+   {% block content %}
+
+   {% endblock content %}
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>HOSTAL BOLÍVAR</h3>
+                    <p>Visita el Hostal Bolivar, los mejores y a tu servicio</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Conócenos</h4>
+                    <ul>
+                        <li><a href="#">Hostal Bolivar</a></li>
+                        <li><a href="#">Términos y condiciones</a></li>
+                        <li><a href="#">Únete</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Soporte</h4>
+                    <ul>
+                        <li><a href="#">Feedback</a></li>
+                        <li><a href="#">Roomflow</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contáctanos</h4>
+                    <div class="contact-info">
+                        <p><i class="fas fa-phone"></i> Telefóno: 952 225 506</p>
+                        <p><i class="fas fa-envelope"></i> Email: hostalbolivar@gmail.com</p>
+                        <p><i class="fas fa-map-marker-alt"></i> Ubicación: 363 Uruguay, José Leonardo Ortiz</p>
+                    </div>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Feedback - Derechos reservados</p>
+                <p>Sistema implementado: Roomflow</p>
+            </div>
+        </div>
+    </footer>
+{% block scripts %}
+    <script src="../Static/JS/main.js"></script>
+    <script src="../Static/JS/home.js"></script>
+{% endblock scripts %}
+</body>
+</html>

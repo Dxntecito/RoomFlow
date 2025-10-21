@@ -20,3 +20,10 @@ dist/
 build/
 *.min.js
 *.min.css
+
+# Ignorar entorno virtual
+.venv/
+# Ignorar archivos de caché de Python
+__pycache__/
+Models/__pycache__/
+Controllers/__pycache__/

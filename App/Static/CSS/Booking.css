@@ -14,6 +14,7 @@ body{
   font-weight: 500;
   font-style: normal;
   display: inline;
+  
 }
 
 .booking_label {
@@ -25,9 +26,16 @@ body{
 .green_round_div {
   border: 1px solid green;
   height: max-content;
-  width: max-content;
+  width: 60%;
   border-radius: 50px; /* mitad de 100px → medias circunferencias */
   padding: 5px;
+}
+.green_round_div_2 {
+  border: 1px solid green;
+  height: max-content;
+  width: 60%;
+  border-radius: 25px; /* mitad de 100px → medias circunferencias */
+
 }
 
 /* Contenedor principal en línea */
@@ -39,6 +47,7 @@ body{
   width: max-content;
   margin-top: 2.5em;
   margin-bottom: 2.5em;
+
 }
 
 /* Cada columna: label arriba, input abajo */
@@ -72,4 +81,140 @@ body{
 #search_button_img{
     width: 50px;
     height: 50px;
+}
+
+#block_titles{
+    display: block;
+    margin-top: 2em;
+}
+
+/* Selects con forma de pildora */
+
+.select_design {
+  order: 2px solid green;       /* Borde verde */
+  border-radius: 25px;           /* Bordes redondeados tipo pastilla */
+  padding: 8px 16px;             /* Espaciado interno */
+  background-color: white;       /* Fondo blanco */
+  color: #006400;                /* Texto verde oscuro */
+  font-family: "Arimo", sans-serif;
+  font-size: 14px;
+  outline: none;                 /* Quita el borde azul al enfocar */
+  appearance: none;              /* Quita el estilo por defecto del navegador */
+  cursor: pointer;               /* Manito al pasar */
+  transition: all 0.2s ease-in-out;
+}
+
+/* Efecto al pasar el mouse */
+.select_design:hover {
+  border-color: #2ecc71;
+
+}
+
+/* Efecto al hacer clic o enfocar */
+.select_design:focus {
+  border-color: #228B22;
+  box-shadow: 0 0 5px #228B22;
+}
+
+
+.booking_label{
+    margin-right: 15px;
+    margin-left: 15px;
+    width: max-content;
+}
+
+#summary_booking{
+    width: 95%;
+}
+
+#summary_footer {
+    display: flex;
+    justify-content: space-between; /* Total a la izquierda, Siguiente a la derecha */
+    align-items: center;            
+    width: 100%;
+    margin-top: 10px;
+    margin-left: 15px;               
+}
+
+#summary_footer p {
+    margin: 0;                      
+}
+
+#summary_footer a {
+    text-decoration: none;          
+    color: rgb(0, 0, 0);                           
+    padding: 5px 15px;
+    border-radius: 20px;            
+}
+
+#next_booking_link{
+    font-weight: bold;
+}
+
+#booking_room_available {
+    border-collapse: separate;   /* Necesario para border-radius */
+    border-spacing: 0;           /* Quita espacios extra */
+    width: 96.5%;
+    border: 2px solid transparent;     /* Borde general de la tabla */
+    border-radius: 15px;         /* Bordes redondeados de la tabla */
+    overflow: hidden;            /* Para que celdas no sobresalgan */
+    margin-left: -0.3%;
+}
+
+#booking_room_available th, 
+#booking_room_available td {
+    border: 1px solid transparent;     /* Bordes de celdas */
+    padding: 10px;
+    text-align: center;
+}
+
+#booking_room_available thead th {
+    background-color: black;     
+    color: white;                
+    font-weight: bold;
+}
+
+#checkbox_booking{
+    width: 30px;
+    height: 30px;
+}
+input[type="checkbox"] {
+  accent-color: green; /* sigue cambiando el color al marcar */
+  appearance: none;     /* quita el estilo por defecto del navegador */
+  border: 2px solid var(--primary-green-light);
+  border-radius: 5px;
+  background-color: white;
+}
+
+/* Para que al marcar no se vea nada */
+input[type="checkbox"]:checked {
+  background-color: var(--primary-green-light); /* o deja blanco si quieres que no cambie */
+}
+
+.room_selected_style {
+    display: inline-flex;           /* Para que el botón y el texto estén alineados */
+    align-items: center;            /* Centrar verticalmente */
+    padding: 5px 15px;              /* Espacio interno tipo “pastilla” */
+    background-color: var(--primary-green-light);        /* Fondo verde */
+    color: white;                   /* Texto blanco */
+    border-radius: 25px;            /* Bordes redondeados tipo pastilla */
+    font-family: Arimo, sans-serif; /* Fuente opcional */
+    font-size: 15px;
+    margin: 15px;                    /* Espaciado externo */
+}
+
+.room_selected_style button {
+    margin-left: 10px;              /* Separación entre texto y botón */
+    background-color: transparent;        /* Fondo del botón */
+    color: rgb(255, 255, 255);                   /* Letra del botón */
+    border: none;
+    border-radius: 50%;             /* Botón redondo */
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
