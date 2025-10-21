@@ -1,16 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+{% extends "Master.html" %}
+
+<!-- Para estilos exclusivamente para esta pagina -->
+{% block stiles %}
     <link rel="stylesheet" href="../../Static/CSS/Booking.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../Static/CSS/style.css">
-</head>
-<body>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../Static/CSS/style.css">
+{% endblock %}
+
+{% block content %} 
     <div><h2 class="booking_tittle">RESERVA DE HABITACIONES</h2></div>
     <div id="booking_date" class="green_round_div">
         <h3 class="Booking_web_subheaders" id="leftTittleG">Fechas de reserva</h3>
@@ -81,6 +80,4 @@
             </tr>
         </tbody>
     </table>
-
-</body>
-</html>
+{% endblock %}

@@ -38,6 +38,9 @@ CREATE TABLE DETALLE_COMPROBANTE (
   cantidad        int(10) NOT NULL, 
   precio_unitario decimal(10, 2) NOT NULL, 
   subtotal        decimal(10, 2) NOT NULL, 
+  room_service_id int(11), 
+  id_evento       int(10), 
+  habitacion_id   int(10), 
   PRIMARY KEY (detalle_id));
 CREATE TABLE DETALLE_TURNO (
   empleado_id int(10) NOT NULL, 
@@ -58,32 +61,22 @@ CREATE TABLE EMPLEADO (
   estado           int(10) NOT NULL, 
   PRIMARY KEY (empleado_id));
 CREATE TABLE EVENTO (
-  id_evento              INT(10) NOT NULL AUTO_INCREMENT, 
-  nombre_evento          VARCHAR(100) NOT NULL, 
-  fecha                  DATE NOT NULL, 
-  hora_inicio            TIME(4) NOT NULL, 
-  hora_fin               TIME(4) NOT NULL, 
-  numero_horas           INT(10) NOT NULL, 
-  precio_final           DECIMAL(10,2) NOT NULL, 
-  estado                 TINYINT(1) NOT NULL, 
-  tipo_evento_id         INT(11) NOT NULL, 
-  tipo_reserva_id        INT(10) NOT NULL, 
-  detalle_comprobante_id INT(10) NOT NULL, 
-  PRIMARY KEY (id_evento)
-);
-CREATE TABLE PISO(
-  piso_id int(10) NOT NULL AUTO_INCREMENT,
-  numero char (2) NOT NULL,
-  estado tinyint(1) NOT NULL,
-  PRIMARY KEY (piso_id));
+  id_evento       int(10) NOT NULL AUTO_INCREMENT, 
+  nombre_evento   varchar(100) NOT NULL, 
+  fecha           date NOT NULL, 
+  hora_inicio     time(4) NOT NULL, 
+  hora_fin        time(4) NOT NULL, 
+  estado          tinyint(1) NOT NULL, 
+  tipo_evento_id  int(11) NOT NULL, 
+  tipo_reserva_id int(10) NOT NULL, 
+  PRIMARY KEY (id_evento));
 CREATE TABLE HABITACION (
-  habitacion_id          int(10) NOT NULL AUTO_INCREMENT, 
-  numero                 char(3) NOT NULL, 
-  estado                 tinyint(1) NOT NULL, 
-  categoria_id           int(10) NOT NULL, 
-  id_categoria           int(10) NOT NULL, 
-  detalle_comprobante_id int(10) NOT NULL, 
-  piso_id                int(10) NOT NULL,
+  habitacion_id int(10) NOT NULL AUTO_INCREMENT, 
+  numero        char(3) NOT NULL, 
+  estado        tinyint(1) NOT NULL, 
+  categoria_id  int(10) NOT NULL, 
+  id_categoria  int(10) NOT NULL, 
+  piso_id       int(10) NOT NULL, 
   PRIMARY KEY (habitacion_id));
 CREATE TABLE INCIDENCIA (
   incidencia_id      int(10) NOT NULL AUTO_INCREMENT, 
@@ -144,9 +137,8 @@ CREATE TABLE ROL (
   estado      tinyint(1) NOT NULL, 
   PRIMARY KEY (rol_id));
 CREATE TABLE ROOM_SERVICE (
-  reserva_id             int(10) NOT NULL, 
-  room_service_id        int(11) NOT NULL AUTO_INCREMENT, 
-  detalle_comprobante_id int(10) NOT NULL, 
+  reserva_id      int(10) NOT NULL, 
+  room_service_id int(11) NOT NULL AUTO_INCREMENT, 
   PRIMARY KEY (room_service_id));
 CREATE TABLE ROOM_SERVICE_AMENIDAD (
   room_service_id int(11) NOT NULL, 
@@ -188,14 +180,14 @@ CREATE TABLE TIPO_PROMOCION (
   estado            tinyint(1) NOT NULL, 
   PRIMARY KEY (id_tipo_promocion));
 CREATE TABLE TRANSACCION (
-  pago_id        int(11) NOT NULL AUTO_INCREMENT, 
-  comprobante_id int(11) NOT NULL, 
+  transaccion_id int(11) NOT NULL AUTO_INCREMENT, 
   metodo_pago_id int(10) NOT NULL, 
   fecha_pago     date NOT NULL, 
   monto          numeric(10, 0) NOT NULL, 
   estado         tinyint(1) NOT NULL, 
   id_reserva     int(10) NOT NULL, 
-  PRIMARY KEY (pago_id));
+  comprobante_id int(11) NOT NULL, 
+  PRIMARY KEY (transaccion_id));
 CREATE TABLE TURNO (
   turno_id     int(10) NOT NULL AUTO_INCREMENT, 
   nombre_turno varchar(20) NOT NULL, 
@@ -221,12 +213,16 @@ CREATE TABLE HUESPED (
   id_habitacion int(10) NOT NULL, 
   PRIMARY KEY (huesped_id, 
   num_doc));
+CREATE TABLE PISO (
+  piso_id int(10) NOT NULL AUTO_INCREMENT, 
+  numero  char(3) NOT NULL, 
+  estado  tinyint(1) NOT NULL, 
+  PRIMARY KEY (piso_id));
 CREATE TABLE RESERVA_HABITACION (
   habitacion_id int(10) NOT NULL, 
   reserva_id    int(10) NOT NULL, 
   PRIMARY KEY (habitacion_id, 
   reserva_id));
--- BLOQUE ALTER CORREGIDO (quita espacios en identificadores)
 ALTER TABLE `USUARIO` ADD CONSTRAINT `FK_USUARIO505418` FOREIGN KEY (id_rol) REFERENCES `ROL` (rol_id);
 ALTER TABLE `CLIENTE` ADD CONSTRAINT `FK_CLIENTE393375` FOREIGN KEY (id_tipo_cliente) REFERENCES `TIPO_CLIENTE` (tipo_cliente_id);
 ALTER TABLE `CLIENTE` ADD CONSTRAINT `FK_CLIENTE638454` FOREIGN KEY (id_pais) REFERENCES `PAIS` (pais_id);
@@ -235,7 +231,6 @@ ALTER TABLE `CLIENTE` ADD CONSTRAINT `FK_CLIENTE695164` FOREIGN KEY (id_tipoemp)
 ALTER TABLE `HUESPED` ADD CONSTRAINT `FKHUESPED655618` FOREIGN KEY (id_cliente) REFERENCES `CLIENTE` (cliente_id);
 ALTER TABLE `HUESPED` ADD CONSTRAINT `FKHUESPED217740` FOREIGN KEY (id_habitacion) REFERENCES `HABITACION` (habitacion_id);
 ALTER TABLE `HABITACION` ADD CONSTRAINT `FK_HABITACIO224172` FOREIGN KEY (id_categoria) REFERENCES `CATEGORIA` (categoria_id);
-ALTER TABLE `HABITACION` ADD CONSTRAINT `FK_HABITACION_PISO` FOREIGN KEY (piso_id) REFERENCES `PISO` (piso_id);
 ALTER TABLE `PROMOCION` ADD CONSTRAINT `FK_PROMOCION990367` FOREIGN KEY (tipo_promocion_id) REFERENCES `TIPO_PROMOCION` (id_tipo_promocion);
 ALTER TABLE `RESERVA` ADD CONSTRAINT `FK_RESERVA548259` FOREIGN KEY (promocion_id) REFERENCES `PROMOCION` (id_promocion);
 ALTER TABLE `RESERVA` ADD CONSTRAINT `FK_RESERVA243209` FOREIGN KEY (cliente_id) REFERENCES `CLIENTE` (cliente_id);
@@ -252,10 +247,11 @@ ALTER TABLE `ROOM_SERVICE_AMENIDAD` ADD CONSTRAINT `FK_ROOM_SERV10855` FOREIGN K
 ALTER TABLE `EVENTO` ADD CONSTRAINT `FK_EVENTO84136` FOREIGN KEY (tipo_evento_id) REFERENCES `TIPO_EVENTO` (tipo_evento_id);
 ALTER TABLE `EVENTO` ADD CONSTRAINT `FK_EVENTO794866` FOREIGN KEY (tipo_reserva_id) REFERENCES `RESERVA` (reserva_id);
 ALTER TABLE `ROOM_SERVICE` ADD CONSTRAINT `FK_ROOM_SERV300422` FOREIGN KEY (reserva_id) REFERENCES `RESERVA` (reserva_id);
-ALTER TABLE `EVENTO` ADD CONSTRAINT `FK_EVENTO387349` FOREIGN KEY (detalle_comprobante_id) REFERENCES `DETALLE_COMPROBANTE` (detalle_id);
-ALTER TABLE `ROOM_SERVICE` ADD CONSTRAINT `FK_ROOM_SERV591653` FOREIGN KEY (detalle_comprobante_id) REFERENCES `DETALLE_COMPROBANTE` (detalle_id);
-ALTER TABLE `HABITACION` ADD CONSTRAINT `FK_HABITACIO721366` FOREIGN KEY (detalle_comprobante_id) REFERENCES `DETALLE_COMPROBANTE` (detalle_id);
 ALTER TABLE `RESERVA_HABITACION` ADD CONSTRAINT `FKRESERVA_HA569661` FOREIGN KEY (habitacion_id) REFERENCES `HABITACION` (habitacion_id);
 ALTER TABLE `RESERVA` ADD CONSTRAINT `FK_RESERVA407528` FOREIGN KEY (empleado_id2) REFERENCES `EMPLEADO` (empleado_id);
 ALTER TABLE `RESERVA_HABITACION` ADD CONSTRAINT `FKRESERVA_HA967758` FOREIGN KEY (reserva_id) REFERENCES `RESERVA` (reserva_id);
-
+ALTER TABLE `TRANSACCION` ADD CONSTRAINT `FK_TRANSACCI868696` FOREIGN KEY (comprobante_id) REFERENCES `COMPROBANTE` (comprobante_id);
+ALTER TABLE `HABITACION` ADD CONSTRAINT `FK_HABITACIO361171` FOREIGN KEY (piso_id) REFERENCES `PISO` (piso_id);
+ALTER TABLE `DETALLE_COMPROBANTE` ADD CONSTRAINT `FK_DETALLE_C715641` FOREIGN KEY (room_service_id) REFERENCES `ROOM_SERVICE` (room_service_id);
+ALTER TABLE `DETALLE_COMPROBANTE` ADD CONSTRAINT `FK_DETALLE_C495323` FOREIGN KEY (id_evento) REFERENCES `EVENTO` (id_evento);
+ALTER TABLE `DETALLE_COMPROBANTE` ADD CONSTRAINT `FK_DETALLE_C530316` FOREIGN KEY (habitacion_id) REFERENCES `HABITACION` (habitacion_id);
