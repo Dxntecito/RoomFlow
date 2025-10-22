@@ -1,0 +1,219 @@
+{% extends "Master.html" %}
+
+<!-- Para estilos exclusivamente para esta pagina -->
+{% block stiles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/Booking.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %} 
+<div id="booking_room_page">
+    <div><h2 class="booking_tittle">RESERVA DE HABITACIONES</h2></div>
+    <div id="booking_date" class="green_round_div">
+        <h3 class="Booking_web_subheaders" id="leftTittleG">Fechas de reserva</h3>
+    <div class="booking_column">
+        <label for="Start_booking_date" class="booking_label">Fecha entrada</label>
+        <input type="date" id="Start_booking_date" name="Start_booking_date">
+    </div>
+
+    <div id="divider"></div>
+
+    <div class="booking_column">
+        <label for="End_booking_date" class="booking_label">Fecha salida</label>
+        <input type="date" id="End_booking_date" name="End_booking_date">
+        
+    </div>
+    <button><img id="search_button_img" src="{{ url_for('static', filename='Img/search_button.png') }}" alt="search_icon"></button>
+
+    </div>
+    <div id="Booking_Filters">
+        <h2 class="Booking_web_subheaders" id="block_titles">Filtros</h2>
+        <label for="floor_number" class="booking_label">Nro. de Piso</label>
+            <select class="select_design" id="floor_number" name="floor_number">
+                <!-- Extraer numero de piso de tabla PISO  -->
+                 <option value="">-- Selecciona una opción --</option>
+                 {% for floor in floors %}
+                <option value="{{ floor[0] }}">{{ floor[1] }}</option>
+                {% endfor %}
+            </select>
+        <label for="room_category" class="booking_label">Categoria</label>
+            <select class="select_design" id="room_category" name="turno">
+                <!-- Extraer numero de piso de tabla PISO  -->
+                <option value="">-- Selecciona una opción --</option>
+                {% for category in categories %}
+                <option value="{{ category[0] }}">{{ category[1] }}</option>
+                {% endfor %}
+            </select>
+    </div>
+    <div>
+        <h2 class="Booking_web_subheaders" id="block_titles"> Habitaciones elegidas</h2>
+        <div class="green_round_div_2" id="summary_booking">
+            <!-- Aqui apareceran las habitaciones seleccionadas -->
+             <div id="selected_rooms">
+             </div>
+             <div id="summary_footer">
+                <p id="Total_sum">Total: S/. 0.00</p>
+                <p><a href="" class="booking_label" id="next_booking_link">→ Siguiente</a></p>
+            </div> 
+        </div>
+    </div>
+    <table id="booking_room_available" class="booking_label" border="1">
+        <thead>
+            <tr>
+            <th>Piso</th>
+            <th>N° Habitacion</th>
+            <th>Categoria</th>
+            <th>Capacidad</th>
+            <th>Precio</th>
+            <th>RESERVAR</th>
+        </tr>
+        </thead>
+        <!-- Generar filas mediante Jinja llamando a la tabla Habitacion -->
+        <tbody>
+    {% for room in rooms %}
+        <tr class="room-row" data-floor="{{ room[4] }}" data-category="{{ room[3] }}">
+            {% for floor in floors %}
+                {% if room[4] == floor[0] %}
+                    <td>Piso {{ floor[1] }}</td>
+                {% endif %}
+            {% endfor %}
+            <td>{{ room[1] }}</td>
+            {% for category in categories %}
+                {% if room[3] == category[0] %}
+                    <td>{{ category[1] }}</td>
+                    <td>{{ category[4] }} Personas</td>
+                {% endif %}
+            {% endfor %}
+            <td class="price" data-room-id="{{ room[0] }}">{{ room[5] }}</td>
+            <td><input class="checkbox_booking" type="checkbox" name="booking_{{ room[0] }}" value="{{ room[0] }}" id="checkbox_booking_{{ room[0] }}"></td>
+        </tr>
+    {% endfor %}
+</tbody>
+
+
+    </table>
+</div>  
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const selectedContainer = document.getElementById("selected_rooms");
+    const totalDisplay = document.getElementById("Total_sum");
+    const floorSelect = document.getElementById("floor_number");
+    const categorySelect = document.getElementById("room_category");
+    let total = 0;
+
+    // Diccionarios generados por Jinja: id -> nombre, id -> precio
+    const roomNames = {
+        {% for room in rooms %}
+            "{{ room[0] }}": "{{ room[1] }}"{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+    const roomPrices = {
+        {% for room in rooms %}
+            "{{ room[0] }}": {{ room[5] }}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+
+    // --- Manejo de checkboxes (crear/ eliminar divs y actualizar total) ---
+    function bindCheckboxEvents() {
+        document.querySelectorAll('.checkbox_booking').forEach(checkbox => {
+            // Evita añadir múltiples listeners
+            if (checkbox.dataset.bound === "true") return;
+            checkbox.dataset.bound = "true";
+
+            checkbox.addEventListener('change', function() {
+                const roomId = this.value;
+                const roomName = roomNames[roomId];
+                const price = parseFloat(roomPrices[roomId]) || 0;
+
+                if (this.checked) {
+                    // Si ya existe el div, no duplicar
+                    if (document.getElementById("room_selected_" + roomId)) return;
+
+                    // Crear div para habitación seleccionada
+                    const div = document.createElement("div");
+                    div.className = "room_selected_style";
+                    div.id = "room_selected_" + roomId;
+                    div.innerHTML = `
+                        <p>Hab. ${roomName} — S/. ${price.toFixed(2)}</p>
+                        <button type="button" class="remove_room">x</button>
+                    `;
+                    selectedContainer.appendChild(div);
+
+                    // Sumar al total
+                    total += price;
+                    updateTotalDisplay();
+
+                    // Evento para quitar habitación desde la X
+                    div.querySelector(".remove_room").addEventListener("click", function() {
+                        checkbox.checked = false;
+                        // esto disparará el 'change' del checkbox y eliminará el div y actualizará total
+                        checkbox.dispatchEvent(new Event('change'));
+                    });
+
+                } else {
+                    // Quitar div si existe
+                    const existingDiv = document.getElementById("room_selected_" + roomId);
+                    if (existingDiv) existingDiv.remove();
+
+                    // Restar del total
+                    total -= price;
+                    if (total < 0) total = 0;
+                    updateTotalDisplay();
+                }
+            });
+        });
+    }
+
+    function updateTotalDisplay() {
+        totalDisplay.textContent = "Total: S/. " + total.toFixed(2);
+    }
+
+    // --- Filtrado de filas según selects ---
+    function filterRows() {
+        const selFloor = floorSelect.value;      // valor string o ""
+        const selCategory = categorySelect.value;
+
+        // recorrer cada fila
+        document.querySelectorAll('.room-row').forEach(row => {
+            const rowFloor = row.dataset.floor;      // string
+            const rowCategory = row.dataset.category;
+
+            let show = true;
+            if (selFloor && selFloor !== "" && selFloor !== rowFloor) show = false;
+            if (selCategory && selCategory !== "" && selCategory !== rowCategory) show = false;
+
+            const checkbox = row.querySelector('.checkbox_booking');
+
+            if (show) {
+                row.style.display = "";
+            } else {
+                // Si la fila se oculta y está marcada, desmarcarla y disparar change para limpiar selección
+                if (checkbox && checkbox.checked) {
+                    checkbox.checked = false;
+                    // dispatchEvent para que el manejador de checkbox limpie la UI y el total
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+                row.style.display = "none";
+            }
+        });
+    }
+
+    // Escuchar cambios en selects
+    floorSelect.addEventListener('change', filterRows);
+    categorySelect.addEventListener('change', filterRows);
+
+    // Inicializar bindings y estado
+    bindCheckboxEvents();
+    updateTotalDisplay();
+
+    // Si tu tabla se actualiza dinámicamente (por ejemplo por AJAX) necesitas re-run bindCheckboxEvents()
+    // Si quieres aplicar el filtro al cargar con valores por defecto:
+    filterRows();
+});
+</script>
+
+
+{% endblock %}

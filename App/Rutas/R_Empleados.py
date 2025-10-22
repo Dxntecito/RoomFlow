@@ -1,7 +1,7 @@
 from flask import render_template, Blueprint, request, jsonify, session, redirect, url_for, flash
-import App.Controladores.ModuleEmployees as controller_empleado
+import App.Controladores.C_Empleado.controlador_empleado as controller_empleado
 
-empleados_bp = Blueprint('empleados', __name__, template_folder='Templates', url_prefix='/Empleados')
+empleados_bp = Blueprint('empleados', __name__, template_folder='CRUDS/Empleados', url_prefix='/Cruds/Empleados')
 
 @empleados_bp.route('/', methods=['GET'])
 @empleados_bp.route('/Empleados', methods=['GET'])
@@ -27,7 +27,7 @@ def Empleados():
     total_pages = (total_empleados + limit - 1) // limit
     
     return render_template(
-        "Empleados/Empleados.html",
+        "Empleados.html",
         empleados=empleados,
         tipos_empleado=tipos_empleado,
         current_page=page,
@@ -73,7 +73,7 @@ def CrearEmpleado():
     
     # Obtener tipos de empleado para el formulario
     tipos_empleado = controller_empleado.get_tipos_empleado()
-    return render_template("Empleados/CrearEmpleado.html", tipos_empleado=tipos_empleado)
+    return render_template("CrearEmpleado.html", tipos_empleado=tipos_empleado)
 
 @empleados_bp.route('/editar/<int:empleado_id>', methods=['GET', 'POST'])
 def EditarEmpleado(empleado_id):
@@ -116,7 +116,7 @@ def EditarEmpleado(empleado_id):
         return redirect(url_for('empleados.Empleados'))
     
     tipos_empleado = controller_empleado.get_tipos_empleado()
-    return render_template("Empleados/EditarEmpleado.html", empleado=empleado, tipos_empleado=tipos_empleado)
+    return render_template("EditarEmpleado.html", empleado=empleado, tipos_empleado=tipos_empleado)
 
 @empleados_bp.route('/eliminar/<int:empleado_id>', methods=['POST'])
 def EliminarEmpleado(empleado_id):
@@ -173,7 +173,7 @@ def ActualizarEmpleado(empleado_id):
         return redirect(url_for('empleados.Empleados'))
     
     tipos_empleado = controller_empleado.get_tipos_empleado()
-    return render_template("Empleados/ActualizarEmpleado.html", empleado=empleado, tipos_empleado=tipos_empleado)
+    return render_template("ActualizarEmpleado.html", empleado=empleado, tipos_empleado=tipos_empleado)
 
 @empleados_bp.route('/registro', methods=['GET', 'POST'])
 def RegistroEmpleado():
@@ -209,7 +209,7 @@ def RegistroEmpleado():
             flash(f'Error: {str(ex)}', 'error')
     
     tipos_empleado = controller_empleado.get_tipos_empleado()
-    return render_template("Empleados/RegistroEmpleado.html", tipos_empleado=tipos_empleado)
+    return render_template("RegistroEmpleado.html", tipos_empleado=tipos_empleado)
 
 @empleados_bp.route('/asignar-turno/<int:empleado_id>', methods=['GET', 'POST'])
 def AsignarTurno(empleado_id):
@@ -242,4 +242,4 @@ def AsignarTurno(empleado_id):
         (3, 'Noche')
     ]
     
-    return render_template("Empleados/AsignarTurno.html", empleado=empleado, turnos=turnos)
+    return render_template("AsignarTurno.html", empleado=empleado, turnos=turnos)
