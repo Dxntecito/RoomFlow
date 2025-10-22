@@ -2,9 +2,13 @@ from flask import Flask, render_template,request,session,redirect,url_for,g
 from bd import get_connection
 from flask_socketio import SocketIO
 
-from App.Blueprints.ModuleRoomsBooking.RoutesBooking import bookingroom_bp
-from App.Blueprints.ModuleEmployees.RoutesEmpleados import empleados_bp
-from App.Blueprints.ModuleEvents.RouteEvents import eventos_bp
+from App.Rutas.RutasReserva import bookingroom_bp
+from App.Rutas.RutasEmpleados import empleados_bp
+from App.Rutas.RutasEvento import eventos_bp
+from App.Rutas.RutasFacturacion import facturaciones_bp
+from App.Rutas.RutasIncidente import incidentes_bp
+from App.Rutas.RutasUsuario import usuarios_bp
+from App.Rutas.
 
 app = Flask(__name__, template_folder="./App/Templates", static_folder="./App/Static")
 app.secret_key = 'clave_super_secreta_123'

@@ -1,5 +1,5 @@
 from flask import render_template, Blueprint, request, jsonify, session, redirect, url_for, flash
-import App.Models.controller_empleado as controller_empleado
+import App.Controladores.ModuleEmployees as controller_empleado
 
 empleados_bp = Blueprint('empleados', __name__, template_folder='Templates', url_prefix='/Empleados')
 
