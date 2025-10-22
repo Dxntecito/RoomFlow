@@ -10,7 +10,7 @@ from App.Rutas.R_Evento import eventos_bp
 # from App.Rutas.RutasUsuario import usuarios_bp
 # from App.Rutas.RutasRoomService import RoomService_bp
 
-app = Flask(__name__, template_folder="./App/Rutas/INDEX/", static_folder="./App/Static")
+app = Flask(__name__, template_folder="./App/Rutas/TEMPLATES", static_folder="./App/Static")
 app.secret_key = 'clave_super_secreta_123'
 
 socketio = SocketIO(app)
