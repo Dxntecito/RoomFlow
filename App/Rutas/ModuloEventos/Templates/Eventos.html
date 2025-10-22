@@ -1,10 +1,10 @@
 {% extends "Master.html" %}
 
 {% block stiles %}
-    <link rel="stylesheet" href="../../Static/CSS/Events.css">
+    <link rel="stylesheet" href="/App/Static/CSS/Events.css">
     <link rel="stylesheet" href="../Static/Fonts/Arimo/static/Arimo-Medium.ttf">
-    <link rel="stylesheet" href="../../Static/CSS/style.css">
-    <link rel="stylesheet" href="../../Static/CSS/home.css">
+    <link rel="stylesheet" href="/App/Static/CSS/style.css">
+    <link rel="stylesheet" href="/App/Static/CSS/home.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 {% endblock %}
 
@@ -157,12 +157,12 @@
             </div>
             <div class="summary-row">
                 <span style="color: #666;">Nro. Horas</span>
-                <span>------</span>
+                <span>4 × S/ 100</span>
             </div>
 
             <div class="summary-row total">
                 <span>Total</span>
-                <span>------</span>
+                <span>S/ 400</span>
             </div>
 
             <button class="pay-button">Pagar</button>
@@ -171,58 +171,27 @@
 </div>
 
 <script>
-const paymentRadios = document.querySelectorAll('input[name="payment"]');
-const cardFields = document.querySelectorAll('.form-row:last-of-type .form-group');
+    const paymentRadios = document.querySelectorAll('input[name="payment"]');
+    const cardFields = document.querySelectorAll('.form-row:last-of-type .form-group');
 
-paymentRadios.forEach(radio => {
-    radio.addEventListener('change', function () {
-        if (this.value === 'billetera') {
-            cardFields.forEach(field => field.style.display = 'none');
-        } else {
-            cardFields.forEach(field => field.style.display = 'flex');
-        }
+    paymentRadios.forEach(radio => {
+        radio.addEventListener('change', function () {
+            if (this.value === 'billetera') {
+                cardFields.forEach(field => field.style.display = 'none');
+            } else {
+                cardFields.forEach(field => field.style.display = 'flex');
+            }
+        });
     });
-});
+
+    document.getElementById("search-button").addEventListener("click", function () {
+        const fecha = document.getElementById("search-fecha").value;
+        const horaEntrada = document.getElementById("search-hora-entrada").value;
+        const horaSalida = document.getElementById("search-hora-salida").value;
+
+        document.getElementById("evento-fecha").value = fecha;
+        document.getElementById("evento-hora-entrada").value = horaEntrada;
+        document.getElementById("evento-hora-salida").value = horaSalida;
+    });
 </script>
-<script>
-document.getElementById("search-button").addEventListener("click", function () {
-    const fecha = document.getElementById("search-fecha").value;
-    const horaEntrada = document.getElementById("search-hora-entrada").value;
-    const horaSalida = document.getElementById("search-hora-salida").value;
-
-    // Llenamos los inputs del resumen
-    document.getElementById("evento-fecha").value = fecha;
-    document.getElementById("evento-hora-entrada").value = horaEntrada;
-    document.getElementById("evento-hora-salida").value = horaSalida;
-
-    // --- Cálculo de pago ---
-    if (!horaEntrada || !horaSalida) return;
-
-    const [h1, m1] = horaEntrada.split(':').map(Number);
-    const [h2, m2] = horaSalida.split(':').map(Number);
-
-    let minutosEntrada = h1 * 60 + m1;
-    let minutosSalida = h2 * 60 + m2;
-    let duracionMinutos = minutosSalida - minutosEntrada;
-
-    if (duracionMinutos < 0) {
-        alert("La hora de salida no puede ser antes de la de entrada");
-        return;
-    }
-
-    let numHoras = duracionMinutos / 60;
-    numHoras = Math.ceil(numHoras); // redondeamos hacia arriba
-
-    const precioPorHora = 100;
-    const total = numHoras * precioPorHora;
-
-    // Actualizamos el resumen
-    const horasSpan = document.querySelector('.summary-row:nth-child(3) span:last-child');
-    horasSpan.textContent = `${numHoras} × S/ ${precioPorHora}`;
-
-    const totalSpan = document.querySelector('.summary-row.total span:last-child');
-    totalSpan.textContent = `S/ ${total}`;
-});
-</script>
-
 {% endblock %}
