@@ -1,217 +1,412 @@
 {% extends "Master.html" %}
 
-<!-- Para estilos exclusivamente para esta pagina -->
 {% block stiles %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/Booking.css') }}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/Booking.css') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap" rel="stylesheet">
 {% endblock %}
 
-{% block content %} 
+{% block content %}
 <div id="booking_room_page">
-    <div><h2 class="booking_tittle">RESERVA DE HABITACIONES</h2></div>
-    <div id="booking_date" class="green_round_div">
+
+  <!-- 🔹 PASO 1: Selección de habitaciones -->
+  <div id="step1">
+    <h2 class="booking_tittle">RESERVA DE HABITACIONES</h2>
+
+    <form method="GET" action="{{ url_for('bookingroom.BookingRoom') }}">
+      <div id="booking_date" class="green_round_div">
         <h3 class="Booking_web_subheaders" id="leftTittleG">Fechas de reserva</h3>
-    <div class="booking_column">
-        <label for="Start_booking_date" class="booking_label">Fecha entrada</label>
-        <input type="date" id="Start_booking_date" name="Start_booking_date">
-    </div>
-
-    <div id="divider"></div>
-
-    <div class="booking_column">
-        <label for="End_booking_date" class="booking_label">Fecha salida</label>
-        <input type="date" id="End_booking_date" name="End_booking_date">
-        
-    </div>
-    <button><img id="search_button_img" src="{{ url_for('static', filename='Img/search_button.png') }}" alt="search_icon"></button>
-
-    </div>
-    <div id="Booking_Filters">
-        <h2 class="Booking_web_subheaders" id="block_titles">Filtros</h2>
-        <label for="floor_number" class="booking_label">Nro. de Piso</label>
-            <select class="select_design" id="floor_number" name="floor_number">
-                <!-- Extraer numero de piso de tabla PISO  -->
-                 <option value="">-- Selecciona una opción --</option>
-                 {% for floor in floors %}
-                <option value="{{ floor[0] }}">{{ floor[1] }}</option>
-                {% endfor %}
-            </select>
-        <label for="room_category" class="booking_label">Categoria</label>
-            <select class="select_design" id="room_category" name="turno">
-                <!-- Extraer numero de piso de tabla PISO  -->
-                <option value="">-- Selecciona una opción --</option>
-                {% for category in categories %}
-                <option value="{{ category[0] }}">{{ category[1] }}</option>
-                {% endfor %}
-            </select>
-    </div>
-    <div>
-        <h2 class="Booking_web_subheaders" id="block_titles"> Habitaciones elegidas</h2>
-        <div class="green_round_div_2" id="summary_booking">
-            <!-- Aqui apareceran las habitaciones seleccionadas -->
-             <div id="selected_rooms">
-             </div>
-             <div id="summary_footer">
-                <p id="Total_sum">Total: S/. 0.00</p>
-                <p><a href="" class="booking_label" id="next_booking_link">→ Siguiente</a></p>
-            </div> 
+        <div class="booking_column">
+          <label for="Start_booking_date" class="booking_label">Fecha de entrada</label>
+          <input type="datetime-local" id="Start_booking_date" name="start" class="date_input"
+                 value="{{ request.args.get('start', '') }}">
         </div>
+
+        <div id="divider"></div>
+
+        <div class="booking_column">
+          <label for="End_booking_date" class="booking_label">Fecha salida</label>
+          <input type="datetime-local" id="End_booking_date" name="end" class="date_input"
+                 value="{{ request.args.get('end', '') }}">
+        </div>
+
+        <button type="submit">
+          <img id="search_button_img" src="{{ url_for('static', filename='Img/search_button.png') }}" alt="search_icon">
+        </button>
+      </div>
+    </form>
+
+    <div id="Booking_Filters">
+      <h2 class="Booking_web_subheaders" id="block_titles">Filtros</h2>
+      <label for="floor_number" class="booking_label">Nro. de Piso</label>
+      <select class="select_design" id="floor_number" name="floor_number">
+        <option value="">-- Selecciona una opción --</option>
+        {% for floor in floors %}
+        <option value="{{ floor[0] }}">{{ floor[1] }}</option>
+        {% endfor %}
+      </select>
+
+      <label for="room_category" class="booking_label">Categoría</label>
+      <select class="select_design" id="room_category" name="turno">
+        <option value="">-- Selecciona una opción --</option>
+        {% for category in categories %}
+        <option value="{{ category[0] }}">{{ category[1] }}</option>
+        {% endfor %}
+      </select>
     </div>
+
+    <div>
+      <h2 class="Booking_web_subheaders" id="block_titles">Habitaciones elegidas</h2>
+      <div class="green_round_div_2" id="summary_booking">
+        <div id="selected_rooms"></div>
+        <div id="summary_footer">
+          <p id="Total_sum">Total: S/. 0.00</p>
+          <p><a href="#" class="booking_label" id="next_booking_link">→ Siguiente</a></p>
+        </div>
+      </div>
+    </div>
+
     <table id="booking_room_available" class="booking_label" border="1">
-        <thead>
-            <tr>
-            <th>Piso</th>
-            <th>N° Habitacion</th>
-            <th>Categoria</th>
-            <th>Capacidad</th>
-            <th>Precio</th>
-            <th>RESERVAR</th>
+      <thead>
+        <tr>
+          <th>Piso</th>
+          <th>N° Habitación</th>
+          <th>Categoría</th>
+          <th>Capacidad</th>
+          <th>Precio</th>
+          <th>Reservar</th>
         </tr>
-        </thead>
-        <!-- Generar filas mediante Jinja llamando a la tabla Habitacion -->
-        <tbody>
-    {% for room in rooms %}
+      </thead>
+      <tbody>
+        {% for room in rooms %}
         <tr class="room-row" data-floor="{{ room[4] }}" data-category="{{ room[3] }}">
-            {% for floor in floors %}
-                {% if room[4] == floor[0] %}
-                    <td>Piso {{ floor[1] }}</td>
-                {% endif %}
-            {% endfor %}
-            <td>{{ room[1] }}</td>
-            {% for category in categories %}
-                {% if room[3] == category[0] %}
-                    <td>{{ category[1] }}</td>
-                    <td>{{ category[4] }} Personas</td>
-                {% endif %}
-            {% endfor %}
-            <td class="price" data-room-id="{{ room[0] }}">{{ room[5] }}</td>
-            <td><input class="checkbox_booking" type="checkbox" name="booking_{{ room[0] }}" value="{{ room[0] }}" id="checkbox_booking_{{ room[0] }}"></td>
+          {% for floor in floors %}
+          {% if room[4] == floor[0] %}
+          <td>Piso {{ floor[1] }}</td>
+          {% endif %}
+          {% endfor %}
+          <td>{{ room[1] }}</td>
+          {% for category in categories %}
+          {% if room[3] == category[0] %}
+          <td>{{ category[1] }}</td>
+          <td>{{ category[4] }} Personas</td>
+          {% endif %}
+          {% endfor %}
+          <td class="price" data-room-id="{{ room[0] }}">{{ room[5] }}</td>
+          <td><input class="checkbox_booking" type="checkbox" name="booking_{{ room[0] }}" value="{{ room[0] }}"
+                     id="checkbox_booking_{{ room[0] }}"></td>
         </tr>
-    {% endfor %}
-</tbody>
-
-
+        {% endfor %}
+      </tbody>
     </table>
-</div>  
+  </div>
 
+<!-- PASO 2: Registro de cliente -->
+<div id="step2" style="display:none;">
+  <h2>Registro del Cliente</h2>
+  <form id="client_form">
+
+    <label>Tipo de Cliente:</label>
+    <div class="switch_container">
+      <label class="switch_label">Persona Natural</label>
+      <label class="switch">
+        <input type="checkbox" id="tipo_cliente_switch">
+        <span class="slider round"></span>
+      </label>
+      <label class="switch_label">Persona Jurídica</label>
+    </div>
+
+    <label>DNI / RUC:</label>
+    <input type="text" id="dni" required>
+
+    <label>Nombre / Razón Social:</label>
+    <input type="text" id="nombre" required>
+
+    <label>Correo:</label>
+    <input type="email" id="correo" required>
+
+    <label>Teléfono:</label>
+    <input type="text" id="telefono">
+
+    <div class="button_group">
+      <button type="button" id="back_to_rooms">← Regresar</button>
+      <button type="button" id="next_to_guests">Siguiente →</button>
+    </div>
+  </form>
+</div>
+
+  <!-- PASO 3: Registro de huéspedes -->
+  <div id="step3" style="display:none;">
+    <h2>Registro de Huéspedes por Habitación</h2>
+    <div id="habitaciones_container"></div>
+
+    <div class="button_group">
+      <button type="button" id="back_to_client">← Regresar</button>
+      <button type="submit" id="finalizar_reserva">Finalizar Reserva</button>
+    </div>
+  </div>
+</div>
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const selectedContainer = document.getElementById("selected_rooms");
-    const totalDisplay = document.getElementById("Total_sum");
-    const floorSelect = document.getElementById("floor_number");
-    const categorySelect = document.getElementById("room_category");
-    let total = 0;
+document.addEventListener("DOMContentLoaded", () => {
+  // --- Referencias generales ---
+  const step1 = document.getElementById("step1");
+  const step2 = document.getElementById("step2");
+  const step3 = document.getElementById("step3");
+  const selectedContainer = document.getElementById("selected_rooms");
+  const totalDisplay = document.getElementById("Total_sum");
+  const nextLink = document.getElementById("next_booking_link");
+  const backToRooms = document.getElementById("back_to_rooms");
+  const nextToGuests = document.getElementById("next_to_guests");
+  const backToClient = document.getElementById("back_to_client");
+  const finalizarReserva = document.getElementById("finalizar_reserva");
+  const habitacionesContainer = document.getElementById("habitaciones_container");
 
-    // Diccionarios generados por Jinja: id -> nombre, id -> precio
-    const roomNames = {
-        {% for room in rooms %}
-            "{{ room[0] }}": "{{ room[1] }}"{% if not loop.last %},{% endif %}
-        {% endfor %}
-    };
-    const roomPrices = {
-        {% for room in rooms %}
-            "{{ room[0] }}": {{ room[5] }}{% if not loop.last %},{% endif %}
-        {% endfor %}
-    };
+  // --- Variables de estado ---
+  let total = 0;
+  let selectedRooms = [];
+  let clientData = {};
 
-    // --- Manejo de checkboxes (crear/ eliminar divs y actualizar total) ---
-    function bindCheckboxEvents() {
-        document.querySelectorAll('.checkbox_booking').forEach(checkbox => {
-            // Evita añadir múltiples listeners
-            if (checkbox.dataset.bound === "true") return;
-            checkbox.dataset.bound = "true";
+  // --- Datos de habitaciones generados con Jinja ---
+  const roomNames = {
+    {% for room in rooms %}
+      "{{ room[0] }}": "{{ room[1] }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+  };
+  const roomPrices = {
+    {% for room in rooms %}
+      "{{ room[0] }}": {{ room[5] }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  };
+  const roomCapacities = {
+    {% for room in rooms %}
+      "{{ room[0] }}": {% for category in categories %}{% if room[3] == category[0] %}{{ category[4] }}{% endif %}{% endfor %}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  };
 
-            checkbox.addEventListener('change', function() {
-                const roomId = this.value;
-                const roomName = roomNames[roomId];
-                const price = parseFloat(roomPrices[roomId]) || 0;
+  // --- Selección de habitaciones ---
+  document.querySelectorAll('.checkbox_booking').forEach(cb => {
+    cb.addEventListener('change', function() {
+      const roomId = this.value;
+      const roomName = roomNames[roomId];
+      const price = parseFloat(roomPrices[roomId]) || 0;
+      
+      if (this.checked) {
+        selectedRooms.push(roomId);
+        total += price;
 
-                if (this.checked) {
-                    // Si ya existe el div, no duplicar
-                    if (document.getElementById("room_selected_" + roomId)) return;
+        const div = document.createElement("div");
+        div.className = "room_selected_style";
+        div.id = "room_selected_" + roomId;
+        div.innerHTML = `
+          <p>Hab. ${roomName} — S/. ${price.toFixed(2)}</p>
+          <button type="button" class="remove_room">x</button>
+        `;
+        selectedContainer.appendChild(div);
 
-                    // Crear div para habitación seleccionada
-                    const div = document.createElement("div");
-                    div.className = "room_selected_style";
-                    div.id = "room_selected_" + roomId;
-                    div.innerHTML = `
-                        <p>Hab. ${roomName} — S/. ${price.toFixed(2)}</p>
-                        <button type="button" class="remove_room">x</button>
-                    `;
-                    selectedContainer.appendChild(div);
-
-                    // Sumar al total
-                    total += price;
-                    updateTotalDisplay();
-
-                    // Evento para quitar habitación desde la X
-                    div.querySelector(".remove_room").addEventListener("click", function() {
-                        checkbox.checked = false;
-                        // esto disparará el 'change' del checkbox y eliminará el div y actualizará total
-                        checkbox.dispatchEvent(new Event('change'));
-                    });
-
-                } else {
-                    // Quitar div si existe
-                    const existingDiv = document.getElementById("room_selected_" + roomId);
-                    if (existingDiv) existingDiv.remove();
-
-                    // Restar del total
-                    total -= price;
-                    if (total < 0) total = 0;
-                    updateTotalDisplay();
-                }
-            });
+        div.querySelector(".remove_room").addEventListener("click", () => {
+          cb.checked = false;
+          cb.dispatchEvent(new Event('change'));
         });
+      } else {
+        selectedRooms = selectedRooms.filter(id => id !== roomId);
+        total -= price;
+        document.getElementById("room_selected_" + roomId)?.remove();
+      }
+
+      totalDisplay.textContent = "Total: S/. " + total.toFixed(2);
+    });
+  });
+
+  // --- Paso 1 → Paso 2 (Cliente) ---
+  nextLink.addEventListener("click", e => {
+    e.preventDefault();
+    if (selectedRooms.length === 0) {
+      alert("Seleccione al menos una habitación antes de continuar.");
+      return;
+    }
+    step1.style.display = "none";
+    step2.style.display = "block";
+  });
+
+  // --- Paso 2 → Paso 1 ---
+  backToRooms.addEventListener("click", () => {
+    step2.style.display = "none";
+    step1.style.display = "block";
+  });
+  const tipoClienteSwitch = document.getElementById("tipo_cliente_switch");
+      const esJuridico = tipoClienteSwitch.checked; // true = Jurídica, false = Natural
+  // --- Paso 2 → Paso 3 (Huéspedes) ---
+  nextToGuests.addEventListener("click", () => {
+    clientData = {
+      dni: document.getElementById("dni").value,
+      nombre: document.getElementById("nombre").value,
+      correo: document.getElementById("correo").value,
+      telefono: document.getElementById("telefono").value,
+      tipo_cliente: esJuridico ? 2 : 1 // 1 = Natural, 2 = Jurídica
+    };
+    if (!clientData.dni || !clientData.nombre || !clientData.correo) {
+      alert("Completa todos los campos obligatorios del cliente");
+      return;
     }
 
-    function updateTotalDisplay() {
-        totalDisplay.textContent = "Total: S/. " + total.toFixed(2);
-    }
+    generarFormulariosHuespedes();
+    step2.style.display = "none";
+    step3.style.display = "block";
+  });
 
-    // --- Filtrado de filas según selects ---
-    function filterRows() {
-        const selFloor = floorSelect.value;      // valor string o ""
-        const selCategory = categorySelect.value;
+  // --- Paso 3 → Paso 2 ---
+  backToClient.addEventListener("click", () => {
+    step3.style.display = "none";
+    step2.style.display = "block";
+  });
 
-        // recorrer cada fila
-        document.querySelectorAll('.room-row').forEach(row => {
-            const rowFloor = row.dataset.floor;      // string
-            const rowCategory = row.dataset.category;
+  // --- Generar formularios de huéspedes dinámicamente ---
+  function generarFormulariosHuespedes() {
+    habitacionesContainer.innerHTML = "";
+    selectedRooms.forEach(roomId => {
+      const capacidad = roomCapacities[roomId];
+      const div = document.createElement("div");
+      div.className = "habitacion_form";
+      div.innerHTML = `
+        <h3>Habitación ${roomNames[roomId]}</h3>
+        <label>Cantidad de personas:</label>
+        <select class="numPersonas" id="numPersonas_${roomId}" data-room="${roomId}">
+          ${Array.from({length: capacidad}, (_, i) => `<option value="${i+1}">${i+1}</option>`).join('')}
+        </select>
+        <div>
+          <input type="checkbox" class="yoHospedare" data-room="${roomId}" id="yoHospedare_${roomId}">
+          <label for="yoHospedare_${roomId}">Yo me hospedaré aquí</label>
+        </div>
+        <div class="contenedorHuespedes" id="huespedes_${roomId}"></div>
+      `;
+      habitacionesContainer.appendChild(div);
 
-            let show = true;
-            if (selFloor && selFloor !== "" && selFloor !== rowFloor) show = false;
-            if (selCategory && selCategory !== "" && selCategory !== rowCategory) show = false;
+      const select = div.querySelector(".numPersonas");
+      select.addEventListener("change", () => generarCamposHuespedes(roomId));
+      generarCamposHuespedes(roomId);
+    });
 
-            const checkbox = row.querySelector('.checkbox_booking');
+    // --- Control "Yo me hospedaré aquí" (solo uno permitido + ajusta huéspedes)
+    const checkboxes = document.querySelectorAll(".yoHospedare");
+    checkboxes.forEach(cb => {
+      cb.addEventListener("change", e => {
+        const roomId = e.target.dataset.room;
+        const select = document.getElementById(`numPersonas_${roomId}`);
 
-            if (show) {
-                row.style.display = "";
-            } else {
-                // Si la fila se oculta y está marcada, desmarcarla y disparar change para limpiar selección
-                if (checkbox && checkbox.checked) {
-                    checkbox.checked = false;
-                    // dispatchEvent para que el manejador de checkbox limpie la UI y el total
-                    checkbox.dispatchEvent(new Event('change'));
-                }
-                row.style.display = "none";
+        if (e.target.checked) {
+          checkboxes.forEach(other => {
+            if (other !== cb) {
+              other.style.display = "none";
+              if (other.nextElementSibling) other.nextElementSibling.style.display = "none";
             }
-        });
+          });
+          const num = parseInt(select.value);
+          generarCamposHuespedes(roomId, Math.max(num - 1, 0));
+        } else {
+          checkboxes.forEach(other => {
+            other.style.display = "inline-block";
+            if (other.nextElementSibling) other.nextElementSibling.style.display = "inline-block";
+          });
+          generarCamposHuespedes(roomId);
+        }
+      });
+    });
+  }
+
+  // --- Generar campos de huéspedes dentro de cada habitación ---
+  function generarCamposHuespedes(roomId, cantidadManual = null) {
+    const contenedor = document.getElementById(`huespedes_${roomId}`);
+    const cantidad = cantidadManual ?? parseInt(document.getElementById(`numPersonas_${roomId}`).value);
+    contenedor.innerHTML = "";
+    for (let i = 1; i <= cantidad; i++) {
+      contenedor.innerHTML += `
+        <div class="huesped_card">
+          <h4>Huésped ${i}</h4>
+          <input class="nombre_huesped" placeholder="Nombre">
+          <input class="apellido_huesped" placeholder="Apellido">
+          <input class="doc_huesped" placeholder="N° Documento">
+        </div>
+      `;
     }
+  }
 
-    // Escuchar cambios en selects
-    floorSelect.addEventListener('change', filterRows);
-    categorySelect.addEventListener('change', filterRows);
+  // --- 🔹 Recolectar todos los datos antes de enviar ---
+ function recolectarDatosReserva() {
+  // --- Capturar fecha y hora de entrada ---
+  const fechaEntradaRaw = document.getElementById("Start_booking_date")?.value || null;
+  const fechaSalidaRaw = document.getElementById("End_booking_date")?.value || null;
 
-    // Inicializar bindings y estado
-    bindCheckboxEvents();
-    updateTotalDisplay();
 
-    // Si tu tabla se actualiza dinámicamente (por ejemplo por AJAX) necesitas re-run bindCheckboxEvents()
-    // Si quieres aplicar el filtro al cargar con valores por defecto:
-    filterRows();
+  // --- Separar fecha y hora ---
+  let fecha_ingreso = null, hora_ingreso = null;
+  let fecha_salida = null, hora_salida = null;
+
+  if (fechaEntradaRaw) {
+    const [fecha, hora] = fechaEntradaRaw.split("T");
+    fecha_ingreso = fecha;
+    hora_ingreso = hora ? hora + ":00" : null; // agrega segundos si no vienen
+  }
+
+  if (fechaSalidaRaw) {
+    const [fecha, hora] = fechaSalidaRaw.split("T");
+    fecha_salida = fecha;
+    hora_salida = hora ? hora + ":00" : null;
+  }
+
+  // --- Recolectar habitaciones seleccionadas ---
+  const habitaciones = selectedRooms.map(roomId => {
+    const huespedesDivs = document.querySelectorAll(`#huespedes_${roomId} .huesped_card`);
+    const huespedes = Array.from(huespedesDivs).map(div => ({
+      nombre: div.querySelector(".nombre_huesped")?.value || "",
+      apellido: div.querySelector(".apellido_huesped")?.value || "",
+      documento: div.querySelector(".doc_huesped")?.value || ""
+    }));
+
+    const yoHospedare = document.getElementById(`yoHospedare_${roomId}`)?.checked || false;
+
+    return {
+      id_habitacion: roomId,
+      nombre: roomNames[roomId],
+      precio: roomPrices[roomId],
+      huespedes: huespedes,
+      yo_me_hospedo: yoHospedare,
+    };
+  });
+
+  // --- Armar el objeto final ---
+  return {
+    cliente: clientData,
+    habitaciones: habitaciones,
+    total: total,
+    fecha_reserva: new Date().toISOString(),
+    fecha_ingreso: fecha_ingreso,
+    hora_ingreso: hora_ingreso,
+    fecha_salida: fecha_salida,
+    hora_salida: hora_salida
+  };
+}
+
+  // --- Finalizar reserva ---
+  finalizarReserva.addEventListener("click", async () => {
+    console.log("🟢 [DEBUG FRONT] Botón Finalizar Reserva presionado");
+
+    const dataReserva = recolectarDatosReserva();
+    console.log("📦 [DEBUG FRONT] Datos a enviar:", dataReserva);
+
+    try {
+      const response = await fetch("/Rutas/TEMPLATES/guardar_reserva", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataReserva)
+      });
+
+      const result = await response.json();
+      console.log("📬 [DEBUG FRONT] Respuesta del servidor:", result);
+    } catch (err) {
+      console.error("❌ [DEBUG FRONT] Error en el fetch:", err);
+    }
+  });
 });
 </script>
 

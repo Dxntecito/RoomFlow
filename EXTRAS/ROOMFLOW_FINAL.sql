@@ -137,15 +137,17 @@ CREATE TABLE RESERVA (
   cliente_id     int(10) NOT NULL, 
   empleado_id    int(10), 
   tipo_reserva   char(1), 
+  fecha_ingreso         date, 
+  hora_ingreso          time,
+  fecha_salida          date,
+  hora_salida           time, 
   estado         tinyint(1) DEFAULT 1 NOT NULL, 
-  fecha_ingreso  date, 
-  fecha_salida   date, 
   motivo         varchar(200), 
   PRIMARY KEY (reserva_id));
 CREATE TABLE RESERVA_HABITACION (
   reserva_habitacion_id int(11) NOT NULL AUTO_INCREMENT, 
   reserva_id            int(10) NOT NULL, 
-  habitacion_id         int(10) NOT NULL, 
+  habitacion_id         int(10) NOT NULL,
   PRIMARY KEY (reserva_habitacion_id));
 CREATE TABLE RESERVA_SERVICIO (
   reserva_servicio_id int(11) NOT NULL AUTO_INCREMENT, 

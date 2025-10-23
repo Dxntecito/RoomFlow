@@ -51,11 +51,39 @@ INSERT INTO CLIENTE (direccion, telefono, f_registro, num_doc, id_tipo_cliente, 
 VALUES ('Av. Larco 123', '999888777', CURDATE(), '44556677', 'N', 1, 1, 'Pérez', 'Rojas', 'María'),
        ('Jr. Grau 234', '988776655', CURDATE(), '10456789011', 'J', 1, 2, NULL, NULL, NULL);
 
-INSERT INTO RESERVA (fecha_registro, hora_registro, monto_total, cliente_id, empleado_id, tipo_reserva, estado, fecha_ingreso, fecha_salida, motivo)
-VALUES (CURDATE(), CURTIME(), 450.00, 1, 1, 'H', 1, '2025-10-25', '2025-10-27', 'Vacaciones familiares');
+INSERT INTO RESERVA (
+    fecha_registro,
+    hora_registro,
+    monto_total,
+    cliente_id,
+    empleado_id,
+    tipo_reserva,
+    estado,
+    fecha_ingreso,
+    hora_ingreso,
+    fecha_salida,
+    hora_salida,
+    motivo
+) 
+VALUES (
+    CURDATE(),
+    CURTIME(),
+    450.00,
+    1,
+    1,
+    'H',
+    1,
+    '2025-10-25',
+    '14:00:00',
+    '2025-10-27',
+    '12:00:00',
+    'Vacaciones familiares'
+);
+
+
 
 INSERT INTO RESERVA_HABITACION (reserva_id, habitacion_id)
-VALUES (1, 1);
+VALUES (2, 1);
 
 INSERT INTO SERVICIO (nombre_servicio, descripcion, precio, estado)
 VALUES ('Spa', 'Masajes relajantes', 80.00, 1),

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Cliente</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .form-container {
+      max-width: 750px;
+      background: #fff;
+      margin: 2rem auto;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+
+    .form-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: .3rem;
+    }
+
+    input[type="text"], input[type="date"], input[type="tel"], select {
+      width: 100%;
+      padding: .6rem;
+      border: 1px solid #ccc;
+      border-radius: .4rem;
+    }
+
+    /* ----- SWITCH PERSONALIZADO ----- */
+    .switch-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1.2rem;
+    }
+
+    .switch-label h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    .switch {
+      position: relative;
+      width: 60px;
+      height: 30px;
+      background-color: #ccc;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      background-color: white;
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+
+    .switch.active {
+      background-color: #007bff;
+    }
+
+    .switch.active::after {
+      left: 33px;
+    }
+
+    .checkbox-container {
+      margin-top: 1rem;
+    }
+
+    .huesped-form {
+      background: #f9f9f9;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: .5rem;
+      border: 1px solid #ddd;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+    }
+
+    button {
+      padding: .7rem 1.5rem;
+      border: none;
+      border-radius: .4rem;
+      cursor: pointer;
+    }
+
+    .btn-back { background-color: #ccc; }
+    .btn-next { background-color: #007BFF; color: white; }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <form id="formCliente">
+      <!-- Tipo de Cliente -->
+      <div class="form-title">Tipo de Cliente</div>
+      <div class="switch-wrapper">
+        <div id="switchTipo" class="switch"></div>
+        <label id="switchLabel" class="switch-label"><h2>Persona Natural</h2></label>
+      </div>
+
+      <!-- Datos Cliente -->
+      <div id="camposNatural" class="form-group">
+        <label>N° Documento</label>
+        <input type="text" id="numDocNatural" class="input-natural">
+
+        <label>Nombres</label>
+        <input type="text" id="nombres" class="input-natural">
+
+        <label>Apellido Paterno</label>
+        <input type="text" id="apePaterno" class="input-natural">
+
+        <label>Apellido Materno</label>
+        <input type="text" id="apeMaterno" class="input-natural">
+      </div>
+
+      <div id="camposJuridica" class="form-group" style="display: none;">
+        <label>RUC</label>
+        <input type="text" id="numDocJuridico" class="input-juridica">
+
+        <label>Razón Social</label>
+        <input type="text" id="razonSocial" class="input-juridica">
+      </div>
+
+      <!-- Datos comunes -->
+      <div class="form-group">
+        <label>Dirección</label>
+        <input type="text" id="direccion">
+
+        <label>Teléfono</label>
+        <input type="tel" id="telefono" maxlength="9">
+
+        <label>Fecha de Registro</label>
+        <input type="date" id="fechaRegistro">
+      </div>
+
+      <!-- Contenedor de habitaciones -->
+      <div id="habitacionesContainer"></div>
+
+      <!-- Botones -->
+      <div class="button-group">
+        <button type="button" class="btn-back">Regresar</button>
+        <button type="submit" class="btn-next">Continuar</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // --- SWITCH TIPO CLIENTE ---
+    const switchTipo = document.getElementById('switchTipo');
+    const switchLabel = document.getElementById('switchLabel');
+    const camposNatural = document.getElementById('camposNatural');
+    const camposJuridica = document.getElementById('camposJuridica');
+
+    switchTipo.addEventListener('click', () => {
+      switchTipo.classList.toggle('active');
+      const esJuridica = switchTipo.classList.contains('active');
+
+      switchLabel.innerHTML = esJuridica 
+        ? "<h2>Persona Jurídica</h2>" 
+        : "<h2>Persona Natural</h2>";
+
+      if (esJuridica) {
+        camposNatural.style.display = 'none';
+        camposJuridica.style.display = 'block';
+        limpiarCampos('.input-natural');
+      } else {
+        camposNatural.style.display = 'block';
+        camposJuridica.style.display = 'none';
+        limpiarCampos('.input-juridica');
+      }
+    });
+
+    function limpiarCampos(selector) {
+      document.querySelectorAll(selector).forEach(i => i.value = '');
+    }
+
+    // --- HABITACIONES ---
+    const habitaciones = [101, 201]; // 🔹 Puedes agregar más: 301, 401, etc.
+    const habitacionesContainer = document.getElementById('habitacionesContainer');
+    let yaSeHospeda = false; // Controla si el cliente ya marcó "Yo me hospedaré aquí"
+
+    habitaciones.forEach((numero, index) => {
+      const div = document.createElement('div');
+      div.classList.add('habitacion-block');
+      div.innerHTML = `
+        <div class="form-title">Habitación ${numero}</div>
+        <div class="form-group">
+          <label for="numPersonas_${numero}">Cantidad de personas</label>
+          <select id="numPersonas_${numero}" class="numPersonas">
+            <option value="1">1 persona</option>
+            <option value="2">2 personas</option>
+            <option value="3">3 personas</option>
+            <option value="4">4 personas</option>
+          </select>
+        </div>
+
+        <div class="checkbox-container">
+          <input type="checkbox" id="yoHospedare_${numero}" class="yoHospedare">
+          <label for="yoHospedare_${numero}">Yo me hospedaré aquí</label>
+        </div>
+
+        <div id="contenedorHuespedes_${numero}" class="contenedorHuespedes"></div>
+      `;
+      habitacionesContainer.appendChild(div);
+    });
+
+    // --- FUNCIONALIDAD DINÁMICA PARA TODAS LAS HABITACIONES ---
+    function generarHuespedes(habitacion) {
+      const select = document.getElementById(`numPersonas_${habitacion}`);
+      const check = document.getElementById(`yoHospedare_${habitacion}`);
+      const contenedor = document.getElementById(`contenedorHuespedes_${habitacion}`);
+      contenedor.innerHTML = "";
+
+      let cantidad = parseInt(select.value);
+      if (check.checked) cantidad -= 1;
+      if (cantidad < 0) cantidad = 0;
+
+      for (let i = 1; i <= cantidad; i++) {
+        const div = document.createElement('div');
+        div.classList.add('huesped-form');
+        div.innerHTML = `
+          <h4>Huésped ${i}</h4>
+          <label>N° Documento</label>
+          <input type="text" name="num_doc_huesped_${habitacion}_${i}">
+          <label>Nombres</label>
+          <input type="text" name="nombre_huesped_${habitacion}_${i}">
+          <label>Apellido Paterno</label>
+          <input type="text" name="ape_pat_huesped_${habitacion}_${i}">
+          <label>Apellido Materno</label>
+          <input type="text" name="ape_mat_huesped_${habitacion}_${i}">
+        `;
+        contenedor.appendChild(div);
+      }
+    }
+
+    // Escuchar cambios de todos los selects y checkboxes
+    habitaciones.forEach(h => {
+      const select = document.getElementById(`numPersonas_${h}`);
+      const check = document.getElementById(`yoHospedare_${h}`);
+
+      select.addEventListener('change', () => generarHuespedes(h));
+      check.addEventListener('change', () => {
+        if (check.checked) {
+          yaSeHospeda = true;
+          desactivarOtrosCheckboxes(h);
+        } else {
+          yaSeHospeda = false;
+          activarTodosCheckboxes();
+        }
+        generarHuespedes(h);
+      });
+
+      generarHuespedes(h);
+    });
+
+    function desactivarOtrosCheckboxes(habitacionActiva) {
+      document.querySelectorAll('.yoHospedare').forEach(chk => {
+        if (chk.id !== `yoHospedare_${habitacionActiva}`) {
+          chk.disabled = true;
+          chk.checked = false;
+        }
+      });
+    }
+
+    function activarTodosCheckboxes() {
+      document.querySelectorAll('.yoHospedare').forEach(chk => chk.disabled = false);
+    }
+
+    // --- SUBMIT SIMULADO ---
+    document.getElementById('formCliente').addEventListener('submit', e => {
+      e.preventDefault();
+      alert('Formulario completo y listo para enviar.');
+    });
+  </script>
+</body>
+</html>
