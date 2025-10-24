@@ -1,0 +1,206 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║  NUEVO SISTEMA DE PERFIL DE USUARIO - ROOMFLOW                   ║
+║  INSTRUCCIONES DE CONFIGURACIÓN                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+📋 ¿QUÉ SE HA AGREGADO?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Nuevo diseño de perfil con MENÚ LATERAL
+✅ 3 secciones: Mis Datos, Gestionar Incidencias, Room Service
+✅ Edición de datos personales con botón "Editar"
+✅ Formulario organizado en 2 columnas
+✅ Nueva tabla PERFIL_USUARIO en la base de datos
+
+🔧 PASO 1: ACTUALIZAR LA BASE DE DATOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Opción A - Ejecutar el script Python (RECOMENDADO):
+--------------------------------------------------
+   python setup_usuarios.py
+
+   ✓ Esto creará automáticamente:
+     - Tabla PERFIL_USUARIO
+     - Tipos de documento (DNI, Pasaporte, etc.)
+
+Opción B - Ejecutar el SQL manualmente:
+---------------------------------------
+   1. Abre phpMyAdmin
+   2. Selecciona la BD "roomflow"
+   3. Ve a la pestaña "SQL"
+   4. Abre el archivo: EXTRAS/CREATE_PERFIL_USUARIO.sql
+   5. Copia y pega el contenido
+   6. Haz clic en "Continuar"
+
+🎨 FUNCIONALIDADES DEL NUEVO PERFIL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📂 MENÚ LATERAL (3 opciones):
+   1. ✅ MIS DATOS - Ver y editar información personal
+   2. 🚧 GESTIONAR INCIDENCIAS - (Por implementar)
+   3. 🚧 ROOM SERVICE - (Por implementar)
+
+📝 SECCIÓN "MIS DATOS":
+   ┌─────────────────────────────────────────────┐
+   │ ✓ Correo Electrónico                        │
+   │ ✓ Tipo de Documento (DNI, Pasaporte, etc.)  │
+   │ ✓ Número de Documento                       │
+   │ ✓ Nombres                                    │
+   │ ✓ Apellido Paterno                          │
+   │ ✓ Apellido Materno                          │
+   │ ✓ Sexo (Masculino/Femenino)                 │
+   │ ✓ Teléfono                                   │
+   └─────────────────────────────────────────────┘
+
+   Organizado en 2 COLUMNAS
+   
+   Botones:
+   - 🖊️ EDITAR DATOS: Habilita la edición
+   - 💾 GUARDAR CAMBIOS: Guarda los cambios
+   - ❌ CANCELAR: Descarta los cambios
+
+💡 CÓMO USAR EL NUEVO PERFIL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Inicia sesión en la aplicación
+2. Haz clic en el ícono de usuario (esquina superior derecha)
+3. Selecciona "Mi Perfil" del menú desplegable
+4. Verás el menú lateral con las 3 opciones
+
+PARA EDITAR TUS DATOS:
+   1. Estás en "Mis Datos" por defecto
+   2. Haz clic en el botón "Editar Datos"
+   3. Los campos se habilitan para edición
+   4. Modifica los datos que necesites
+   5. Haz clic en "Guardar Cambios"
+   6. ¡Listo! Verás un mensaje de confirmación
+
+PARA CAMBIAR DE SECCIÓN:
+   1. Haz clic en cualquier opción del menú lateral
+   2. El contenido cambia automáticamente
+   3. Gestionar Incidencias y Room Service están "próximamente"
+
+📊 ESTRUCTURA DE LA BASE DE DATOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TABLA: PERFIL_USUARIO
+┌────────────────────┬──────────────┬─────────────────────┐
+│ Campo              │ Tipo         │ Descripción         │
+├────────────────────┼──────────────┼─────────────────────┤
+│ perfil_id          │ INT(10)      │ ID (Primary Key)    │
+│ usuario_id         │ INT(10)      │ ID del usuario      │
+│ nombres            │ VARCHAR(50)  │ Nombres             │
+│ apellido_paterno   │ VARCHAR(50)  │ Apellido paterno    │
+│ apellido_materno   │ VARCHAR(50)  │ Apellido materno    │
+│ tipo_documento_id  │ INT(10)      │ Tipo de documento   │
+│ num_documento      │ VARCHAR(20)  │ Número documento    │
+│ sexo               │ CHAR(1)      │ M o F               │
+│ telefono           │ VARCHAR(9)   │ Teléfono            │
+└────────────────────┴──────────────┴─────────────────────┘
+
+TABLA: TIPO_DOCUMENTO
+┌────────────────────┬──────────────┬─────────────────────┐
+│ tipo_doc_id        │ INT(10)      │ ID (Primary Key)    │
+│ nombre_tipo_doc    │ VARCHAR(20)  │ Nombre del tipo     │
+│ estado             │ TINYINT(1)   │ 1=Activo, 0=Inactivo│
+└────────────────────┴──────────────┴─────────────────────┘
+
+Tipos de documento incluidos:
+   1. DNI
+   2. Pasaporte
+   3. Carnet de Extranjería
+   4. RUC
+
+🎨 DISEÑO Y COLORES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ Colores verdes del proyecto (#328336, #64CC4F)
+✨ Menú lateral con header verde
+✨ Botones con gradientes verdes
+✨ Animaciones suaves al cambiar de sección
+✨ Formulario con campos deshabilitados hasta hacer clic en "Editar"
+✨ Alertas de éxito/error con animaciones
+✨ Diseño responsive (funciona en móvil y desktop)
+
+📁 ARCHIVOS MODIFICADOS/CREADOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NUEVOS:
+   ✓ EXTRAS/CREATE_PERFIL_USUARIO.sql
+   ✓ INSTRUCCIONES_NUEVO_PERFIL.txt (este archivo)
+
+MODIFICADOS:
+   ✓ App/Controladores/C_Usuarios/controlador_usuario.py
+      - get_perfil_completo()
+      - update_perfil_usuario()
+      - get_tipos_documento()
+   
+   ✓ App/Rutas/R_Usuario.py
+      - Ruta /perfil actualizada
+      - Nueva ruta /perfil/actualizar (POST)
+   
+   ✓ App/Rutas/TEMPLATES/Perfil.html
+      - Completamente rediseñado con menú lateral
+   
+   ✓ setup_usuarios.py
+      - Crea automáticamente PERFIL_USUARIO y tipos de documento
+
+🔄 PARA DESARROLLADORES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Agregar una nueva sección al menú:
+
+1. En Perfil.html, agregar botón al menú lateral:
+   <button class="menu-btn" data-section="nueva-seccion">
+       <i class="fas fa-icon"></i>
+       <span>Nueva Sección</span>
+   </button>
+
+2. Agregar el contenido de la sección:
+   <div class="section-content" id="nueva-seccion">
+       <h2 class="section-title">Nueva Sección</h2>
+       <!-- Tu contenido aquí -->
+   </div>
+
+3. El JavaScript ya maneja automáticamente el cambio de secciones
+
+🚀 PRÓXIMAS FUNCIONALIDADES A IMPLEMENTAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 GESTIONAR INCIDENCIAS:
+   - Ver incidencias reportadas
+   - Crear nueva incidencia
+   - Ver respuestas
+   - Historial de incidencias
+
+🛎️ ROOM SERVICE:
+   - Ver pedidos activos
+   - Realizar nuevo pedido
+   - Historial de pedidos
+   - Estado de entrega
+
+❓ SOLUCIÓN DE PROBLEMAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Error: "Table 'roomflow.PERFIL_USUARIO' doesn't exist"
+   → Ejecuta: python setup_usuarios.py
+   → O ejecuta el SQL: EXTRAS/CREATE_PERFIL_USUARIO.sql
+
+❌ Error: "Unknown column 'p.nombres'"
+   → La tabla PERFIL_USUARIO no está creada correctamente
+   → Verifica que todas las columnas existan
+
+❌ No aparecen los tipos de documento
+   → Verifica que la tabla TIPO_DOCUMENTO tenga datos
+   → Ejecuta el script setup_usuarios.py de nuevo
+
+❌ Los cambios no se guardan
+   → Verifica la consola del navegador (F12) para errores
+   → Verifica que la ruta /perfil/actualizar esté funcionando
+
+═══════════════════════════════════════════════════════════════════
+
+¡Todo listo! Ejecuta python setup_usuarios.py y prueba el nuevo perfil
+
+═══════════════════════════════════════════════════════════════════
+

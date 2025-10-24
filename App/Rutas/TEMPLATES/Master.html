@@ -17,18 +17,44 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <h1>HOSTAL BOLÍVAR</h1>
+                    <a href="{{ url_for('Index') }}" style="text-decoration: none; color: inherit;">
+                        <h1>HOSTAL BOLÍVAR</h1>
+                    </a>
                 </div>
                 <nav class="nav">
-                    <a href="#" class="nav-link">Nuestras habitaciones</a>
-                    <button class="btn btn-primary">Servicios</button>
+                    <a href="{{ url_for('bookingroom.BookingRoom') }}" class="nav-link">Nuestras habitaciones</a>
+                    <a href="{{ url_for('eventos.Eventos') }}" class="nav-link">Eventos</a>
                     <div class="header-icons">
                         <button class="icon-btn menu-toggle" id="menuToggle">
                             <i class="fas fa-bars"></i>
                         </button>
-                        <button class="icon-btn user-toggle active" id="userToggle">
-                            <i class="fas fa-user"></i>
-                        </button>
+                        {% if session.get('usuario_id') %}
+                            <div class="user-menu">
+                                <button class="icon-btn user-toggle active" id="userToggle" title="{{ session.get('usuario') }}">
+                                    <i class="fas fa-user"></i>
+                                </button>
+                                <div class="user-dropdown" id="userDropdown" style="display: none;">
+                                    <div style="padding: 12px 20px; background: #f8f9fa; border-radius: 10px 10px 0 0; border-bottom: 2px solid #328336;">
+                                        <div style="font-weight: 600; color: #333; font-size: 14px;">{{ session.get('usuario') }}</div>
+                                        <div style="font-size: 12px; color: #666;">{{ session.get('email') }}</div>
+                                    </div>
+                                    <a href="{{ url_for('usuarios.Perfil') }}">
+                                        <i class="fas fa-user-circle"></i> Mi Perfil
+                                    </a>
+                                    <a href="{{ url_for('usuarios.CambiarContrasena') }}">
+                                        <i class="fas fa-key"></i> Cambiar Contraseña
+                                    </a>
+                                    <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
+                                    <a href="{{ url_for('usuarios.Logout') }}" style="color: #ff6b6b;">
+                                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                                    </a>
+                                </div>
+                            </div>
+                        {% else %}
+                            <a href="{{ url_for('usuarios.Login') }}" class="icon-btn user-toggle" title="Iniciar sesión">
+                                <i class="fas fa-sign-in-alt"></i>
+                            </a>
+                        {% endif %}
                     </div>
                 </nav>
             </div>
@@ -88,8 +114,95 @@
         </div>
     </footer>
 {% block scripts %}
-    <script src="{{ url_for('static', filename='CSS/main.css') }}"></script>
-    <script src="{{ url_for('static', filename='CSS/Home.css') }}"></script>
+    <script src="{{ url_for('static', filename='JS/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='JS/home.js') }}"></script>
 {% endblock scripts %}
+<style>
+    /* Estilos para el menú de usuario */
+    .user-menu {
+        position: relative;
+    }
+
+    .user-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        min-width: 220px;
+        margin-top: 10px;
+        z-index: 1000;
+        animation: fadeInDown 0.3s ease;
+    }
+
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .user-dropdown a {
+        display: block;
+        padding: 12px 20px;
+        color: #333;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 14px;
+    }
+
+    .user-dropdown a:first-child {
+        border-radius: 10px 10px 0 0;
+    }
+
+    .user-dropdown a:last-child {
+        border-radius: 0 0 10px 10px;
+    }
+
+    .user-dropdown a:hover {
+        background: #f8f9fa;
+        padding-left: 25px;
+    }
+
+    .user-dropdown a i {
+        margin-right: 10px;
+        width: 20px;
+    }
+
+    /* Estilos para el botón de login cuando no hay sesión */
+    a.icon-btn {
+        text-decoration: none;
+    }
+
+    a.icon-btn:hover {
+        text-decoration: none;
+    }
+</style>
+<script>
+    // Toggle user dropdown
+    document.addEventListener('DOMContentLoaded', function() {
+        const userToggle = document.getElementById('userToggle');
+        const userDropdown = document.getElementById('userDropdown');
+        
+        if (userToggle && userDropdown) {
+            userToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            // Cerrar dropdown al hacer clic fuera
+            document.addEventListener('click', function(e) {
+                if (!userToggle.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>
