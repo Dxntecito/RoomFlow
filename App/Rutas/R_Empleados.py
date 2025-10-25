@@ -75,32 +75,27 @@ def CrearEmpleado():
     if request.method == 'POST':
         try:
             # Obtener datos del formulario
-            cod_empleado = request.form.get('cod_empleado')
             dni = request.form.get('dni')
             ape_paterno = request.form.get('ape_paterno')
             ape_materno = request.form.get('ape_materno')
             nombres = request.form.get('nombres')
             sexo = request.form.get('sexo')
-            movil = request.form.get('movil')
-            tipo_empleado_id = request.form.get('tipo_empleado_id')
+            movil = request.form.get('telefono')  # Cambio de 'movil' a 'telefono'
+            tipo_empleado_id = request.form.get('rol')  # Cambio de 'tipo_empleado_id' a 'rol'
             
             # Validar datos requeridos
-            if not all([cod_empleado, dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id]):
-                flash('Todos los campos son obligatorios', 'error')
-                return redirect(url_for('empleados.CrearEmpleado'))
+            if not all([dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id]):
+                return jsonify({'success': False, 'message': 'Todos los campos son obligatorios'})
             
-            # Insertar empleado
-            success, message = controller_empleado.insert_empleado(
-                cod_empleado, dni, ape_paterno, ape_materno, 
-                nombres, sexo, movil, tipo_empleado_id
+            # Insertar empleado con código automático
+            success, message = controller_empleado.insert_empleado_auto(
+                dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id
             )
-            if success:
-                flash(message, 'success')
-                return redirect(url_for('empleados.Empleados'))
-            else:
-                flash(message, 'error')
-        except Exception as ex:
-            flash(f'Error: {str(ex)}', 'error')
+            
+            return jsonify({'success': success, 'message': message})
+            
+        except Exception as e:
+            return jsonify({'success': False, 'message': f'Error al crear empleado: {str(e)}'})
     
     # Obtener tipos de empleado para el formulario
     tipos_empleado = controller_empleado.get_tipos_empleado()
@@ -159,14 +154,9 @@ def EliminarEmpleado(empleado_id):
     """
     try:
         success, message = controller_empleado.delete_empleado(empleado_id)
-        if success:
-            flash(message, 'success')
-        else:
-            flash(message, 'error')
+        return jsonify({'success': success, 'message': message})
     except Exception as ex:
-        flash(f'Error: {str(ex)}', 'error')
-    
-    return redirect(url_for('empleados.Empleados'))
+        return jsonify({'success': False, 'message': f'Error: {str(ex)}'})
 
 @empleados_bp.route('/actualizar/<int:empleado_id>', methods=['GET', 'POST'])
 @admin_required
@@ -181,27 +171,23 @@ def ActualizarEmpleado(empleado_id):
             ape_materno = request.form.get('ape_materno')
             nombres = request.form.get('nombres')
             dni = request.form.get('dni')
-            movil = request.form.get('movil')
+            movil = request.form.get('telefono')  # Cambio de 'movil' a 'telefono'
             sexo = request.form.get('sexo')
-            tipo_empleado_id = request.form.get('tipo_empleado_id')
+            tipo_empleado_id = request.form.get('rol')  # Cambio de 'tipo_empleado_id' a 'rol'
+            estado = request.form.get('estado')
             
             # Validar datos requeridos
-            if not all([ape_paterno, ape_materno, nombres, dni, movil, sexo, tipo_empleado_id]):
-                flash('Todos los campos son obligatorios', 'error')
-                return redirect(url_for('empleados.ActualizarEmpleado', empleado_id=empleado_id))
+            if not all([ape_paterno, ape_materno, nombres, dni, movil, sexo, tipo_empleado_id, estado]):
+                return jsonify({'success': False, 'message': 'Todos los campos son obligatorios'})
             
             # Actualizar empleado
             success, message = controller_empleado.update_empleado(
-                empleado_id, empleado_id, dni, ape_paterno, ape_materno, 
-                nombres, sexo, movil, tipo_empleado_id
+                empleado_id, dni, ape_paterno, ape_materno, 
+                nombres, sexo, movil, tipo_empleado_id, estado
             )
-            if success:
-                flash(message, 'success')
-                return redirect(url_for('empleados.Empleados'))
-            else:
-                flash(message, 'error')
+            return jsonify({'success': success, 'message': message})
         except Exception as ex:
-            flash(f'Error: {str(ex)}', 'error')
+            return jsonify({'success': False, 'message': f'Error: {str(ex)}'})
     
     # Obtener datos del empleado
     empleado = controller_empleado.get_empleado_by_id(empleado_id)
@@ -303,10 +289,18 @@ def api_empleados():
         for empleado in empleados:
             empleados_formateados.append({
                 'id': empleado[0],  # empleado_id
+                'codigo': empleado[1],  # cod_empleado
+                'dni': empleado[2],  # dni
+                'ape_paterno': empleado[3],  # ape_paterno
+                'ape_materno': empleado[4],  # ape_materno
+                'nombres': empleado[5],  # nombres
+                'sexo': empleado[6],  # sexo
                 'telefono': empleado[7],  # movil
+                'rol_id': empleado[8],  # tipo_empleado_id
+                'estado': empleado[9],  # estado
+                'rol': empleado[10],  # nombre_tipo (ya viene del JOIN)
                 'nombre': f"{empleado[5]} {empleado[3]} {empleado[4]}",  # nombres + ape_paterno + ape_materno
-                'turno': 'Tarde',  # TODO: Implementar lógica de turnos
-                'rol': empleado[10]  # nombre_tipo (ya viene del JOIN)
+                'turno': empleado[11] if empleado[11] else 'Sin turno'  # Turno real o 'Sin turno'
             })
         
         return jsonify({
@@ -318,3 +312,79 @@ def api_empleados():
             'success': False,
             'error': str(e)
         }), 500
+
+@empleados_bp.route('/buscar/<dni>', methods=['GET'])
+@admin_required
+def buscar_empleado(dni):
+    """
+    Buscar empleado por DNI
+    """
+    try:
+        empleado = controller_empleado.get_empleado_by_dni(dni)
+        if empleado:
+            return jsonify({
+                'success': True,
+                'empleado': {
+                    'id': empleado[0],
+                    'nombre': f"{empleado[5]} {empleado[3]} {empleado[4]}",
+                    'dni': empleado[2]
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Empleado no encontrado'
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error al buscar empleado: {str(e)}'
+        })
+
+@empleados_bp.route('/asignar-turno', methods=['POST'])
+@admin_required
+def asignar_turno():
+    """
+    Asignar turno a empleado
+    """
+    try:
+        empleado_id = request.form.get('empleado_id')
+        turno_id = request.form.get('turno')
+        
+        if not empleado_id or not turno_id:
+            return jsonify({
+                'success': False,
+                'message': 'Empleado y turno son requeridos'
+            })
+        
+        # Asignar turno usando el controlador
+        success, message = controller_empleado.asignar_turno_empleado(empleado_id, turno_id)
+        return jsonify({
+            'success': success,
+            'message': message
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error al asignar turno: {str(e)}'
+        })
+
+@empleados_bp.route('/turnos', methods=['GET'])
+@admin_required
+def get_turnos_api():
+    """
+    Obtener la lista de turnos para el frontend
+    """
+    try:
+        turnos = controller_empleado.get_turnos()
+        turnos_list = [{'id': t[0], 'nombre': t[1]} for t in turnos]
+        return jsonify({
+            'success': True,
+            'turnos': turnos_list
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error al obtener turnos: {str(e)}'
+        })

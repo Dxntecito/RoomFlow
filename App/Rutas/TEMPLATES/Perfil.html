@@ -713,6 +713,194 @@
             transform: translateY(0);
         }
     }
+
+    /* Notificaciones bonitas */
+    .notification-toast {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        min-width: 300px;
+        max-width: 400px;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        border-left: 4px solid #28a745;
+    }
+
+    .notification-toast.show {
+        transform: translateX(0);
+    }
+
+    .notification-toast.error {
+        border-left-color: #dc3545;
+    }
+
+    .notification-toast-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .notification-toast-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        font-size: 14px;
+        color: white;
+    }
+
+    .notification-toast.success .notification-toast-icon {
+        background: #28a745;
+    }
+
+    .notification-toast.error .notification-toast-icon {
+        background: #dc3545;
+    }
+
+    .notification-toast-title {
+        font-weight: 600;
+        font-size: 16px;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .notification-toast-message {
+        color: #6c757d;
+        font-size: 14px;
+        line-height: 1.4;
+        margin: 0;
+    }
+
+    .notification-toast-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .notification-toast-close:hover {
+        background: #f8f9fa;
+        color: #dc3545;
+    }
+
+    /* Modal de confirmación */
+    .modal-confirm {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-confirm.show {
+        opacity: 1;
+    }
+
+    .modal-confirm-content {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        transform: scale(0.8);
+        transition: transform 0.3s ease;
+    }
+
+    .modal-confirm.show .modal-confirm-content {
+        transform: scale(1);
+    }
+
+    .modal-confirm-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #ffc107;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 24px;
+        color: white;
+    }
+
+    .modal-confirm-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 15px;
+    }
+
+    .modal-confirm-message {
+        color: #6c757d;
+        margin-bottom: 20px;
+        line-height: 1.4;
+    }
+
+    .modal-confirm-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .btn-confirm {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-confirm-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-confirm-danger:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+    }
+
+    .btn-confirm-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-confirm-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
 </style>
 {% endblock %}
 
@@ -873,7 +1061,7 @@
                             <input type="text" id="search-input" name="search" class="search-input"
                                 placeholder="Buscar por nombre, apellido o numero telefonico...">
 
-                            <button type="button" class="search-button" onclick="filtrarEmpleados()">
+                            <button type="button" class="search-button" onclick="buscarYMostrarResultado()">
                                 <i class="fas fa-search"></i>
                             </button>
                         </div>
@@ -1029,12 +1217,13 @@
                     </div>
                     <div class="detail-group">
                         <label class="detail-label" for="crear_dni">DNI *</label>
-                        <input type="text" id="crear_dni" name="dni" class="detail-value" maxlength="8" required>
+                        <input type="text" id="crear_dni" name="dni" class="detail-value" maxlength="8" pattern="[0-9]+"
+                            title="Solo números" required>
                     </div>
                     <div class="detail-group">
                         <label class="detail-label" for="crear_telefono">Teléfono *</label>
                         <input type="text" id="crear_telefono" name="telefono" class="detail-value" maxlength="9"
-                            required>
+                            pattern="[0-9]+" title="Solo números" required>
                     </div>
                     <div class="detail-group">
                         <label class="detail-label" for="crear_sexo">Sexo *</label>
@@ -1055,7 +1244,9 @@
                     </div>
                     <div class="detail-group">
                         <label class="detail-label" for="crear_codigo">Código de Empleado *</label>
-                        <input type="text" id="crear_codigo" name="codigo" class="detail-value" required>
+                        <input type="text" id="crear_codigo" name="codigo" class="detail-value" readonly
+                            style="background-color: #f8f9fa;">
+                        <small style="color: #6c757d; font-size: 12px;">Se genera automáticamente</small>
                     </div>
                 </div>
             </form>
@@ -1068,6 +1259,170 @@
             <button class="btn-modal btn-modal-primary" onclick="guardarEmpleado()">
                 <i class="fas fa-save"></i>
                 Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de editar empleado -->
+<div id="modalEditar" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Editar Empleado</h3>
+            <button class="modal-close" onclick="cerrarModal('modalEditar')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="formEditarEmpleado">
+                <div class="employee-details">
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_nombres">Nombres *</label>
+                        <input type="text" id="editar_nombres" name="nombres" class="detail-value" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_ape_paterno">Apellido Paterno *</label>
+                        <input type="text" id="editar_ape_paterno" name="ape_paterno" class="detail-value" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_ape_materno">Apellido Materno *</label>
+                        <input type="text" id="editar_ape_materno" name="ape_materno" class="detail-value" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_dni">DNI *</label>
+                        <input type="text" id="editar_dni" name="dni" class="detail-value" maxlength="8" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_telefono">Teléfono *</label>
+                        <input type="text" id="editar_telefono" name="telefono" class="detail-value" maxlength="9"
+                            required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_sexo">Sexo *</label>
+                        <select id="editar_sexo" name="sexo" class="detail-value" required>
+                            <option value="">Seleccione</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                        </select>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_rol">Rol *</label>
+                        <select id="editar_rol" name="rol" class="detail-value" required>
+                            <option value="">Seleccione rol</option>
+                            <option value="1">Recepcionista</option>
+                            <option value="2">Administrador</option>
+                            <option value="3">Limpieza</option>
+                        </select>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_codigo">Código de Empleado *</label>
+                        <input type="text" id="editar_codigo" name="codigo" class="detail-value" readonly
+                            style="background-color: #f8f9fa;">
+                        <small style="color: #6c757d; font-size: 12px;">Se genera automáticamente</small>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_estado">Estado *</label>
+                        <select id="editar_estado" name="estado" class="detail-value" required>
+                            <option value="">Seleccione estado</option>
+                            <option value="Activo">Activo</option>
+                            <option value="Inactivo">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalEditar')">
+                <i class="fas fa-times"></i>
+                Cancelar
+            </button>
+            <button class="btn-modal btn-modal-primary" onclick="actualizarEmpleado()">
+                <i class="fas fa-save"></i>
+                Guardar Cambios
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de asignar turno -->
+<div id="modalAsignarTurno" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Asignar Turno</h3>
+            <button class="modal-close" onclick="cerrarModal('modalAsignarTurno')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="formAsignarTurno">
+                <div class="employee-details">
+                    <div class="detail-group">
+                        <label class="detail-label" for="asignar_dni">Nro. de documento</label>
+                        <input type="text" id="asignar_dni" name="dni" class="detail-value" readonly
+                            style="background-color: #f8f9fa;">
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="asignar_empleado">Empleado</label>
+                        <input type="text" id="asignar_empleado" name="empleado" class="detail-value" readonly
+                            style="background-color: #f8f9fa;">
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="asignar_turno">Turno *</label>
+                        <select id="asignar_turno" name="turno" class="detail-value" required>
+                            <option value="">Seleccione turno</option>
+                            <option value="1">Mañana</option>
+                            <option value="2">Tarde</option>
+                            <option value="3">Noche</option>
+                        </select>
+                    </div>
+                    <!-- Campo oculto para el empleado_id -->
+                    <input type="hidden" id="asignar_empleado_id" name="empleado_id" value="">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalAsignarTurno')">
+                <i class="fas fa-times"></i>
+                Cancelar
+            </button>
+            <button class="btn-modal btn-modal-primary" onclick="guardarTurno()">
+                <i class="fas fa-save"></i>
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Notificaciones toast (oculto por defecto) -->
+<div id="notification-toast" class="notification-toast" style="display: none;">
+    <button class="notification-toast-close" onclick="cerrarNotificacionToast()">
+        <i class="fas fa-times"></i>
+    </button>
+    <div class="notification-toast-header">
+        <div class="notification-toast-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        <h4 class="notification-toast-title">Título</h4>
+    </div>
+    <p class="notification-toast-message">Mensaje</p>
+</div>
+
+<!-- Modal de confirmación (oculto por defecto) -->
+<div id="modal-confirm" class="modal-confirm" style="display: none;">
+    <div class="modal-confirm-content">
+        <div class="modal-confirm-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3 class="modal-confirm-title">Confirmar Acción</h3>
+        <p class="modal-confirm-message">¿Estás seguro?</p>
+        <div class="modal-confirm-buttons">
+            <button class="btn-confirm btn-confirm-danger" onclick="confirmarAccion()">
+                <i class="fas fa-trash"></i>
+                Eliminar
+            </button>
+            <button class="btn-confirm btn-confirm-secondary" onclick="cancelarAccion()">
+                <i class="fas fa-times"></i>
+                Cancelar
             </button>
         </div>
     </div>
@@ -1240,14 +1595,59 @@
 
     // Función para mostrar formulario de crear empleado
     function mostrarFormularioCrear() {
-        alert('Funcionalidad de crear empleado - Próximamente implementada');
-        // Aquí se puede implementar un modal o formulario para crear empleados
+        // Limpiar formulario
+        document.getElementById('formCrearEmpleado').reset();
+        document.getElementById('modalCrear').classList.add('show');
+
+        // Agregar event listeners para generar código automáticamente
+        const rolSelect = document.getElementById('crear_rol');
+        const telefonoInput = document.getElementById('crear_telefono');
+        const codigoInput = document.getElementById('crear_codigo');
+
+        function generarCodigo() {
+            const rol = rolSelect.value;
+            const dni = document.getElementById('crear_dni').value;
+
+            if (rol && dni) {
+                let prefijo = '';
+                switch (rol) {
+                    case '1': prefijo = 'RE'; break; // Recepcionista
+                    case '2': prefijo = 'AD'; break; // Administrador
+                    case '3': prefijo = 'LI'; break; // Limpieza
+                }
+
+                // Usar el DNI completo
+                const codigo = prefijo + dni;
+
+                codigoInput.value = codigo;
+            } else {
+                codigoInput.value = '';
+            }
+        }
+
+        // Event listeners
+        rolSelect.addEventListener('change', generarCodigo);
+        document.getElementById('crear_dni').addEventListener('input', function (e) {
+            // Solo permitir números
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            generarCodigo();
+        });
+
+        // Validación para teléfono (solo números)
+        document.getElementById('crear_telefono').addEventListener('input', function (e) {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
     }
 
     // Datos de empleados (se cargarán desde la base de datos)
     let empleadosData = [];
 
-    // Función para filtrar empleados
+    // Variables para modales y notificaciones
+    let confirmCallback = null;
+    let empleadoEditando = null;
+
+
+    // Función para filtrar empleados (solo filtra, no abre modales)
     function filtrarEmpleados() {
         const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
         const rolFilter = document.getElementById('rol-filter').value;
@@ -1279,16 +1679,60 @@
         });
 
         mostrarEmpleados(empleadosFiltrados);
+    }
 
-        // Si hay un solo resultado y se está buscando, mostrar detalles automáticamente
+    // Función para buscar y mostrar resultado (solo cuando se hace clic en el botón)
+    function buscarYMostrarResultado() {
+        const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+        const rolFilter = document.getElementById('rol-filter').value;
+
+        let empleadosFiltrados = empleadosData.filter(empleado => {
+            // Búsqueda más inteligente
+            let cumpleBusqueda = false;
+
+            if (searchTerm === '') {
+                cumpleBusqueda = true; // Si no hay término de búsqueda, mostrar todos
+            } else {
+                // Buscar en nombre completo
+                const nombreCompleto = empleado.nombre.toLowerCase();
+
+                // Buscar por palabras que empiecen con el término
+                const palabras = nombreCompleto.split(' ');
+                cumpleBusqueda = palabras.some(palabra => palabra.startsWith(searchTerm));
+
+                // También buscar en teléfono si es numérico
+                if (!cumpleBusqueda && /^\d+$/.test(searchTerm)) {
+                    cumpleBusqueda = empleado.telefono.includes(searchTerm);
+                }
+            }
+
+            // Filtro por rol
+            const cumpleRol = !rolFilter || empleado.rol.toLowerCase().includes(rolFilter.toLowerCase());
+
+            return cumpleBusqueda && cumpleRol;
+        });
+
+        mostrarEmpleados(empleadosFiltrados);
+
+        // Solo abrir modal si hay un resultado y se está buscando algo específico
         if (empleadosFiltrados.length === 1 && searchTerm !== '') {
             mostrarDetallesEmpleado(empleadosFiltrados[0].id);
+        } else if (empleadosFiltrados.length === 0 && searchTerm !== '') {
+            alert('No se encontraron empleados con ese criterio de búsqueda');
+        } else if (empleadosFiltrados.length > 1) {
+            alert(`Se encontraron ${empleadosFiltrados.length} empleados. Haz clic en uno para ver sus detalles.`);
         }
     }
 
     // Función para mostrar empleados en la tabla
     function mostrarEmpleados(empleados) {
+        console.log('Mostrando empleados:', empleados.length);
         const tbody = document.querySelector('#empleados .empleados-table tbody');
+
+        if (!tbody) {
+            console.error('No se encontró el tbody de la tabla');
+            return;
+        }
 
         if (empleados.length === 0) {
             tbody.innerHTML = `
@@ -1302,7 +1746,7 @@
             return;
         }
 
-        tbody.innerHTML = empleados.map(empleado => `
+        const html = empleados.map(empleado => `
             <tr onclick="mostrarDetallesEmpleado(${empleado.id})" style="cursor: pointer;">
                 <td class="phone-cell">${empleado.telefono}</td>
                 <td class="name-cell">${empleado.nombre}</td>
@@ -1324,6 +1768,15 @@
                 </td>
             </tr>
         `).join('');
+
+        tbody.innerHTML = html;
+        console.log('HTML generado y aplicado');
+
+        // Actualizar el contador de empleados si existe
+        const contador = document.querySelector('#empleados .empleados-count');
+        if (contador) {
+            contador.textContent = `Mostrando ${empleados.length} empleado(s)`;
+        }
     }
 
     // Funciones para las acciones de empleados
@@ -1334,19 +1787,43 @@
 
     function editarEmpleado(id) {
         const empleado = empleadosData.find(e => e.id === id);
-        alert(`Editar empleado: ${empleado.nombre}`);
+        if (!empleado) return;
+
+        // Mostrar modal de edición
+        mostrarModalEdicion(empleado);
     }
 
-    function eliminarEmpleado(id) {
+    async function eliminarEmpleado(id) {
         const empleado = empleadosData.find(e => e.id === id);
-        if (confirm(`¿Está seguro de eliminar a ${empleado.nombre}?`)) {
-            // Remover de la lista
-            const index = empleadosData.findIndex(e => e.id === id);
-            empleadosData.splice(index, 1);
-            // Refiltrar y mostrar
-            filtrarEmpleados();
-            alert('Empleado eliminado exitosamente');
-        }
+        if (!empleado) return;
+
+        // Mostrar modal de confirmación bonito
+        mostrarModalConfirmacion(
+            'Eliminar Empleado',
+            `¿Estás seguro de que quieres eliminar a <strong>${empleado.nombre}</strong>?`,
+            'Esta acción eliminará permanentemente el empleado de la base de datos.',
+            async () => {
+                try {
+                    // Eliminar de la base de datos
+                    const response = await fetch(`/Cruds/Empleados/eliminar/${id}`, {
+                        method: 'POST'
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Recargar la lista desde la BD
+                        await cargarEmpleados();
+                        mostrarNotificacionBonita('success', 'Empleado Eliminado', `${empleado.nombre} ha sido eliminado permanentemente.`);
+                    } else {
+                        mostrarNotificacionBonita('error', 'Error', result.message);
+                    }
+                } catch (error) {
+                    console.error('Error al eliminar empleado:', error);
+                    mostrarNotificacionBonita('error', 'Error', 'Error al eliminar el empleado. Intente nuevamente.');
+                }
+            }
+        );
     }
 
     // Función para cargar empleados desde la base de datos
@@ -1426,18 +1903,151 @@
         // Limpiar formulario
         document.getElementById('formCrearEmpleado').reset();
         document.getElementById('modalCrear').classList.add('show');
+
+        // Agregar event listeners para generar código automáticamente
+        const rolSelect = document.getElementById('crear_rol');
+        const telefonoInput = document.getElementById('crear_telefono');
+        const codigoInput = document.getElementById('crear_codigo');
+
+        function generarCodigo() {
+            const rol = rolSelect.value;
+            const dni = document.getElementById('crear_dni').value;
+
+            if (rol && dni) {
+                let prefijo = '';
+                switch (rol) {
+                    case '1': prefijo = 'RE'; break; // Recepcionista
+                    case '2': prefijo = 'AD'; break; // Administrador
+                    case '3': prefijo = 'LI'; break; // Limpieza
+                }
+
+                // Usar el DNI completo
+                const codigo = prefijo + dni;
+
+                codigoInput.value = codigo;
+            } else {
+                codigoInput.value = '';
+            }
+        }
+
+        // Event listeners
+        rolSelect.addEventListener('change', generarCodigo);
+        document.getElementById('crear_dni').addEventListener('input', function (e) {
+            // Solo permitir números
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            generarCodigo();
+        });
     }
 
     function cerrarModal(modalId) {
         document.getElementById(modalId).classList.remove('show');
     }
 
-    function guardarEmpleado() {
-        const form = document.getElementById('formCrearEmpleado');
+    function mostrarModalEdicion(empleado) {
+        empleadoEditando = empleado;
+
+        // Llenar formulario con datos del empleado
+        document.getElementById('editar_nombres').value = empleado.nombres || '';
+        document.getElementById('editar_ape_paterno').value = empleado.ape_paterno || '';
+        document.getElementById('editar_ape_materno').value = empleado.ape_materno || '';
+        document.getElementById('editar_dni').value = empleado.dni || '';
+        document.getElementById('editar_telefono').value = empleado.telefono || '';
+        document.getElementById('editar_sexo').value = empleado.sexo || '';
+        document.getElementById('editar_rol').value = empleado.rol_id || '';
+        document.getElementById('editar_codigo').value = empleado.codigo || '';
+        document.getElementById('editar_estado').value = empleado.estado || '';
+
+        // Agregar event listeners para generar código automáticamente
+        const rolSelect = document.getElementById('editar_rol');
+        const dniInput = document.getElementById('editar_dni');
+        const codigoInput = document.getElementById('editar_codigo');
+
+        function generarCodigoEdicion() {
+            const rol = rolSelect.value;
+            const dni = dniInput.value;
+
+            if (rol && dni) {
+                let prefijo = '';
+                switch (rol) {
+                    case '1': prefijo = 'RE'; break; // Recepcionista
+                    case '2': prefijo = 'AD'; break; // Administrador
+                    case '3': prefijo = 'LI'; break; // Limpieza
+                }
+
+                // Usar el DNI completo
+                const codigo = prefijo + dni;
+                codigoInput.value = codigo;
+            } else {
+                codigoInput.value = '';
+            }
+        }
+
+        // Event listeners
+        rolSelect.addEventListener('change', generarCodigoEdicion);
+        dniInput.addEventListener('input', function (e) {
+            // Solo permitir números
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            generarCodigoEdicion();
+        });
+
+        // Validación para teléfono (solo números)
+        document.getElementById('editar_telefono').addEventListener('input', function (e) {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+
+        // Mostrar modal
+        document.getElementById('modalEditar').classList.add('show');
+    }
+
+    async function actualizarEmpleado() {
+        if (!empleadoEditando) return;
+
+        const form = document.getElementById('formEditarEmpleado');
         const formData = new FormData(form);
 
         // Validar campos requeridos
-        const camposRequeridos = ['nombres', 'ape_paterno', 'ape_materno', 'dni', 'telefono', 'sexo', 'rol', 'codigo'];
+        const camposRequeridos = ['nombres', 'ape_paterno', 'ape_materno', 'dni', 'telefono', 'sexo', 'rol', 'estado'];
+        let camposFaltantes = [];
+
+        camposRequeridos.forEach(campo => {
+            if (!formData.get(campo)) {
+                camposFaltantes.push(campo);
+            }
+        });
+
+        if (camposFaltantes.length > 0) {
+            mostrarNotificacionBonita('error', 'Campos Faltantes', 'Por favor complete todos los campos requeridos');
+            return;
+        }
+
+        try {
+            // Enviar datos al servidor
+            const response = await fetch(`/Cruds/Empleados/actualizar/${empleadoEditando.id}`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                cerrarModal('modalEditar');
+                cargarEmpleados();
+                mostrarNotificacionBonita('success', 'Empleado Actualizado', result.message);
+            } else {
+                mostrarNotificacionBonita('error', 'Error', result.message);
+            }
+        } catch (error) {
+            console.error('Error al actualizar empleado:', error);
+            mostrarNotificacionBonita('error', 'Error', 'Error al actualizar el empleado. Intente nuevamente.');
+        }
+    }
+
+    async function guardarEmpleado() {
+        const form = document.getElementById('formCrearEmpleado');
+        const formData = new FormData(form);
+
+        // Validar campos requeridos (excluyendo codigo ya que se genera automáticamente)
+        const camposRequeridos = ['nombres', 'ape_paterno', 'ape_materno', 'dni', 'telefono', 'sexo', 'rol'];
         let camposFaltantes = [];
 
         camposRequeridos.forEach(campo => {
@@ -1451,21 +2061,155 @@
             return;
         }
 
-        // Aquí iría la lógica para guardar el empleado
-        console.log('Guardando empleado:', Object.fromEntries(formData));
+        try {
+            // Enviar datos al servidor
+            const response = await fetch('/Cruds/Empleados/crear', {
+                method: 'POST',
+                body: formData
+            });
 
-        // Simular guardado exitoso
-        alert('Empleado creado exitosamente');
-        cerrarModal('modalCrear');
+            const result = await response.json();
 
-        // Recargar la lista de empleados
-        cargarEmpleados();
+            if (result.success) {
+                cerrarModal('modalCrear');
+                cargarEmpleados();
+                mostrarNotificacionBonita('success', 'Empleado Creado', result.message);
+            } else {
+                mostrarNotificacionBonita('error', 'Error', result.message);
+            }
+        } catch (error) {
+            console.error('Error al guardar empleado:', error);
+            alert('Error al guardar el empleado. Intente nuevamente.');
+        }
+    }
+
+
+    // Funciones para notificaciones bonitas
+    function mostrarNotificacionBonita(tipo, titulo, mensaje) {
+        const toast = document.getElementById('notification-toast');
+        const icon = toast.querySelector('.notification-toast-icon i');
+        const title = toast.querySelector('.notification-toast-title');
+        const message = toast.querySelector('.notification-toast-message');
+
+        // Configurar contenido
+        title.textContent = titulo;
+        message.textContent = mensaje;
+
+        // Configurar tipo
+        toast.className = `notification-toast ${tipo}`;
+
+        if (tipo === 'success') {
+            icon.className = 'fas fa-check';
+        } else {
+            icon.className = 'fas fa-times';
+        }
+
+        // Mostrar notificación
+        toast.style.display = 'block';
+        toast.classList.add('show');
+
+        // Auto-cerrar después de 4 segundos
+        setTimeout(() => {
+            cerrarNotificacionToast();
+        }, 4000);
+    }
+
+    function cerrarNotificacionToast() {
+        const toast = document.getElementById('notification-toast');
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 300);
+    }
+
+    function mostrarModalConfirmacion(titulo, mensaje, descripcion, callback) {
+        const modal = document.getElementById('modal-confirm');
+        const title = modal.querySelector('.modal-confirm-title');
+        const message = modal.querySelector('.modal-confirm-message');
+
+        title.textContent = titulo;
+        message.innerHTML = mensaje + '<br><small>' + descripcion + '</small>';
+
+        confirmCallback = callback;
+        modal.style.display = 'flex';
+        modal.classList.add('show');
+    }
+
+    function confirmarAccion() {
+        if (confirmCallback) {
+            confirmCallback();
+        }
+        cerrarModalConfirmacion();
+    }
+
+    function cancelarAccion() {
+        cerrarModalConfirmacion();
+    }
+
+    function cerrarModalConfirmacion() {
+        const modal = document.getElementById('modal-confirm');
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+        confirmCallback = null;
+    }
+
+    // Funciones para asignar turno
+    function asignarTurno(id) {
+        const empleado = empleadosData.find(e => e.id === id);
+        if (!empleado) return;
+
+        // Limpiar formulario y llenar datos
+        document.getElementById('formAsignarTurno').reset();
+        document.getElementById('asignar_dni').value = empleado.dni;
+        document.getElementById('asignar_empleado').value = empleado.nombre;
+        document.getElementById('asignar_empleado_id').value = empleado.id;
+
+        // Mostrar modal
+        document.getElementById('modalAsignarTurno').classList.add('show');
+    }
+
+    async function guardarTurno() {
+        const form = document.getElementById('formAsignarTurno');
+        const formData = new FormData(form);
+
+        const empleado_id = formData.get('empleado_id');
+        const turno = formData.get('turno');
+
+        if (!empleado_id || !turno) {
+            mostrarNotificacionBonita('error', 'Campos Faltantes', 'Complete todos los campos requeridos');
+            return;
+        }
+
+        try {
+            const response = await fetch('/Cruds/Empleados/asignar-turno', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                cerrarModal('modalAsignarTurno');
+                cargarEmpleados();
+                mostrarNotificacionBonita('success', 'Turno Asignado', result.message);
+            } else {
+                mostrarNotificacionBonita('error', 'Error', result.message);
+            }
+        } catch (error) {
+            console.error('Error al asignar turno:', error);
+            mostrarNotificacionBonita('error', 'Error', 'Error al asignar turno');
+        }
     }
 
     // Cerrar modales al hacer clic fuera de ellos
     document.addEventListener('click', function (e) {
         if (e.target.classList.contains('modal')) {
             e.target.classList.remove('show');
+        }
+        if (e.target.classList.contains('modal-confirm')) {
+            cerrarModalConfirmacion();
         }
     });
 </script>
