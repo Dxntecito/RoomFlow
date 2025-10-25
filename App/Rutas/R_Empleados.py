@@ -388,3 +388,30 @@ def get_turnos_api():
             'success': False,
             'message': f'Error al obtener turnos: {str(e)}'
         })
+
+@empleados_bp.route('/turno-actual/<int:empleado_id>', methods=['GET'])
+@admin_required
+def get_turno_actual_api(empleado_id):
+    """
+    Obtener el turno actual de un empleado
+    """
+    try:
+        turno = controller_empleado.get_turno_actual_empleado(empleado_id)
+        if turno:
+            return jsonify({
+                'success': True,
+                'turno': {
+                    'id': turno[0],
+                    'nombre': turno[1]
+                }
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'turno': None
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error al obtener turno actual: {str(e)}'
+        })

@@ -261,7 +261,7 @@ def get_empleado_by_dni(dni):
 
 def asignar_turno_empleado(empleado_id, turno_id):
     """
-    Asignar un turno a un empleado y registrarlo en DETALLE_TURNO
+    Asignar o actualizar un turno a un empleado en DETALLE_TURNO
     """
     connection = get_connection()
     try:
@@ -276,14 +276,51 @@ def asignar_turno_empleado(empleado_id, turno_id):
             if cursor.fetchone()[0] == 0:
                 return False, "El turno seleccionado no existe"
             
-            # Insertar en DETALLE_TURNO (usando 'fecha' como nombre de columna)
-            query = "INSERT INTO DETALLE_TURNO (empleado_id, turno_id, fecha) VALUES (%s, %s, CURDATE())"
-            cursor.execute(query, (empleado_id, turno_id))
+            # Verificar si ya existe un turno para este empleado hoy
+            cursor.execute("SELECT COUNT(*) FROM DETALLE_TURNO WHERE empleado_id = %s AND fecha = CURDATE()", (empleado_id,))
+            turno_existente = cursor.fetchone()[0] > 0
+            
+            if turno_existente:
+                # Actualizar turno existente
+                query = "UPDATE DETALLE_TURNO SET turno_id = %s WHERE empleado_id = %s AND fecha = CURDATE()"
+                cursor.execute(query, (turno_id, empleado_id))
+                message = "Turno actualizado exitosamente"
+            else:
+                # Insertar nuevo turno
+                query = "INSERT INTO DETALLE_TURNO (empleado_id, turno_id, fecha) VALUES (%s, %s, CURDATE())"
+                cursor.execute(query, (empleado_id, turno_id))
+                message = "Turno asignado exitosamente"
+            
             connection.commit()
-            return True, "Turno asignado exitosamente"
+            return True, message
     except Exception as e:
         connection.rollback()
         return False, f"Error al asignar turno: {str(e)}"
+    finally:
+        connection.close()
+
+
+def get_turno_actual_empleado(empleado_id):
+    """
+    Obtener el turno actual de un empleado
+    """
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            query = """
+                SELECT dt.turno_id, t.nombre_turno 
+                FROM DETALLE_TURNO dt 
+                JOIN TURNO t ON dt.turno_id = t.turno_id 
+                WHERE dt.empleado_id = %s 
+                ORDER BY dt.fecha DESC 
+                LIMIT 1
+            """
+            cursor.execute(query, (empleado_id,))
+            turno = cursor.fetchone()
+            return turno
+    except Exception as e:
+        print(f"Error al obtener turno actual: {e}")
+        return None
     finally:
         connection.close()
 

@@ -2156,7 +2156,7 @@
     }
 
     // Funciones para asignar turno
-    function asignarTurno(id) {
+    async function asignarTurno(id) {
         const empleado = empleadosData.find(e => e.id === id);
         if (!empleado) return;
 
@@ -2165,6 +2165,10 @@
         document.getElementById('asignar_dni').value = empleado.dni;
         document.getElementById('asignar_empleado').value = empleado.nombre;
         document.getElementById('asignar_empleado_id').value = empleado.id;
+
+        // Cargar turnos y turno actual
+        await cargarTurnosParaAsignar();
+        await cargarTurnoActual(empleado.id);
 
         // Mostrar modal
         document.getElementById('modalAsignarTurno').classList.add('show');
@@ -2200,6 +2204,41 @@
         } catch (error) {
             console.error('Error al asignar turno:', error);
             mostrarNotificacionBonita('error', 'Error', 'Error al asignar turno');
+        }
+    }
+
+    async function cargarTurnosParaAsignar() {
+        try {
+            const response = await fetch('/Cruds/Empleados/turnos');
+            const result = await response.json();
+            const selectTurno = document.getElementById('asignar_turno');
+            selectTurno.innerHTML = '<option value="">Seleccione turno</option>';
+            if (result.success && result.turnos) {
+                result.turnos.forEach(turno => {
+                    const option = document.createElement('option');
+                    option.value = turno.id;
+                    option.textContent = turno.nombre;
+                    selectTurno.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error al cargar turnos:', error);
+            mostrarNotificacionBonita('error', 'Error', 'No se pudieron cargar los turnos.');
+        }
+    }
+
+    async function cargarTurnoActual(empleado_id) {
+        try {
+            const response = await fetch(`/Cruds/Empleados/turno-actual/${empleado_id}`);
+            const result = await response.json();
+            const selectTurno = document.getElementById('asignar_turno');
+
+            if (result.success && result.turno) {
+                // Seleccionar el turno actual
+                selectTurno.value = result.turno.id;
+            }
+        } catch (error) {
+            console.error('Error al cargar turno actual:', error);
         }
     }
 
