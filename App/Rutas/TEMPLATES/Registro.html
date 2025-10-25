@@ -1,0 +1,538 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+<style>
+    /* Estilos para el formulario de registro */
+    .registro-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 120px 20px 40px 20px;
+        background: linear-gradient(135deg, #328336 0%, #64CC4F 100%);
+    }
+
+    .registro-box {
+        background: white;
+        border-radius: 20px;
+        padding: 50px 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 600px;
+        width: 100%;
+        animation: fadeInUp 0.5s ease;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .registro-box::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .registro-box::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .registro-box::-webkit-scrollbar-thumb {
+        background: #328336;
+        border-radius: 10px;
+    }
+
+    .registro-box::-webkit-scrollbar-thumb:hover {
+        background: #64CC4F;
+    }
+
+    .registro-box select {
+        width: 100%;
+        padding: 14px 18px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+        background: white;
+        cursor: pointer;
+    }
+
+    .registro-box select:focus {
+        outline: none;
+        border-color: #328336;
+        box-shadow: 0 0 0 3px rgba(50, 131, 54, 0.1);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .registro-header {
+        text-align: center;
+        margin-bottom: 35px;
+    }
+
+    .registro-header h2 {
+        color: #333;
+        font-size: 32px;
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+
+    .registro-header p {
+        color: #666;
+        font-size: 16px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 14px 18px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #328336;
+        box-shadow: 0 0 0 3px rgba(50, 131, 54, 0.1);
+    }
+
+    .form-group input::placeholder {
+        color: #aaa;
+    }
+
+    .form-group .validation-message {
+        font-size: 12px;
+        margin-top: 5px;
+        display: none;
+    }
+
+    .form-group .validation-message.error {
+        color: #c33;
+        display: block;
+    }
+
+    .form-group .validation-message.success {
+        color: #3c3;
+        display: block;
+    }
+
+    .password-requirements {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+        font-size: 12px;
+    }
+
+    .password-requirements h4 {
+        margin: 0 0 8px 0;
+        color: #333;
+        font-size: 13px;
+    }
+
+    .password-requirements ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #666;
+    }
+
+    .password-requirements li {
+        margin: 3px 0;
+    }
+
+    .btn-registro {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #328336 0%, #64CC4F 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 15px;
+    }
+
+    .btn-registro:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(50, 131, 54, 0.4);
+    }
+
+    .btn-registro:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .registro-footer {
+        text-align: center;
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .registro-footer p {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .registro-footer a {
+        color: #328336;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+    }
+
+    .registro-footer a:hover {
+        color: #64CC4F;
+    }
+
+    /* Mensajes flash */
+    .alert {
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .alert-error {
+        background-color: #fee;
+        color: #c33;
+        border-left: 4px solid #c33;
+    }
+
+    .alert-success {
+        background-color: #efe;
+        color: #3c3;
+        border-left: 4px solid #3c3;
+    }
+
+    .password-toggle {
+        position: relative;
+    }
+
+    .password-toggle input {
+        padding-right: 45px;
+    }
+
+    .password-toggle .toggle-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #666;
+        transition: color 0.3s ease;
+    }
+
+    .password-toggle .toggle-icon:hover {
+        color: #328336;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="registro-container">
+    <div class="registro-box">
+        <div class="registro-header">
+            <h2>Crear Cuenta</h2>
+            <p>Únete a nosotros hoy</p>
+        </div>
+
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('usuarios.Registro') }}" id="registroForm">
+            <!-- Datos de Cuenta -->
+            <h3 style="color: #333; margin-bottom: 20px; font-size: 18px; border-bottom: 2px solid #328336; padding-bottom: 10px;">
+                <i class="fas fa-user-lock"></i> Datos de Cuenta
+            </h3>
+
+            <div class="form-group">
+                <label for="usuario">Usuario *</label>
+                <input 
+                    type="text" 
+                    id="usuario" 
+                    name="usuario" 
+                    placeholder="Elige un nombre de usuario" 
+                    required
+                    minlength="3"
+                    maxlength="50"
+                    autocomplete="username"
+                >
+                <div class="validation-message" id="usuario-message"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Correo Electrónico *</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="tu@email.com" 
+                    required
+                    autocomplete="email"
+                >
+                <div class="validation-message" id="email-message"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="contrasena">Contraseña *</label>
+                <div class="password-toggle">
+                    <input 
+                        type="password" 
+                        id="contrasena" 
+                        name="contrasena" 
+                        placeholder="Crea una contraseña segura" 
+                        required
+                        minlength="6"
+                        autocomplete="new-password"
+                    >
+                    <i class="fas fa-eye toggle-icon" id="togglePassword"></i>
+                </div>
+                <div class="password-requirements">
+                    <h4>Requisitos de contraseña:</h4>
+                    <ul>
+                        <li>Mínimo 6 caracteres</li>
+                        <li>Se recomienda usar mayúsculas, minúsculas y números</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmar_contrasena">Confirmar Contraseña *</label>
+                <div class="password-toggle">
+                    <input 
+                        type="password" 
+                        id="confirmar_contrasena" 
+                        name="confirmar_contrasena" 
+                        placeholder="Confirma tu contraseña" 
+                        required
+                        autocomplete="new-password"
+                    >
+                    <i class="fas fa-eye toggle-icon" id="toggleConfirmPassword"></i>
+                </div>
+                <div class="validation-message" id="confirm-message"></div>
+            </div>
+
+            <!-- Datos Personales -->
+            <h3 style="color: #333; margin: 30px 0 20px 0; font-size: 18px; border-bottom: 2px solid #328336; padding-bottom: 10px;">
+                <i class="fas fa-id-card"></i> Datos Personales
+            </h3>
+
+            <div class="form-group">
+                <label for="nombres">Nombres *</label>
+                <input 
+                    type="text" 
+                    id="nombres" 
+                    name="nombres" 
+                    placeholder="Tus nombres" 
+                    required
+                    maxlength="50"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="apellido_paterno">Apellido Paterno *</label>
+                <input 
+                    type="text" 
+                    id="apellido_paterno" 
+                    name="apellido_paterno" 
+                    placeholder="Tu apellido paterno" 
+                    required
+                    maxlength="50"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="apellido_materno">Apellido Materno *</label>
+                <input 
+                    type="text" 
+                    id="apellido_materno" 
+                    name="apellido_materno" 
+                    placeholder="Tu apellido materno" 
+                    required
+                    maxlength="50"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="tipo_documento_id">Tipo de Documento *</label>
+                <select id="tipo_documento_id" name="tipo_documento_id" required>
+                    <option value="1">DNI</option>
+                    <option value="2">Pasaporte</option>
+                    <option value="3">Carnet de Extranjería</option>
+                    <option value="4">RUC</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="num_documento">Número de Documento *</label>
+                <input 
+                    type="text" 
+                    id="num_documento" 
+                    name="num_documento" 
+                    placeholder="Ingresa tu número de documento" 
+                    required
+                    maxlength="20"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="sexo">Sexo *</label>
+                <select id="sexo" name="sexo" required>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input 
+                    type="tel" 
+                    id="telefono" 
+                    name="telefono" 
+                    placeholder="999999999" 
+                    maxlength="9"
+                    pattern="[0-9]{9}"
+                >
+            </div>
+
+            <button type="submit" class="btn-registro" id="btnSubmit">
+                <i class="fas fa-user-plus"></i> Crear Cuenta
+            </button>
+        </form>
+
+        <div class="registro-footer">
+            <p>¿Ya tienes una cuenta? <a href="{{ url_for('usuarios.Login') }}">Inicia sesión aquí</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('contrasena');
+        const icon = this;
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+
+    document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('confirmar_contrasena');
+        const icon = this;
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+
+    // Validación en tiempo real de contraseñas
+    const passwordInput = document.getElementById('contrasena');
+    const confirmPasswordInput = document.getElementById('confirmar_contrasena');
+    const confirmMessage = document.getElementById('confirm-message');
+
+    confirmPasswordInput.addEventListener('input', function() {
+        if (confirmPasswordInput.value === '') {
+            confirmMessage.style.display = 'none';
+        } else if (confirmPasswordInput.value === passwordInput.value) {
+            confirmMessage.textContent = '✓ Las contraseñas coinciden';
+            confirmMessage.className = 'validation-message success';
+        } else {
+            confirmMessage.textContent = '✗ Las contraseñas no coinciden';
+            confirmMessage.className = 'validation-message error';
+        }
+    });
+
+    passwordInput.addEventListener('input', function() {
+        if (confirmPasswordInput.value !== '') {
+            if (confirmPasswordInput.value === passwordInput.value) {
+                confirmMessage.textContent = '✓ Las contraseñas coinciden';
+                confirmMessage.className = 'validation-message success';
+            } else {
+                confirmMessage.textContent = '✗ Las contraseñas no coinciden';
+                confirmMessage.className = 'validation-message error';
+            }
+        }
+    });
+
+    // Auto-hide alerts after 5 seconds
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.style.transition = 'opacity 0.5s ease';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 5000);
+
+    // Validación del formulario antes de enviar
+    document.getElementById('registroForm').addEventListener('submit', function(e) {
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+
+        if (password !== confirmPassword) {
+            e.preventDefault();
+            confirmMessage.textContent = '✗ Las contraseñas no coinciden';
+            confirmMessage.className = 'validation-message error';
+            confirmPasswordInput.focus();
+        }
+    });
+</script>
+{% endblock %}
+

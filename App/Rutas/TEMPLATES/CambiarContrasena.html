@@ -1,0 +1,445 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+<style>
+    .cambiar-contrasena-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 120px 20px 40px 20px;
+        background: linear-gradient(135deg, #328336 0%, #64CC4F 100%);
+    }
+
+    .cambiar-contrasena-box {
+        background: white;
+        border-radius: 20px;
+        padding: 50px 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 100%;
+        animation: fadeInUp 0.5s ease;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .cambiar-contrasena-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .cambiar-contrasena-header h2 {
+        color: #333;
+        font-size: 32px;
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+
+    .cambiar-contrasena-header p {
+        color: #666;
+        font-size: 16px;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-group label {
+        display: block;
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 15px 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #328336;
+        box-shadow: 0 0 0 3px rgba(50, 131, 54, 0.1);
+    }
+
+    .form-group input::placeholder {
+        color: #aaa;
+    }
+
+    .password-toggle {
+        position: relative;
+    }
+
+    .password-toggle input {
+        padding-right: 45px;
+    }
+
+    .password-toggle .toggle-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #666;
+        transition: color 0.3s ease;
+    }
+
+    .password-toggle .toggle-icon:hover {
+        color: #328336;
+    }
+
+    .password-strength {
+        margin-top: 10px;
+        height: 4px;
+        background: #e0e0e0;
+        border-radius: 2px;
+        overflow: hidden;
+        display: none;
+    }
+
+    .password-strength-bar {
+        height: 100%;
+        transition: all 0.3s ease;
+        width: 0%;
+    }
+
+    .strength-weak {
+        background: #ff6b6b;
+        width: 33%;
+    }
+
+    .strength-medium {
+        background: #feca57;
+        width: 66%;
+    }
+
+    .strength-strong {
+        background: #328336;
+        width: 100%;
+    }
+
+    .password-requirements {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+        font-size: 12px;
+    }
+
+    .password-requirements h4 {
+        margin: 0 0 8px 0;
+        color: #333;
+        font-size: 13px;
+    }
+
+    .password-requirements ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #666;
+    }
+
+    .password-requirements li {
+        margin: 3px 0;
+    }
+
+    .btn-cambiar {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #328336 0%, #64CC4F 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    .btn-cambiar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(50, 131, 54, 0.4);
+    }
+
+    .cambiar-contrasena-footer {
+        text-align: center;
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .cambiar-contrasena-footer a {
+        color: #328336;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .cambiar-contrasena-footer a:hover {
+        color: #64CC4F;
+    }
+
+    /* Mensajes flash */
+    .alert {
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .alert-error {
+        background-color: #fee;
+        color: #c33;
+        border-left: 4px solid #c33;
+    }
+
+    .alert-success {
+        background-color: #efe;
+        color: #3c3;
+        border-left: 4px solid #3c3;
+    }
+
+    .validation-message {
+        font-size: 12px;
+        margin-top: 5px;
+        display: none;
+    }
+
+    .validation-message.error {
+        color: #c33;
+        display: block;
+    }
+
+    .validation-message.success {
+        color: #3c3;
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cambiar-contrasena-container">
+    <div class="cambiar-contrasena-box">
+        <div class="cambiar-contrasena-header">
+            <h2>Cambiar Contraseña</h2>
+            <p>Actualiza tu contraseña de forma segura</p>
+        </div>
+
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('usuarios.CambiarContrasena') }}" id="cambiarContrasenaForm">
+            <div class="form-group">
+                <label for="contrasena_actual">Contraseña Actual</label>
+                <div class="password-toggle">
+                    <input 
+                        type="password" 
+                        id="contrasena_actual" 
+                        name="contrasena_actual" 
+                        placeholder="Ingresa tu contraseña actual" 
+                        required
+                        autocomplete="current-password"
+                    >
+                    <i class="fas fa-eye toggle-icon" id="toggleCurrentPassword"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="contrasena_nueva">Nueva Contraseña</label>
+                <div class="password-toggle">
+                    <input 
+                        type="password" 
+                        id="contrasena_nueva" 
+                        name="contrasena_nueva" 
+                        placeholder="Ingresa tu nueva contraseña" 
+                        required
+                        minlength="6"
+                        autocomplete="new-password"
+                    >
+                    <i class="fas fa-eye toggle-icon" id="toggleNewPassword"></i>
+                </div>
+                <div class="password-strength" id="passwordStrength">
+                    <div class="password-strength-bar" id="strengthBar"></div>
+                </div>
+                <div class="password-requirements">
+                    <h4>Requisitos de contraseña:</h4>
+                    <ul>
+                        <li>Mínimo 6 caracteres</li>
+                        <li>Se recomienda usar mayúsculas, minúsculas y números</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmar_contrasena">Confirmar Nueva Contraseña</label>
+                <div class="password-toggle">
+                    <input 
+                        type="password" 
+                        id="confirmar_contrasena" 
+                        name="confirmar_contrasena" 
+                        placeholder="Confirma tu nueva contraseña" 
+                        required
+                        autocomplete="new-password"
+                    >
+                    <i class="fas fa-eye toggle-icon" id="toggleConfirmPassword"></i>
+                </div>
+                <div class="validation-message" id="confirm-message"></div>
+            </div>
+
+            <button type="submit" class="btn-cambiar">
+                <i class="fas fa-key"></i> Cambiar Contraseña
+            </button>
+        </form>
+
+        <div class="cambiar-contrasena-footer">
+            <a href="{{ url_for('usuarios.Perfil') }}">
+                <i class="fas fa-arrow-left"></i> Volver al Perfil
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle password visibility functions
+    function setupPasswordToggle(toggleId, inputId) {
+        document.getElementById(toggleId).addEventListener('click', function() {
+            const passwordInput = document.getElementById(inputId);
+            const icon = this;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    }
+
+    setupPasswordToggle('toggleCurrentPassword', 'contrasena_actual');
+    setupPasswordToggle('toggleNewPassword', 'contrasena_nueva');
+    setupPasswordToggle('toggleConfirmPassword', 'confirmar_contrasena');
+
+    // Password strength indicator
+    const newPasswordInput = document.getElementById('contrasena_nueva');
+    const strengthBar = document.getElementById('strengthBar');
+    const strengthContainer = document.getElementById('passwordStrength');
+
+    newPasswordInput.addEventListener('input', function() {
+        const password = this.value;
+        
+        if (password.length === 0) {
+            strengthContainer.style.display = 'none';
+            return;
+        }
+        
+        strengthContainer.style.display = 'block';
+        
+        let strength = 0;
+        if (password.length >= 6) strength++;
+        if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+        if (password.match(/[0-9]/)) strength++;
+        
+        strengthBar.className = 'password-strength-bar';
+        if (strength === 1) {
+            strengthBar.classList.add('strength-weak');
+        } else if (strength === 2) {
+            strengthBar.classList.add('strength-medium');
+        } else if (strength === 3) {
+            strengthBar.classList.add('strength-strong');
+        }
+    });
+
+    // Validación en tiempo real de contraseñas
+    const confirmPasswordInput = document.getElementById('confirmar_contrasena');
+    const confirmMessage = document.getElementById('confirm-message');
+
+    confirmPasswordInput.addEventListener('input', function() {
+        if (confirmPasswordInput.value === '') {
+            confirmMessage.style.display = 'none';
+        } else if (confirmPasswordInput.value === newPasswordInput.value) {
+            confirmMessage.textContent = '✓ Las contraseñas coinciden';
+            confirmMessage.className = 'validation-message success';
+        } else {
+            confirmMessage.textContent = '✗ Las contraseñas no coinciden';
+            confirmMessage.className = 'validation-message error';
+        }
+    });
+
+    newPasswordInput.addEventListener('input', function() {
+        if (confirmPasswordInput.value !== '') {
+            if (confirmPasswordInput.value === newPasswordInput.value) {
+                confirmMessage.textContent = '✓ Las contraseñas coinciden';
+                confirmMessage.className = 'validation-message success';
+            } else {
+                confirmMessage.textContent = '✗ Las contraseñas no coinciden';
+                confirmMessage.className = 'validation-message error';
+            }
+        }
+    });
+
+    // Validación del formulario antes de enviar
+    document.getElementById('cambiarContrasenaForm').addEventListener('submit', function(e) {
+        const newPassword = newPasswordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+
+        if (newPassword !== confirmPassword) {
+            e.preventDefault();
+            confirmMessage.textContent = '✗ Las contraseñas no coinciden';
+            confirmMessage.className = 'validation-message error';
+            confirmPasswordInput.focus();
+        }
+    });
+
+    // Auto-hide alerts after 5 seconds
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.style.transition = 'opacity 0.5s ease';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 5000);
+</script>
+{% endblock %}
+

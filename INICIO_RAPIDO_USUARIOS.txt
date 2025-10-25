@@ -1,0 +1,206 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║  SISTEMA DE AUTENTICACIÓN - ROOMFLOW                              ║
+║  GUÍA DE INICIO RÁPIDO                                            ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+📋 ¿QUÉ SE HA AGREGADO?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Sistema completo de inicio de sesión
+✅ Registro de nuevos usuarios  
+✅ Gestión de perfil de usuario
+✅ Cambio de contraseña
+✅ Control de sesiones (login/logout)
+✅ Sistema de roles (Admin, Cliente, Empleado, Recepcionista)
+✅ Protección de rutas con decoradores
+✅ Interfaz moderna y responsive
+✅ Menú de usuario en el header
+
+🚀 PASOS PARA USAR EL SISTEMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ CONFIGURAR LA BASE DE DATOS
+   
+   Opción A - Usar el script Python (RECOMENDADO):
+   ------------------------------------------------
+   python setup_usuarios.py
+   
+   Opción B - Usar el archivo SQL:
+   --------------------------------
+   mysql -u root -p roomflow < EXTRAS/INSERTS_USUARIOS.sql
+   
+   O ejecuta EXTRAS/INSERTS_USUARIOS.sql desde MySQL Workbench/phpMyAdmin
+
+2️⃣ INICIAR EL SERVIDOR
+
+   python main.py
+   
+   El servidor estará disponible en: http://localhost:8000
+
+3️⃣ PROBAR EL SISTEMA
+
+   Abre tu navegador y ve a:
+   - http://localhost:8000/auth/login    (Iniciar sesión)
+   - http://localhost:8000/auth/registro (Crear cuenta)
+
+🔐 CREDENCIALES DE PRUEBA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👤 ADMINISTRADOR
+   Usuario:    admin
+   Contraseña: admin123
+   Rol:        Administrador (acceso completo)
+
+👤 CLIENTE
+   Usuario:    cliente
+   Contraseña: cliente123
+   Rol:        Cliente (usuario normal)
+
+📍 RUTAS DISPONIBLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PÚBLICAS (sin login):
+  /                          → Página de inicio
+  /auth/login                → Iniciar sesión
+  /auth/registro             → Registrarse
+
+PROTEGIDAS (requieren login):
+  /auth/perfil               → Ver perfil de usuario
+  /auth/cambiar-contrasena   → Cambiar contraseña
+  /auth/logout               → Cerrar sesión
+
+ADMINISTRATIVAS (solo admin):
+  /auth/usuarios             → Listar todos los usuarios
+
+📂 ARCHIVOS CREADOS/MODIFICADOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NUEVOS:
+  ✓ App/Controladores/C_Usuarios/controlador_usuario.py
+  ✓ App/Rutas/R_Usuario.py
+  ✓ App/Rutas/TEMPLATES/Login.html
+  ✓ App/Rutas/TEMPLATES/Registro.html
+  ✓ App/Rutas/TEMPLATES/Perfil.html
+  ✓ App/Rutas/TEMPLATES/CambiarContrasena.html
+  ✓ EXTRAS/INSERTS_USUARIOS.sql
+  ✓ EXTRAS/README_AUTENTICACION.md
+  ✓ setup_usuarios.py
+  ✓ EXTRAS/EJEMPLO_PROTECCION_RUTAS.py
+
+MODIFICADOS:
+  ✓ main.py (registrado blueprint de usuarios)
+  ✓ App/Rutas/TEMPLATES/Master.html (header con menú de usuario)
+
+🛠️ CÓMO PROTEGER TUS PROPIAS RUTAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Para requerir que el usuario esté logueado:
+
+    from App.Rutas.R_Usuario import login_required
+    
+    @tu_blueprint.route('/mi-ruta')
+    @login_required
+    def mi_ruta():
+        return "Solo usuarios autenticados"
+
+Para requerir rol de administrador:
+
+    from App.Rutas.R_Usuario import admin_required
+    
+    @tu_blueprint.route('/admin')
+    @admin_required  
+    def ruta_admin():
+        return "Solo administradores"
+
+Ver más ejemplos en: EXTRAS/EJEMPLO_PROTECCION_RUTAS.py
+
+💡 ACCEDER A DATOS DEL USUARIO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+En Python:
+    from flask import session
+    
+    usuario_id = session.get('usuario_id')
+    usuario = session.get('usuario')
+    email = session.get('email')
+    rol_id = session.get('rol_id')
+    rol_nombre = session.get('rol_nombre')
+
+En HTML:
+    {% if session.get('usuario_id') %}
+        Bienvenido, {{ session.get('usuario') }}!
+    {% endif %}
+
+🎨 CARACTERÍSTICAS DEL DISEÑO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ Formularios con gradientes modernos
+✨ Animaciones suaves
+✨ Validación en tiempo real
+✨ Mensajes flash informativos
+✨ Indicador de fortaleza de contraseña
+✨ Toggle para mostrar/ocultar contraseña
+✨ Diseño responsive (móvil, tablet, desktop)
+✨ Menú desplegable de usuario en el header
+
+🔒 SEGURIDAD IMPLEMENTADA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Contraseñas hasheadas con SHA256
+✓ Validación de formularios (cliente y servidor)
+✓ No se permiten usuarios o emails duplicados
+✓ Control de sesiones seguro
+✓ Protección de rutas
+✓ Sistema de roles
+
+⚠️ IMPORTANTE - SEGURIDAD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. CAMBIA la contraseña de admin después del primer login
+2. CAMBIA app.secret_key en main.py por una clave más segura
+3. Para producción, usa HTTPS
+4. Considera agregar límite de intentos de login
+
+📖 DOCUMENTACIÓN COMPLETA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Para más detalles, consulta:
+  - EXTRAS/README_AUTENTICACION.md (documentación completa)
+  - EXTRAS/EJEMPLO_PROTECCION_RUTAS.py (ejemplos de código)
+
+❓ SOLUCIÓN DE PROBLEMAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Error: "Usuario o contraseña incorrectos"
+   → Verifica que hayas ejecutado setup_usuarios.py
+   → Usa las credenciales de prueba correctas
+
+❌ Error al conectar a la base de datos
+   → Verifica que MySQL esté ejecutándose
+   → Verifica las credenciales en bd.py
+   → Asegúrate de que la base de datos 'roomflow' exista
+
+❌ El menú de usuario no aparece
+   → Verifica que main.py esté actualizado
+   → Reinicia el servidor Flask
+
+❌ Error de importación
+   → Verifica que todos los archivos se hayan creado
+   → Reinicia el servidor
+
+🎯 PRÓXIMOS PASOS SUGERIDOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Cambia las contraseñas de prueba
+2. Protege las rutas de empleados, reservas, etc.
+3. Agrega verificación de email
+4. Implementa recuperación de contraseña
+5. Agrega permisos más granulares
+6. Implementa historial de sesiones
+
+═══════════════════════════════════════════════════════════════════
+
+           ¡Todo listo para usar el sistema! 🚀
+
+═══════════════════════════════════════════════════════════════════
+
