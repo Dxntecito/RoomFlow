@@ -84,6 +84,14 @@
                                 class="action-btn edit-btn" title="Actualizar empleado">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            <form method="POST"
+                                action="{{ url_for('empleados.EliminarEmpleado', empleado_id=empleado[0]) }}"
+                                style="display: inline;"
+                                onsubmit="return confirm('¿Está seguro de eliminar este empleado?')">
+                                <button type="submit" class="action-btn delete-btn" title="Eliminar empleado">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </div>
                     </td>
                 </tr>

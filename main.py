@@ -8,6 +8,7 @@ from App.Rutas.R_Evento import eventos_bp
 from App.Rutas.R_Cliente import cliente_bp
 from App.Rutas.R_Reserva_Habitacion import reserva_habitacion_bp
 from App.Rutas.R_Huesped  import huesped_bp
+from App.Rutas.R_Usuario import usuarios_bp
 # from App.Rutas.RutasFacturacion import facturaciones_bp
 # from App.Rutas.RutasIncidente import incidentes_bp
 # from App.Rutas.RutasRoomService import RoomService_bp
@@ -20,6 +21,7 @@ socketio = SocketIO(app)
 app.register_blueprint(bookingroom_bp)
 app.register_blueprint(empleados_bp)
 app.register_blueprint(eventos_bp)
+app.register_blueprint(usuarios_bp)
 
 @app.route("/")
 @app.route("/RoomFlow")

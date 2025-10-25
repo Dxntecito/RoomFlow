@@ -262,6 +262,19 @@
     transform: scale(1.1);
 }
 
+.delete-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+}
+
+.delete-btn:hover {
+    background: #c82333;
+    color: white;
+    text-decoration: none;
+    transform: scale(1.1);
+}
+
 /* Estado sin datos */
 .no-data {
     text-align: center;

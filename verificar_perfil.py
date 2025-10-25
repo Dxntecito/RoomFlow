@@ -10,7 +10,7 @@ def verificar_datos():
             user='root',
             port=3306,
             password='',
-            db='roomflow',
+            db='roomflowdb',
             charset='utf8mb4'
         )
         
