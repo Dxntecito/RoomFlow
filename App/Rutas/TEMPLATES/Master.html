@@ -183,26 +183,10 @@
         text-decoration: none;
     }
 </style>
-<script>
-    // Toggle user dropdown
-    document.addEventListener('DOMContentLoaded', function() {
-        const userToggle = document.getElementById('userToggle');
-        const userDropdown = document.getElementById('userDropdown');
-        
-        if (userToggle && userDropdown) {
-            userToggle.addEventListener('click', function(e) {
-                e.stopPropagation();
-                userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
-            });
-            
-            // Cerrar dropdown al hacer clic fuera
-            document.addEventListener('click', function(e) {
-                if (!userToggle.contains(e.target) && !userDropdown.contains(e.target)) {
-                    userDropdown.style.display = 'none';
-                }
-            });
-        }
-    });
-</script>
+
+
+
+
+
 </body>
 </html>

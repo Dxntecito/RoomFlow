@@ -1,6 +1,7 @@
 # controllers/controlador_cliente.py
 from datetime import date
 from bd import get_connection
+import traceback
 
 def guardar_cliente(data):
     num_doc = data.get('num_doc')
@@ -40,3 +41,29 @@ def guardar_cliente(data):
     cursor.close()
     conn.close()
     return cliente_id
+
+def buscar_cliente_por_documento(num_doc):
+    """
+    Devuelve cliente_id (int) si existe, o None.
+    Usa get_connection() y with connection.cursor().
+    """
+    if not num_doc:
+        return None
+
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT cliente_id FROM CLIENTE WHERE num_doc = %s", (num_doc,))
+            row = cursor.fetchone()
+            return row[0] if row else None
+    except Exception as e:
+        print(f"❌ [ERROR en buscar_cliente_por_documento]: {e}")
+        traceback.print_exc()
+        return None
+    finally:
+        if connection:
+            connection.close()
+
+
+

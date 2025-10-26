@@ -55,12 +55,12 @@
 }
 
 .nav-link {
-    color: var(--text-white);
-    text-decoration: none;
-    font-weight: 500;
-    font-size: var(--font-size-lg);
-    transition: var(--transition);
-    position: relative;
+    color: var(--text-white) !important;
+    text-decoration: none  !important;
+    font-weight: 500 !important;
+    font-size: var(--font-size-lg) !important;
+    transition: var(--transition) !important;
+    position: relative !important;
 }
 
 .nav-link::after {
@@ -171,7 +171,21 @@
 }
 
 .booking-form {
-    background: white;
+    background: transparent;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: 70px;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    animation: slideInUp 0.8s ease-out 0.3s both;
+    max-width: 800px;
+    margin: 0 auto;
+    border: none;
+    height: 90px;
+}
+
+.booking-form-2 {
+    background: rgb(242, 242, 242);
     padding: var(--spacing-md) var(--spacing-xl);
     border-radius: 70px;
     display: flex;
@@ -179,7 +193,7 @@
     gap: var(--spacing-md);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     animation: slideInUp 0.8s ease-out 0.3s both;
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
     border: none;
     height: 90px;
@@ -276,7 +290,7 @@
     font-size: 1.5rem;
     font-weight: 600;
     padding: 0 !important;
-    margin: 0 0 0 -20px !important;
+    margin: 0 0 0 -5px !important;
     line-height: 1 !important;
 }
 

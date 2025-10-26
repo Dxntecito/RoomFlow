@@ -325,6 +325,69 @@ body {
     margin: 0 auto var(--spacing-md);
 }
 
+
+.date_input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #f9f9f9;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 5px 7px;
+  font-size: 0.95rem;
+  color: #333;
+  outline: none;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.date_input:hover {
+  background-color: #f1f1f1;
+}
+
+.date_input:focus {
+  border-color: #0078ff;
+  box-shadow: 0 0 0 3px rgba(0, 120, 255, 0.15);
+  background-color: #fff;
+}
+
+.date_input::-webkit-calendar-picker-indicator {
+  filter: invert(40%) sepia(50%) saturate(300%) hue-rotate(200deg);
+  cursor: pointer;
+}
+.booking_row {
+  display: flex;
+  align-items: flex-start; /* o center si prefieres alineación centrada verticalmente */
+  justify-content: center;
+  gap: 2rem; /* espacio entre columnas */
+  margin-bottom: 1rem;
+}
+
+.booking_column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.booking_label {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.date_input {
+  padding: 6px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+#divider {
+  width: 1px;
+  background-color: #ccc;
+  height: 60px; /* ajusta según el alto de tus inputs */
+  align-self: center;
+}
+
 /* Animaciones */
 @keyframes slideInRight {
     from {

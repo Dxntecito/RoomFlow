@@ -5,6 +5,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/Booking_huespedes.css') }}">
+
 {% endblock %}
 
 {% block content %}
@@ -19,17 +21,32 @@
         <h3 class="Booking_web_subheaders" id="leftTittleG">Fechas de reserva</h3>
         <div class="booking_column">
           <label for="Start_booking_date" class="booking_label">Fecha de entrada</label>
-          <input type="datetime-local" id="Start_booking_date" name="start" class="date_input"
-                 value="{{ request.args.get('start', '') }}">
+          <input type="datetime-local"
+                id="Start_booking_date"
+                name="start"
+                class="date_input"
+                {% if start_dt is not none %}
+                  value="{{ start_dt.strftime('%Y-%m-%dT%H:%M') }}"
+                {% else %}
+                  value=""
+                {% endif %}>
         </div>
 
         <div id="divider"></div>
 
         <div class="booking_column">
           <label for="End_booking_date" class="booking_label">Fecha salida</label>
-          <input type="datetime-local" id="End_booking_date" name="end" class="date_input"
-                 value="{{ request.args.get('end', '') }}">
+          <input type="datetime-local"
+                id="End_booking_date"
+                name="end"
+                class="date_input"
+                {% if end_dt is not none %}
+                  value="{{ end_dt.strftime('%Y-%m-%dT%H:%M') }}"
+                {% else %}
+                  value=""
+                {% endif %}>
         </div>
+
 
         <button type="submit">
           <img id="search_button_img" src="{{ url_for('static', filename='Img/search_button.png') }}" alt="search_icon">
@@ -105,35 +122,82 @@
 <!-- PASO 2: Registro de cliente -->
 <div id="step2" style="display:none;">
   <h2>Registro del Cliente</h2>
-  <form id="client_form">
+  <form id="client_form" autocomplete="off">
 
-    <label>Tipo de Cliente:</label>
-    <div class="switch_container">
-      <label class="switch_label">Persona Natural</label>
-      <label class="switch">
-        <input type="checkbox" id="tipo_cliente_switch">
-        <span class="slider round"></span>
-      </label>
-      <label class="switch_label">Persona Jurídica</label>
-    </div>
 
-    <label>DNI / RUC:</label>
-    <input type="text" id="dni" required>
+  <div class="switch_container" style="display:flex; align-items:center; gap:10px; margin:8px 0;">
+    <label class="switch_label">Natural</label>
+    <label class="switch">
+      <input type="checkbox" id="tipo_cliente_switch">
+      <span class="slider round"></span>
+    </label>
+    <label class="switch_label">Jurídica</label>
+  </div>
+  <label id="tipo_cliente_label">Persona Natural</label>
+  <!-- ---------- Campos Persona Natural ---------- -->
+  <div id="natural_fields">
+    <label for="num_doc_natural">DNI</label>
+    <input type="text" id="num_doc_natural" maxlength="8" placeholder="Ej: 87654321">
 
-    <label>Nombre / Razón Social:</label>
-    <input type="text" id="nombre" required>
+    <label for="nombres">Nombres</label>
+    <input type="text" id="nombres" placeholder="Nombres">
 
-    <label>Correo:</label>
-    <input type="email" id="correo" required>
+    <label for="ape_paterno">Apellido Paterno</label>
+    <input type="text" id="ape_paterno" placeholder="Apellido paterno">
 
-    <label>Teléfono:</label>
-    <input type="text" id="telefono">
+    <label for="ape_materno">Apellido Materno</label>
+    <input type="text" id="ape_materno" placeholder="Apellido materno">
 
-    <div class="button_group">
-      <button type="button" id="back_to_rooms">← Regresar</button>
-      <button type="button" id="next_to_guests">Siguiente →</button>
-    </div>
-  </form>
+    <label for="telefono_natural">Teléfono</label>
+    <input type="text" id="telefono_natural" placeholder="987654321">
+
+    <label for="pais_select">País</label>
+    <select id="pais_select">
+      <option value="">-- Seleccione país --</option>
+      {% for country in countries %}
+      <option value="{{ country[0] }}">{{ country[1] }}</option>
+      {% endfor %}
+      <!-- si tienes la lista desde el backend, reemplaza estas opciones dinamicamente -->
+    </select>
+  </div>
+
+  <!-- ---------- Campos Persona Jurídica (ocultos por defecto) ---------- -->
+  <div id="juridica_fields" style="display:none;">
+    <label for="num_doc_juridico">RUC (11 dígitos)</label>
+    <input type="text" id="num_doc_juridico" maxlength="11" placeholder="Ej: 20123456789">
+
+    <label for="razon_social">Razón Social</label>
+    <input type="text" id="razon_social" placeholder="Nombre de la empresa">
+
+    <label for="direccion_juridica">Dirección</label>
+    <input type="text" id="direccion_juridica" placeholder="Dirección fiscal">
+
+    <label for="telefono_juridico">Teléfono</label>
+    <input type="text" id="telefono_juridico" placeholder="987654321">
+
+    <!-- <label for="tipo_empresa">Tipo de Empresa</label>
+    <select id="tipo_empresa">
+      <option value="">-- Seleccione tipo --</option>
+      <option value="1">Individual</option>
+      <option value="2">Sociedad Anónima</option>
+      <option value="3">EIRL</option>
+    </select> -->
+    <label for="pais_select_j">País</label>
+    <select id="pais_select_j">
+      <option value="">-- Seleccione país --</option>
+      {% for country in countries %}
+      <option value="{{ country[0] }}">{{ country[1] }}</option>
+      {% endfor %}
+      <!-- si tienes la lista desde el backend, reemplaza estas opciones dinamicamente -->
+    </select>
+  </div>
+
+  <div class="button_group" style="margin-top:12px;">
+    <button type="button" id="back_to_rooms">← Regresar</button>
+    <button type="button" id="next_to_guests">Siguiente →</button>
+  </div>
+</form>
+
 </div>
 
   <!-- PASO 3: Registro de huéspedes -->
@@ -147,13 +211,15 @@
     </div>
   </div>
 </div>
+<script src="{{ url_for('static', filename='JS/Booking.js') }}"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
   // --- Referencias generales ---
   const step1 = document.getElementById("step1");
   const step2 = document.getElementById("step2");
   const step3 = document.getElementById("step3");
+  const floorSelect = document.getElementById("floor_number");
   const selectedContainer = document.getElementById("selected_rooms");
+  const categorySelect = document.getElementById("room_category");
   const totalDisplay = document.getElementById("Total_sum");
   const nextLink = document.getElementById("next_booking_link");
   const backToRooms = document.getElementById("back_to_rooms");
@@ -167,17 +233,116 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedRooms = [];
   let clientData = {};
 
+   // Diccionarios generados por Jinja: id -> nombre, id -> precio
+    const roomNames = {
+        {% for room in rooms %}
+            "{{ room[0] }}": "{{ room[1] }}"{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+    const roomPrices = {
+        {% for room in rooms %}
+            "{{ room[0] }}": {{ room[5] }}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+    
+        // --- Filtrado de filas según selects ---
+    function filterRows() {
+        const selFloor = floorSelect.value;      // valor string o ""
+        const selCategory = categorySelect.value;
+
+        // recorrer cada fila
+        document.querySelectorAll('.room-row').forEach(row => {
+            const rowFloor = row.dataset.floor;      // string
+            const rowCategory = row.dataset.category;
+
+            let show = true;
+            if (selFloor && selFloor !== "" && selFloor !== rowFloor) show = false;
+            if (selCategory && selCategory !== "" && selCategory !== rowCategory) show = false;
+
+            const checkbox = row.querySelector('.checkbox_booking');
+
+            if (show) {
+                row.style.display = "";
+            } else {
+                // Si la fila se oculta y está marcada, desmarcarla y disparar change para limpiar selección
+                if (checkbox && checkbox.checked) {
+                    checkbox.checked = false;
+                    // dispatchEvent para que el manejador de checkbox limpie la UI y el total
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+                row.style.display = "none";
+            }
+        });
+    }
+     // Escuchar cambios en selects
+    floorSelect.addEventListener('change', filterRows);
+    categorySelect.addEventListener('change', filterRows);
+
+
+    // Si tu tabla se actualiza dinámicamente (por ejemplo por AJAX) necesitas re-run bindCheckboxEvents()
+    function bindCheckboxEvents() {
+    document.querySelectorAll('.checkbox_booking').forEach(cb => {
+      if (cb.dataset.bound === "true") return;
+      cb.dataset.bound = "true";
+
+      cb.addEventListener('change', function() {
+        const roomId = this.value;
+        const price = parseFloat(roomPrices[roomId]) || 0;
+
+        if (this.checked) {
+          if (!selectedRooms.includes(roomId)) selectedRooms.push(roomId);
+          total += price;
+          createSelectedRoomDiv(roomId);
+        } else {
+          selectedRooms = selectedRooms.filter(id => id !== roomId);
+          total -= price;
+          if (total < 0) total = 0;
+          const el = document.getElementById("room_selected_" + roomId);
+          if (el) el.remove();
+        }
+        updateTotalDisplay();
+      });
+    });
+  }
+
+  function createSelectedRoomDiv(roomId) {
+    const roomName = roomNames[roomId];
+    const price = parseFloat(roomPrices[roomId]) || 0;
+    // Si ya existe, no duplicar
+    if (document.getElementById("room_selected_" + roomId)) return;
+
+    const div = document.createElement("div");
+    div.className = "room_selected_style";
+    div.id = "room_selected_" + roomId;
+    div.innerHTML = `
+      <p>Hab. ${roomName} — S/. ${price.toFixed(2)}</p>
+      <button type="button" class="remove_room">x</button>
+    `;
+    selectedContainer.appendChild(div);
+
+    // evento X para quitar
+    div.querySelector(".remove_room").addEventListener("click", () => {
+      const cb = document.getElementById("checkbox_booking_" + roomId);
+      if (cb) {
+        cb.checked = false;
+        cb.dispatchEvent(new Event('change'));
+      } else {
+        // si no hay checkbox (caso raro), solo eliminar y ajustar total
+        div.remove();
+        total -= price;
+        if (total < 0) total = 0;
+        updateTotalDisplay();
+        selectedRooms = selectedRooms.filter(id => id !== roomId);
+      }
+    });
+  }
+    function updateTotalDisplay() {
+    totalDisplay.textContent = "Total: S/. " + total.toFixed(2);
+  }
+    // Si quieres aplicar el filtro al cargar con valores por defecto:
+    filterRows();
+
   // --- Datos de habitaciones generados con Jinja ---
-  const roomNames = {
-    {% for room in rooms %}
-      "{{ room[0] }}": "{{ room[1] }}"{% if not loop.last %},{% endif %}
-    {% endfor %}
-  };
-  const roomPrices = {
-    {% for room in rooms %}
-      "{{ room[0] }}": {{ room[5] }}{% if not loop.last %},{% endif %}
-    {% endfor %}
-  };
   const roomCapacities = {
     {% for room in rooms %}
       "{{ room[0] }}": {% for category in categories %}{% if room[3] == category[0] %}{{ category[4] }}{% endif %}{% endfor %}{% if not loop.last %},{% endif %}
@@ -234,26 +399,7 @@ document.addEventListener("DOMContentLoaded", () => {
     step2.style.display = "none";
     step1.style.display = "block";
   });
-  const tipoClienteSwitch = document.getElementById("tipo_cliente_switch");
-      const esJuridico = tipoClienteSwitch.checked; // true = Jurídica, false = Natural
-  // --- Paso 2 → Paso 3 (Huéspedes) ---
-  nextToGuests.addEventListener("click", () => {
-    clientData = {
-      dni: document.getElementById("dni").value,
-      nombre: document.getElementById("nombre").value,
-      correo: document.getElementById("correo").value,
-      telefono: document.getElementById("telefono").value,
-      tipo_cliente: esJuridico ? 2 : 1 // 1 = Natural, 2 = Jurídica
-    };
-    if (!clientData.dni || !clientData.nombre || !clientData.correo) {
-      alert("Completa todos los campos obligatorios del cliente");
-      return;
-    }
-
-    generarFormulariosHuespedes();
-    step2.style.display = "none";
-    step3.style.display = "block";
-  });
+  
 
   // --- Paso 3 → Paso 2 ---
   backToClient.addEventListener("click", () => {
@@ -261,11 +407,188 @@ document.addEventListener("DOMContentLoaded", () => {
     step2.style.display = "block";
   });
 
-  // --- Generar formularios de huéspedes dinámicamente ---
-  function generarFormulariosHuespedes() {
+  // referencias
+  const tipoSwitch = document.getElementById("tipo_cliente_switch");
+  const tipoLabel = document.getElementById("tipo_cliente_label");
+  const naturalFields = document.getElementById("natural_fields");
+  const juridicaFields = document.getElementById("juridica_fields");
+  const nextToGuestsBtn = document.getElementById("next_to_guests");
+  const backToRoomsBtn = document.getElementById("back_to_rooms");
+
+  // inputs naturales
+  const numDocNatural = document.getElementById("num_doc_natural");
+  const nombres = document.getElementById("nombres");
+  const apePaterno = document.getElementById("ape_paterno");
+  const apeMaterno = document.getElementById("ape_materno");
+  const telefonoNatural = document.getElementById("telefono_natural");
+  const paisSelect = document.getElementById("pais_select");
+  const startDateInput = document.getElementById("Start_booking_date");
+  const endDateInput = document.getElementById("End_booking_date");
+  // inputs juridicos
+  const numDocJuridico = document.getElementById("num_doc_juridico");
+  const paisjuridica = document.getElementById("pais_select_j");
+  const razonSocial = document.getElementById("razon_social");
+  const direccionJuridica = document.getElementById("direccion_juridica");
+  const telefonojuridica = document.getElementById("telefono_juridico");
+  // const tipoEmpresa = document.getElementById("tipo_empresa");
+
+  // correo (opcional/global)
+  const correoCliente = document.getElementById("correo_cliente");
+
+  // estado de cliente que construirás
+
+  // función para alternar vistas según switch
+  function toggleClienteView() {
+    const esJuridico = tipoSwitch.checked;
+    if (esJuridico) {
+      tipoLabel.textContent = "Persona Jurídica";
+      naturalFields.style.display = "none";
+      juridicaFields.style.display = "block";
+    } else {
+      tipoLabel.textContent = "Persona Natural";
+      naturalFields.style.display = "block";
+      juridicaFields.style.display = "none";
+    }
+  }
+
+  // limpiar campos al cambiar tipo (opcional, recomendable)
+  function limpiarCampos() {
+    // naturales
+    numDocNatural.value = "";
+    nombres.value = "";
+    apePaterno.value = "";
+    apeMaterno.value = "";
+    telefonoNatural.value = "";
+    paisSelect.value = "";
+
+    // juridicos
+    numDocJuridico.value = "";
+    razonSocial.value = "";
+    direccionJuridica.value = "";
+    paisjuridica.value="";
+    // tipoEmpresa.value = "";
+
+    // correo
+    correoCliente.value = "";
+  }
+
+  // validar DNI (8 dígitos) y RUC (11 dígitos) - solo números
+  function esDniValido(dni) {
+    return /^[0-9]{8}$/.test(dni);
+  }
+  function esRucValido(ruc) {
+    return /^[0-9]{11}$/.test(ruc);
+  }
+
+  // on switch change
+  tipoSwitch.addEventListener("change", () => {
+    toggleClienteView();
+    // opcional: limpiar campos para evitar datos sucios entre vistas
+    // limpiarCampos();
+  });
+
+  // inicializar vista
+  toggleClienteView();
+
+  // botón volver (si lo usas)
+  if (backToRoomsBtn) {
+    backToRoomsBtn.addEventListener("click", () => {
+      // tu lógica para volver al paso anterior (ya existía)
+      // por ejemplo:
+      const step1 = document.getElementById("step1");
+      const step2 = document.getElementById("step2");
+      if (step2) step2.style.display = "none";
+      if (step1) step1.style.display = "block";
+    });
+  }
+
+  // botón siguiente: construir clientData y validar según tipo
+  if (nextToGuestsBtn) {
+    nextToGuestsBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      const esJuridico = tipoSwitch.checked;
+
+      if (!esJuridico) {
+        // Persona Natural -> campos: num_doc, nombres, ape_paterno, ape_materno, telefono, pais
+        const dniVal = numDocNatural.value.trim();
+        const nombresVal = nombres.value.trim();
+        const apePatVal = apePaterno.value.trim();
+        const apeMatVal = apeMaterno.value.trim();
+        const telefonoVal = telefonoNatural.value.trim();
+        const paisVal = paisSelect.value;
+
+        // validaciones
+        if (!dniVal || !nombresVal || !apePatVal || !apeMatVal || !paisVal) {
+          alert("Complete todos los campos obligatorios para Persona Natural (DNI, nombres, apellidos y país).");
+          return;
+        }
+        if (!esDniValido(dniVal)) {
+          alert("DNI inválido. Debe contener 8 dígitos numéricos.");
+          return;
+        }
+
+        clientData = {
+          tipo: "N",
+          num_doc: dniVal,
+          nombres: nombresVal,
+          ape_paterno: apePatVal,
+          ape_materno: apeMatVal,
+          telefono: telefonoVal || null,
+          pais_id: paisVal,
+        };
+
+      } else {
+        // Persona Jurídica -> campos: num_doc_juridico (RUC 11), razon_social, direccion, tipo_empresa
+        const rucVal = numDocJuridico.value.trim();
+        const razonVal = razonSocial.value.trim();
+        const direccionVal = direccionJuridica.value.trim();
+        const paisj = paisjuridica.value;
+        const telefonoj = telefonojuridica.value.trim();
+        // const tipoEmpVal = tipoEmpresa.value;
+
+        // validaciones
+        if (!rucVal || !razonVal || !direccionVal || !paisj || !telefonoj ) {
+          alert("Complete todos los campos obligatorios para Persona Jurídica (RUC, razón social, dirección, tipo de empresa).");
+          return;
+        }
+        if (!esRucValido(rucVal)) {
+          alert("RUC inválido. Debe contener 11 dígitos numéricos.");
+          return;
+        }
+
+        clientData = {
+          tipo: "J",
+          num_doc: rucVal,
+          razon_social: razonVal,
+          direccion: direccionVal,
+          pais_id: paisj,
+          telefono: telefonoj,
+        };
+      }
+
+      // si llega aquí, clientData está listo
+      console.log("ClientData preparado:", clientData);
+
+      // aquí sigue la lógica de tu app: generar formularios de huéspedes y avanzar al siguiente paso
+      // por ejemplo:
+      // generarFormulariosHuespedes();  // si usas la función que ya tienes
+    generarFormulariosHuespedes();
+      const step2 = document.getElementById("step2");
+      const step3 = document.getElementById("step3");
+      if (step2) step2.style.display = "none";
+      if (step3) step3.style.display = "block";
+
+      // guarda clientData en un scope global si lo necesitas:
+      window.__CLIENT_DATA__ = clientData;
+      
+    });
+  }
+
+function generarFormulariosHuespedes() {
     habitacionesContainer.innerHTML = "";
     selectedRooms.forEach(roomId => {
-      const capacidad = roomCapacities[roomId];
+      const capacidad = parseInt(roomCapacities[roomId]) || 1;
       const div = document.createElement("div");
       div.className = "habitacion_form";
       div.innerHTML = `
@@ -287,128 +610,119 @@ document.addEventListener("DOMContentLoaded", () => {
       generarCamposHuespedes(roomId);
     });
 
-    // --- Control "Yo me hospedaré aquí" (solo uno permitido + ajusta huéspedes)
     const checkboxes = document.querySelectorAll(".yoHospedare");
     checkboxes.forEach(cb => {
       cb.addEventListener("change", e => {
         const roomId = e.target.dataset.room;
         const select = document.getElementById(`numPersonas_${roomId}`);
-
         if (e.target.checked) {
-          checkboxes.forEach(other => {
-            if (other !== cb) {
-              other.style.display = "none";
-              if (other.nextElementSibling) other.nextElementSibling.style.display = "none";
-            }
-          });
+          checkboxes.forEach(other => { if (other !== cb) other.style.display = "none"; });
           const num = parseInt(select.value);
           generarCamposHuespedes(roomId, Math.max(num - 1, 0));
         } else {
-          checkboxes.forEach(other => {
-            other.style.display = "inline-block";
-            if (other.nextElementSibling) other.nextElementSibling.style.display = "inline-block";
-          });
+          checkboxes.forEach(other => { other.style.display = "inline-block"; });
           generarCamposHuespedes(roomId);
         }
       });
     });
   }
-
-  // --- Generar campos de huéspedes dentro de cada habitación ---
-  function generarCamposHuespedes(roomId, cantidadManual = null) {
+function generarCamposHuespedes(roomId, cantidadManual = null) {
     const contenedor = document.getElementById(`huespedes_${roomId}`);
-    const cantidad = cantidadManual ?? parseInt(document.getElementById(`numPersonas_${roomId}`).value);
+    const cantidad = cantidadManual ?? parseInt(document.getElementById(`numPersonas_${roomId}`)?.value) ?? 1;
+    if (!contenedor) return;
     contenedor.innerHTML = "";
     for (let i = 1; i <= cantidad; i++) {
       contenedor.innerHTML += `
         <div class="huesped_card">
           <h4>Huésped ${i}</h4>
           <input class="nombre_huesped" placeholder="Nombre">
-          <input class="apellido_huesped" placeholder="Apellido">
+          <input class="apellido_huesped" placeholder="Apellido Paterno">
+          <input class ="apellido_huesped_m" placeholder="Apellido Materno">
           <input class="doc_huesped" placeholder="N° Documento">
         </div>
       `;
     }
   }
+function recolectarDatosReserva() {
+    const fechaEntradaRaw = startDateInput?.value || null;
+    const fechaSalidaRaw = endDateInput?.value || null;
 
-  // --- 🔹 Recolectar todos los datos antes de enviar ---
- function recolectarDatosReserva() {
-  // --- Capturar fecha y hora de entrada ---
-  const fechaEntradaRaw = document.getElementById("Start_booking_date")?.value || null;
-  const fechaSalidaRaw = document.getElementById("End_booking_date")?.value || null;
+    let fecha_ingreso = null, hora_ingreso = null;
+    let fecha_salida = null, hora_salida = null;
 
+    if (fechaEntradaRaw) {
+      if (fechaEntradaRaw.includes("T")) {
+        const [fecha, hora] = fechaEntradaRaw.split("T");
+        fecha_ingreso = fecha;
+        hora_ingreso = hora ? (hora.length === 5 ? hora + ":00" : hora) : null;
+      } else {
+        fecha_ingreso = fechaEntradaRaw;
+        hora_ingreso = null;
+      }
+    }
+    if (fechaSalidaRaw) {
+      if (fechaSalidaRaw.includes("T")) {
+        const [fecha, hora] = fechaSalidaRaw.split("T");
+        fecha_salida = fecha;
+        hora_salida = hora ? (hora.length === 5 ? hora + ":00" : hora) : null;
+      } else {
+        fecha_salida = fechaSalidaRaw;
+        hora_salida = null;
+      }
+    }
 
-  // --- Separar fecha y hora ---
-  let fecha_ingreso = null, hora_ingreso = null;
-  let fecha_salida = null, hora_salida = null;
-
-  if (fechaEntradaRaw) {
-    const [fecha, hora] = fechaEntradaRaw.split("T");
-    fecha_ingreso = fecha;
-    hora_ingreso = hora ? hora + ":00" : null; // agrega segundos si no vienen
-  }
-
-  if (fechaSalidaRaw) {
-    const [fecha, hora] = fechaSalidaRaw.split("T");
-    fecha_salida = fecha;
-    hora_salida = hora ? hora + ":00" : null;
-  }
-
-  // --- Recolectar habitaciones seleccionadas ---
-  const habitaciones = selectedRooms.map(roomId => {
-    const huespedesDivs = document.querySelectorAll(`#huespedes_${roomId} .huesped_card`);
-    const huespedes = Array.from(huespedesDivs).map(div => ({
-      nombre: div.querySelector(".nombre_huesped")?.value || "",
-      apellido: div.querySelector(".apellido_huesped")?.value || "",
-      documento: div.querySelector(".doc_huesped")?.value || ""
-    }));
-
-    const yoHospedare = document.getElementById(`yoHospedare_${roomId}`)?.checked || false;
+    const habitaciones = selectedRooms.map(roomId => {
+      const huespedesDivs = document.querySelectorAll(`#huespedes_${roomId} .huesped_card`);
+      const huespedes = Array.from(huespedesDivs).map(div => ({
+        nombre: div.querySelector(".nombre_huesped")?.value || "",
+        ape_paterno: div.querySelector(".apellido_huesped")?.value || "",
+        ape_materno : div.querySelector(".apellido_huesped_m")?.value || "",
+        documento: div.querySelector(".doc_huesped")?.value || ""
+      }));
+      const yoHospedare = document.getElementById(`yoHospedare_${roomId}`)?.checked || false;
+      return {
+        id_habitacion: roomId,
+        nombre: roomNames[roomId],
+        precio: roomPrices[roomId],
+        huespedes: huespedes,
+        yo_me_hospedo: yoHospedare
+      };
+    });
 
     return {
-      id_habitacion: roomId,
-      nombre: roomNames[roomId],
-      precio: roomPrices[roomId],
-      huespedes: huespedes,
-      yo_me_hospedo: yoHospedare,
+      cliente: clientData,
+      habitaciones: habitaciones,
+      total: total,
+      fecha_reserva: new Date().toISOString(),
+      fecha_ingreso: fecha_ingreso,
+      hora_ingreso: hora_ingreso,
+      fecha_salida: fecha_salida,
+      hora_salida: hora_salida
     };
-  });
+  }
+if (finalizarReserva) {
+    finalizarReserva.addEventListener("click", async () => {
+      const dataReserva = recolectarDatosReserva();
+      try {
+        const response = await fetch("/Rutas/TEMPLATES/guardar_reserva", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dataReserva)
+        });
+        const result = await response.json();
+        if (result && result.success) {
+          alert("Reserva guardada correctamente.");
+          window.location.href = "/RoomFlow";
+        } else {
+          alert("Ocurrió un problema al guardar la reserva.");
+        }
+      } catch (err) {
+        console.error("Error en el fetch:", err);
+        alert("Error en la comunicación con el servidor.");
+      }
+    });
+  }
 
-  // --- Armar el objeto final ---
-  return {
-    cliente: clientData,
-    habitaciones: habitaciones,
-    total: total,
-    fecha_reserva: new Date().toISOString(),
-    fecha_ingreso: fecha_ingreso,
-    hora_ingreso: hora_ingreso,
-    fecha_salida: fecha_salida,
-    hora_salida: hora_salida
-  };
-}
-
-  // --- Finalizar reserva ---
-  finalizarReserva.addEventListener("click", async () => {
-    console.log("🟢 [DEBUG FRONT] Botón Finalizar Reserva presionado");
-
-    const dataReserva = recolectarDatosReserva();
-    console.log("📦 [DEBUG FRONT] Datos a enviar:", dataReserva);
-
-    try {
-      const response = await fetch("/Rutas/TEMPLATES/guardar_reserva", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dataReserva)
-      });
-
-      const result = await response.json();
-      console.log("📬 [DEBUG FRONT] Respuesta del servidor:", result);
-    } catch (err) {
-      console.error("❌ [DEBUG FRONT] Error en el fetch:", err);
-    }
-  });
-});
 </script>
-
 
 {% endblock %}

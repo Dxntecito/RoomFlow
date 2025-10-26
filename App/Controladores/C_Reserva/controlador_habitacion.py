@@ -71,17 +71,19 @@ from datetime import datetime
 #     return rooms
 def get_available_rooms(start_dt=None, end_dt=None, limit=20, offset=0):
     """
-    Obtiene las habitaciones disponibles filtrando por fechas y horas.
-    start_dt y end_dt son objetos datetime de Python (datetime.datetime)
+    Obtiene las habitaciones disponibles (no tienen reservas que colisionen con [start_dt, end_dt)).
+    start_dt y end_dt son objetos datetime.datetime (o None).
     """
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
             if start_dt and end_dt:
-                # Debug: imprimimos parámetros
-                print("SQL Params:", start_dt, end_dt, limit, offset)
+                # convertimos a strings en formato MySQL
+                start_str = start_dt.strftime('%Y-%m-%d %H:%M:%S')
+                end_str = end_dt.strftime('%Y-%m-%d %H:%M:%S')
 
-                # Consulta filtrando correctamente colisiones de reservas
+                print("SQL Params (start,end,limit,offset):", start_str, end_str, limit, offset)
+
                 sql = """
                     SELECT
                         h.habitacion_id,
@@ -93,22 +95,21 @@ def get_available_rooms(start_dt=None, end_dt=None, limit=20, offset=0):
                     FROM HABITACION h
                     INNER JOIN CATEGORIA c ON h.id_categoria = c.categoria_id
                     INNER JOIN PISO p ON h.piso_id = p.piso_id
-                    LEFT JOIN RESERVA_HABITACION rh ON rh.habitacion_id = h.habitacion_id
-                    LEFT JOIN RESERVA r ON r.reserva_id = rh.reserva_id
-                    WHERE r.reserva_id IS NULL
-                       OR NOT (
-                           STR_TO_DATE(CONCAT(r.fecha_ingreso, ' ', r.hora_ingreso), '%%Y-%%m-%%d %%H:%%i:%%s') < %s
-                           AND
-                           STR_TO_DATE(CONCAT(r.fecha_salida, ' ', r.hora_salida), '%%Y-%%m-%%d %%H:%%i:%%s') > %s
-                       )
+                    WHERE NOT EXISTS (
+                        SELECT 1
+                        FROM RESERVA_HABITACION rh2
+                        JOIN RESERVA r2 ON r2.reserva_id = rh2.reserva_id
+                        WHERE rh2.habitacion_id = h.habitacion_id
+                          -- existe colisión si: r2.start < end AND r2.end > start
+                          AND TIMESTAMP(r2.fecha_ingreso, COALESCE(r2.hora_ingreso, '00:00:00')) < %s
+                          AND TIMESTAMP(r2.fecha_salida, COALESCE(r2.hora_salida, '23:59:59')) > %s
+                    )
                     LIMIT %s OFFSET %s
                 """
-
-                # Pasamos parámetros en el orden correcto: end_dt primero, start_dt después
-                cursor.execute(sql, (end_dt, start_dt, limit, offset))
+                # parámetros: end_str (to compare r.start < end), start_str (to compare r.end > start)
+                cursor.execute(sql, (end_str, start_str, limit, offset))
 
             else:
-                # Si no se envían fechas, trae todas las habitaciones
                 sql = """
                     SELECT
                         h.habitacion_id,
@@ -124,9 +125,10 @@ def get_available_rooms(start_dt=None, end_dt=None, limit=20, offset=0):
                 """
                 cursor.execute(sql, (limit, offset))
 
-            # Obtenemos resultados
             rooms = cursor.fetchall()
-            print("Rooms fetched:", rooms)  # Debug: verificar qué devuelve
+            print("Rooms fetched (count):", len(rooms))
+            # imprime primero filas si necesitas debug
+            # print("Rooms fetched:", rooms)
     finally:
         connection.close()
     return rooms

@@ -1,0 +1,134 @@
+/* === FORMULARIOS DE HABITACIONES Y HUÉSPEDES === */
+
+.habitacion_form {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.5rem 1.8rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.habitacion_form:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.habitacion_form h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e6e6e6;
+  padding-bottom: 0.5rem;
+}
+
+.habitacion_form label {
+  display: block;
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.habitacion_form select {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fafafa;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.habitacion_form select:focus {
+  outline: none;
+  border-color: #007bff;
+  background-color: #fff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+}
+
+/* === CHECKBOX “YO ME HOSPEDARÉ AQUÍ” === */
+.habitacion_form input[type="checkbox"] {
+  accent-color: #007bff;
+  transform: scale(1.1);
+  margin-right: 6px;
+}
+
+.habitacion_form label[for^="yoHospedare_"] {
+  font-size: 0.9rem;
+  color: #444;
+}
+
+/* === CONTENEDOR DE HUÉSPEDES === */
+.contenedorHuespedes {
+  margin-top: 1.2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+/* === TARJETA DE HUÉSPED === */
+.huesped_card {
+  background: #f9fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  transition: all 0.2s ease;
+}
+
+.huesped_card:hover {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.huesped_card h4 {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 0.8rem;
+  font-weight: 500;
+}
+
+/* === CAMPOS DE HUÉSPED === */
+.huesped_card input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 0.7rem;
+  background-color: #fafafa;
+  transition: all 0.2s ease;
+}
+
+.huesped_card input:focus {
+  outline: none;
+  border-color: #007bff;
+  background-color: #fff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+/* === CONTENEDOR PRINCIPAL === */
+#habitacionesContainer {
+  max-width: 800px;
+  margin: 2rem auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* === ANIMACIÓN SUAVE DE APARICIÓN === */
+.huesped_card,
+.habitacion_form {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

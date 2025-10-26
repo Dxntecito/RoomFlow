@@ -17,12 +17,7 @@
   
 }
 
-.booking_label {
-  font-family: "Arimo", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 100;
-  font-style: normal;
-}
+
 .green_round_div {
   border: 1px solid green;
   height: max-content;
@@ -71,6 +66,7 @@
   border: none;
   cursor: pointer;
 }
+
 #leftTittleG {
   text-align: left;
   width: 100%;
@@ -117,11 +113,6 @@
 }
 
 
-.booking_label{
-    margin-right: 15px;
-    margin-left: 15px;
-    width: max-content;
-}
 
 #summary_booking{
     width: 95%;
@@ -235,7 +226,15 @@ input[type="checkbox"]:checked {
   font-size: 0.9rem;
   color: #333;
   font-weight: 500;
+  margin-right: 15px;
+  margin-left: 15px;
+  width: max-content;
+  font-family: "Arimo", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 100;
+  font-style: normal;
 }
+
 
 .date_input {
   appearance: none;
@@ -326,3 +325,169 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(22px);
 }
+
+
+/* === FORMULARIO CLIENTE - ESTILO MINIMALISTA === */
+
+#client_form {
+  max-width: 420px;
+  margin: 20px auto;
+  background: #ffffff;
+  padding: 1rem 1.5rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  font-family: "Inter", Arial, sans-serif;
+  color: #333;
+}
+
+#client_form label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+#client_form input,
+#client_form select {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background-color: #fafafa;
+  transition: all 0.2s ease;
+}
+
+#client_form input:focus,
+#client_form select:focus {
+  border-color: #007bff;
+  background-color: #fff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+}
+
+/* === SWITCH === */
+.switch_container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.switch_label {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+input:checked + .slider {
+  background-color: #007bff;
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+/* === BOTONES === */
+.button_group {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 1.5rem;
+}
+
+.button_group button {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.1s ease;
+}
+
+#back_to_rooms {
+  background: #e9ecef;
+  color: #333;
+}
+
+#next_to_guests {
+  background: #007bff;
+  color: #fff;
+}
+
+.button_group button:hover {
+  transform: translateY(-1px);
+}
+
+#back_to_rooms:hover {
+  background: #d8d8d8;
+}
+
+#next_to_guests:hover {
+  background: #0066e0;
+}
+
+/* === SELECT PAÍS === */
+#pais {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' fill='%23555' width='12' height='12' viewBox='0 0 20 20'><path d='M5.516 7.548a.625.625 0 0 1 .884 0L10 11.147l3.6-3.599a.625.625 0 1 1 .884.884l-4.042 4.042a.625.625 0 0 1-.884 0L5.516 8.432a.625.625 0 0 1 0-.884z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+}
+
+/* === TRANSICIÓN SUAVE AL CAMBIAR CAMPOS === */
+.dynamic-field {
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
