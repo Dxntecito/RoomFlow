@@ -3,7 +3,7 @@
 ║  GUÍA DE INICIO RÁPIDO                                            ║
 ╚═══════════════════════════════════════════════════════════════════╝
 
-📋 ¿QUÉ SE HA AGREGADO?
+📋 ¿QUÉ SE HA AGREGADO :3?
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ✅ Sistema completo de inicio de sesión

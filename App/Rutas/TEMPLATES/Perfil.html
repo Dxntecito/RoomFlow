@@ -251,6 +251,65 @@
         border-left: 4px solid #dc3545;
     }
 
+    /* Estilos para botones de estado de incidencias */
+    .btn-estado {
+        transition: all 0.3s ease;
+        border: 2px solid;
+        background: white;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 12px;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-estado:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-estado.active {
+        color: white;
+        font-weight: 700;
+    }
+
+    .btn-estado[data-estado="1"] {
+        border-color: #28a745;
+        color: #28a745;
+    }
+
+    .btn-estado[data-estado="1"]:hover,
+    .btn-estado[data-estado="1"].active {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-estado[data-estado="2"] {
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+
+    .btn-estado[data-estado="2"]:hover,
+    .btn-estado[data-estado="2"].active {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-estado[data-estado="3"] {
+        border-color: #ffc107;
+        color: #ffc107;
+    }
+
+    .btn-estado[data-estado="3"]:hover,
+    .btn-estado[data-estado="3"].active {
+        background: #ffc107;
+        color: white;
+    }
+
     /* Secciones vacías */
     .empty-section {
         text-align: center;
@@ -713,194 +772,6 @@
             transform: translateY(0);
         }
     }
-
-    /* Notificaciones bonitas */
-    .notification-toast {
-        position: fixed;
-        top: 100px;
-        right: 20px;
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        z-index: 1000;
-        min-width: 300px;
-        max-width: 400px;
-        transform: translateX(100%);
-        transition: all 0.3s ease;
-        border-left: 4px solid #28a745;
-    }
-
-    .notification-toast.show {
-        transform: translateX(0);
-    }
-
-    .notification-toast.error {
-        border-left-color: #dc3545;
-    }
-
-    .notification-toast-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-    .notification-toast-icon {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 12px;
-        font-size: 14px;
-        color: white;
-    }
-
-    .notification-toast.success .notification-toast-icon {
-        background: #28a745;
-    }
-
-    .notification-toast.error .notification-toast-icon {
-        background: #dc3545;
-    }
-
-    .notification-toast-title {
-        font-weight: 600;
-        font-size: 16px;
-        color: #2c3e50;
-        margin: 0;
-    }
-
-    .notification-toast-message {
-        color: #6c757d;
-        font-size: 14px;
-        line-height: 1.4;
-        margin: 0;
-    }
-
-    .notification-toast-close {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: none;
-        border: none;
-        font-size: 18px;
-        color: #6c757d;
-        cursor: pointer;
-        padding: 5px;
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .notification-toast-close:hover {
-        background: #f8f9fa;
-        color: #dc3545;
-    }
-
-    /* Modal de confirmación */
-    .modal-confirm {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .modal-confirm.show {
-        opacity: 1;
-    }
-
-    .modal-confirm-content {
-        background: white;
-        border-radius: 15px;
-        padding: 30px;
-        max-width: 400px;
-        width: 90%;
-        text-align: center;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        transform: scale(0.8);
-        transition: transform 0.3s ease;
-    }
-
-    .modal-confirm.show .modal-confirm-content {
-        transform: scale(1);
-    }
-
-    .modal-confirm-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: #ffc107;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 20px;
-        font-size: 24px;
-        color: white;
-    }
-
-    .modal-confirm-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 15px;
-    }
-
-    .modal-confirm-message {
-        color: #6c757d;
-        margin-bottom: 20px;
-        line-height: 1.4;
-    }
-
-    .modal-confirm-buttons {
-        display: flex;
-        gap: 15px;
-        justify-content: center;
-    }
-
-    .btn-confirm {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .btn-confirm-danger {
-        background: #dc3545;
-        color: white;
-    }
-
-    .btn-confirm-danger:hover {
-        background: #c82333;
-        transform: translateY(-2px);
-    }
-
-    .btn-confirm-secondary {
-        background: #6c757d;
-        color: white;
-    }
-
-    .btn-confirm-secondary:hover {
-        background: #5a6268;
-        transform: translateY(-2px);
-    }
 </style>
 {% endblock %}
 
@@ -1030,11 +901,163 @@
 
             <!-- Sección: Gestionar Incidencias -->
             <div class="section-content" id="incidencias">
-                <h2 class="section-title">Gestionar Incidencias</h2>
-                <div class="empty-section">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>Próximamente</h3>
-                    <p>Esta sección estará disponible pronto</p>
+                <!-- Alertas de incidencias -->
+                <div class="alert alert-success" id="alert-incidencia-success" style="display: none;">
+                    <i class="fas fa-check-circle"></i> <span id="incidencia-success-message"></span>
+                </div>
+
+                <div class="alert alert-error" id="alert-incidencia-error" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i> <span id="incidencia-error-message"></span>
+                </div>
+
+                <!-- Panel principal de incidencias -->
+                <div id="panel-incidencias">
+                    <!-- Encabezado con título y búsqueda -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                        <h2 style="margin: 0; color: #328336;">
+                            <i class="fas fa-exclamation-triangle"></i> Mis Incidencias
+                        </h2>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="buscar-incidencias" placeholder="Buscar incidencias..." style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; width: 250px;">
+                            <button class="btn btn-primary" onclick="buscarIncidencias()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de incidencias -->
+                    <div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #328336; color: white;">
+                                <tr>
+                                    <th style="padding: 15px; text-align: left; font-weight: 600;">Fecha de Envío</th>
+                                    <th style="padding: 15px; text-align: left; font-weight: 600;">Fecha de Resolución</th>
+                                    <th style="padding: 15px; text-align: left; font-weight: 600;">Título</th>
+                                    <th style="padding: 15px; text-align: left; font-weight: 600;">Estado</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: 600;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-incidencias">
+                                <tr>
+                                    <td colspan="5" style="padding: 40px; text-align: center; color: #999;">
+                                        <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 10px;"></i>
+                                        <p>Cargando incidencias...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Botón crear incidencia -->
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="mostrarFormularioIncidencia()" style="padding: 12px 24px; font-size: 16px;">
+                            <i class="fas fa-plus"></i> Crear Incidencia
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Formulario de nueva/editar incidencia -->
+                <div id="formulario-incidencia" style="display: none; margin-bottom: 30px; padding: 30px; background: #f8f9fa; border-radius: 10px; position: relative; z-index: 1000; border: 2px solid #328336;">
+                    <h3 style="margin-bottom: 25px; color: #328336;">
+                        <i class="fas fa-file-alt"></i> 
+                        <span id="form-titulo">Nueva Incidencia</span>
+                    </h3>
+                    
+                    <form id="form-nueva-incidencia" enctype="multipart/form-data">
+                        <input type="hidden" id="incidencia_id_edit" name="incidencia_id" value="">
+                        
+                        <!-- Datos de Incidencia -->
+                        <h4 style="color: #328336; margin-bottom: 20px; font-size: 18px; border-bottom: 2px solid #328336; padding-bottom: 10px;">
+                            Datos de Incidencia
+                        </h4>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="incidencia-titulo">Título *</label>
+                            <input type="text" id="incidencia-titulo" name="titulo" class="form-control" required maxlength="255" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="incidencia-descripcion">Descripción *</label>
+                            <textarea id="incidencia-descripcion" name="descripcion" class="form-control" required rows="4" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; resize: vertical;"></textarea>
+                        </div>
+
+                        <div class="form-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label for="incidencia-tipo">Tipo de Incidencia *</label>
+                                <select id="incidencia-tipo" name="tipo_incidencia_id" class="form-control" required style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                                    <option value="">Seleccione...</option>
+                                    <option value="1">Reserva</option>
+                                    <option value="2">RoomService</option>
+                                    <option value="3">Evento</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="incidencia-comprobante">Comprobante</label>
+                                <input type="text" id="incidencia-comprobante" name="numero_comprobante" class="form-control" maxlength="20" placeholder="Ej: B001-0001" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="incidencia-evidencia">Evidencia (Imagen)</label>
+                                <input type="file" id="incidencia-evidencia" name="evidencia" class="form-control" accept="image/*" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                                <small style="color: #666; font-size: 12px;">Formatos: JPG, PNG, GIF (Máx. 5MB)</small>
+                            </div>
+                        </div>
+
+                        <!-- Evaluación (Para administradores) -->
+                        <div id="seccion-evaluacion" style="margin-top: 30px; display: none;">
+                            <h4 style="color: #328336; margin-bottom: 20px; font-size: 18px; border-bottom: 2px solid #328336; padding-bottom: 10px;">
+                                <i class="fas fa-cogs"></i> Evaluación y Respuesta
+                            </h4>
+                            
+                            <!-- Estado de la incidencia -->
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #328336;">
+                                    Estado de la Incidencia
+                                </label>
+                                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                                        <input type="radio" name="estado_incidencia" value="3" id="estado-proceso" style="margin: 0;">
+                                        <span style="color: #ffc107; font-weight: 600;">
+                                            <i class="fas fa-clock"></i> En Proceso
+                                        </span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                                        <input type="radio" name="estado_incidencia" value="1" id="estado-aprobado" style="margin: 0;">
+                                        <span style="color: #28a745; font-weight: 600;">
+                                            <i class="fas fa-check-circle"></i> Aprobado
+                                        </span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                                        <input type="radio" name="estado_incidencia" value="2" id="estado-rechazado" style="margin: 0;">
+                                        <span style="color: #dc3545; font-weight: 600;">
+                                            <i class="fas fa-times-circle"></i> Rechazado
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Respuesta del hotel -->
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="incidencia-respuesta" style="display: block; margin-bottom: 10px; font-weight: 600; color: #328336;">
+                                    <i class="fas fa-reply"></i> Respuesta del Hotel
+                                </label>
+                                <textarea id="incidencia-respuesta" name="respuesta" class="form-control" rows="4" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; resize: vertical;" placeholder="Escriba la respuesta del hotel..."></textarea>
+                                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                                    <i class="fas fa-info-circle"></i> Esta respuesta será visible para el cliente
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="form-actions" style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px; padding-top: 25px; border-top: 2px solid #e0e0e0;">
+                            <button type="button" class="btn btn-secondary" onclick="volverALista()">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="btn-guardar-incidencia">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -1061,7 +1084,7 @@
                             <input type="text" id="search-input" name="search" class="search-input"
                                 placeholder="Buscar por nombre, apellido o numero telefonico...">
 
-                            <button type="button" class="search-button" onclick="buscarYMostrarResultado()">
+                            <button type="button" class="search-button" onclick="filtrarEmpleados()">
                                 <i class="fas fa-search"></i>
                             </button>
                         </div>
@@ -1217,13 +1240,12 @@
                     </div>
                     <div class="detail-group">
                         <label class="detail-label" for="crear_dni">DNI *</label>
-                        <input type="text" id="crear_dni" name="dni" class="detail-value" maxlength="8" pattern="[0-9]+"
-                            title="Solo números" required>
+                        <input type="text" id="crear_dni" name="dni" class="detail-value" maxlength="8" required>
                     </div>
                     <div class="detail-group">
                         <label class="detail-label" for="crear_telefono">Teléfono *</label>
                         <input type="text" id="crear_telefono" name="telefono" class="detail-value" maxlength="9"
-                            pattern="[0-9]+" title="Solo números" required>
+                            required>
                     </div>
                     <div class="detail-group">
                         <label class="detail-label" for="crear_sexo">Sexo *</label>
@@ -1244,9 +1266,7 @@
                     </div>
                     <div class="detail-group">
                         <label class="detail-label" for="crear_codigo">Código de Empleado *</label>
-                        <input type="text" id="crear_codigo" name="codigo" class="detail-value" readonly
-                            style="background-color: #f8f9fa;">
-                        <small style="color: #6c757d; font-size: 12px;">Se genera automáticamente</small>
+                        <input type="text" id="crear_codigo" name="codigo" class="detail-value" required>
                     </div>
                 </div>
             </form>
@@ -1259,170 +1279,6 @@
             <button class="btn-modal btn-modal-primary" onclick="guardarEmpleado()">
                 <i class="fas fa-save"></i>
                 Guardar
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de editar empleado -->
-<div id="modalEditar" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 class="modal-title">Editar Empleado</h3>
-            <button class="modal-close" onclick="cerrarModal('modalEditar')">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <form id="formEditarEmpleado">
-                <div class="employee-details">
-                    <div class="detail-group">
-                        <label class="detail-label" for="editar_nombres">Nombres *</label>
-                        <input type="text" id="editar_nombres" name="nombres" class="detail-value" required>
-                    </div>
-                    <div class="detail-group">
-                        <label class="detail-label" for="editar_ape_paterno">Apellido Paterno *</label>
-                        <input type="text" id="editar_ape_paterno" name="ape_paterno" class="detail-value" required>
-                    </div>
-                    <div class="detail-group">
-                        <label class="detail-label" for="editar_ape_materno">Apellido Materno *</label>
-                        <input type="text" id="editar_ape_materno" name="ape_materno" class="detail-value" required>
-                    </div>
-                    <div class="detail-group">
-                        <label class="detail-label" for="editar_dni">DNI *</label>
-                        <input type="text" id="editar_dni" name="dni" class="detail-value" maxlength="8" required>
-                    </div>
-                    <div class="detail-group">
-                        <label class="detail-label" for="editar_telefono">Teléfono *</label>
-                        <input type="text" id="editar_telefono" name="telefono" class="detail-value" maxlength="9"
-                            required>
-                    </div>
-                    <div class="detail-group">
-                        <label class="detail-label" for="editar_sexo">Sexo *</label>
-                        <select id="editar_sexo" name="sexo" class="detail-value" required>
-                            <option value="">Seleccione</option>
-                            <option value="M">Masculino</option>
-                            <option value="F">Femenino</option>
-                        </select>
-                    </div>
-                    <div class="detail-group">
-                        <label class="detail-label" for="editar_rol">Rol *</label>
-                        <select id="editar_rol" name="rol" class="detail-value" required>
-                            <option value="">Seleccione rol</option>
-                            <option value="1">Recepcionista</option>
-                            <option value="2">Administrador</option>
-                            <option value="3">Limpieza</option>
-                        </select>
-                    </div>
-                    <div class="detail-group">
-                        <label class="detail-label" for="editar_codigo">Código de Empleado *</label>
-                        <input type="text" id="editar_codigo" name="codigo" class="detail-value" readonly
-                            style="background-color: #f8f9fa;">
-                        <small style="color: #6c757d; font-size: 12px;">Se genera automáticamente</small>
-                    </div>
-                    <div class="detail-group">
-                        <label class="detail-label" for="editar_estado">Estado *</label>
-                        <select id="editar_estado" name="estado" class="detail-value" required>
-                            <option value="">Seleccione estado</option>
-                            <option value="Activo">Activo</option>
-                            <option value="Inactivo">Inactivo</option>
-                        </select>
-                    </div>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalEditar')">
-                <i class="fas fa-times"></i>
-                Cancelar
-            </button>
-            <button class="btn-modal btn-modal-primary" onclick="actualizarEmpleado()">
-                <i class="fas fa-save"></i>
-                Guardar Cambios
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de asignar turno -->
-<div id="modalAsignarTurno" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 class="modal-title">Asignar Turno</h3>
-            <button class="modal-close" onclick="cerrarModal('modalAsignarTurno')">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <form id="formAsignarTurno">
-                <div class="employee-details">
-                    <div class="detail-group">
-                        <label class="detail-label" for="asignar_dni">Nro. de documento</label>
-                        <input type="text" id="asignar_dni" name="dni" class="detail-value" readonly
-                            style="background-color: #f8f9fa;">
-                    </div>
-                    <div class="detail-group">
-                        <label class="detail-label" for="asignar_empleado">Empleado</label>
-                        <input type="text" id="asignar_empleado" name="empleado" class="detail-value" readonly
-                            style="background-color: #f8f9fa;">
-                    </div>
-                    <div class="detail-group">
-                        <label class="detail-label" for="asignar_turno">Turno *</label>
-                        <select id="asignar_turno" name="turno" class="detail-value" required>
-                            <option value="">Seleccione turno</option>
-                            <option value="1">Mañana</option>
-                            <option value="2">Tarde</option>
-                            <option value="3">Noche</option>
-                        </select>
-                    </div>
-                    <!-- Campo oculto para el empleado_id -->
-                    <input type="hidden" id="asignar_empleado_id" name="empleado_id" value="">
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalAsignarTurno')">
-                <i class="fas fa-times"></i>
-                Cancelar
-            </button>
-            <button class="btn-modal btn-modal-primary" onclick="guardarTurno()">
-                <i class="fas fa-save"></i>
-                Guardar
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Notificaciones toast (oculto por defecto) -->
-<div id="notification-toast" class="notification-toast" style="display: none;">
-    <button class="notification-toast-close" onclick="cerrarNotificacionToast()">
-        <i class="fas fa-times"></i>
-    </button>
-    <div class="notification-toast-header">
-        <div class="notification-toast-icon">
-            <i class="fas fa-check"></i>
-        </div>
-        <h4 class="notification-toast-title">Título</h4>
-    </div>
-    <p class="notification-toast-message">Mensaje</p>
-</div>
-
-<!-- Modal de confirmación (oculto por defecto) -->
-<div id="modal-confirm" class="modal-confirm" style="display: none;">
-    <div class="modal-confirm-content">
-        <div class="modal-confirm-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <h3 class="modal-confirm-title">Confirmar Acción</h3>
-        <p class="modal-confirm-message">¿Estás seguro?</p>
-        <div class="modal-confirm-buttons">
-            <button class="btn-confirm btn-confirm-danger" onclick="confirmarAccion()">
-                <i class="fas fa-trash"></i>
-                Eliminar
-            </button>
-            <button class="btn-confirm btn-confirm-secondary" onclick="cancelarAccion()">
-                <i class="fas fa-times"></i>
-                Cancelar
             </button>
         </div>
     </div>
@@ -1595,59 +1451,14 @@
 
     // Función para mostrar formulario de crear empleado
     function mostrarFormularioCrear() {
-        // Limpiar formulario
-        document.getElementById('formCrearEmpleado').reset();
-        document.getElementById('modalCrear').classList.add('show');
-
-        // Agregar event listeners para generar código automáticamente
-        const rolSelect = document.getElementById('crear_rol');
-        const telefonoInput = document.getElementById('crear_telefono');
-        const codigoInput = document.getElementById('crear_codigo');
-
-        function generarCodigo() {
-            const rol = rolSelect.value;
-            const dni = document.getElementById('crear_dni').value;
-
-            if (rol && dni) {
-                let prefijo = '';
-                switch (rol) {
-                    case '1': prefijo = 'RE'; break; // Recepcionista
-                    case '2': prefijo = 'AD'; break; // Administrador
-                    case '3': prefijo = 'LI'; break; // Limpieza
-                }
-
-                // Usar el DNI completo
-                const codigo = prefijo + dni;
-
-                codigoInput.value = codigo;
-            } else {
-                codigoInput.value = '';
-            }
-        }
-
-        // Event listeners
-        rolSelect.addEventListener('change', generarCodigo);
-        document.getElementById('crear_dni').addEventListener('input', function (e) {
-            // Solo permitir números
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
-            generarCodigo();
-        });
-
-        // Validación para teléfono (solo números)
-        document.getElementById('crear_telefono').addEventListener('input', function (e) {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
-        });
+        alert('Funcionalidad de crear empleado - Próximamente implementada');
+        // Aquí se puede implementar un modal o formulario para crear empleados
     }
 
     // Datos de empleados (se cargarán desde la base de datos)
     let empleadosData = [];
 
-    // Variables para modales y notificaciones
-    let confirmCallback = null;
-    let empleadoEditando = null;
-
-
-    // Función para filtrar empleados (solo filtra, no abre modales)
+    // Función para filtrar empleados
     function filtrarEmpleados() {
         const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
         const rolFilter = document.getElementById('rol-filter').value;
@@ -1679,60 +1490,16 @@
         });
 
         mostrarEmpleados(empleadosFiltrados);
-    }
 
-    // Función para buscar y mostrar resultado (solo cuando se hace clic en el botón)
-    function buscarYMostrarResultado() {
-        const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
-        const rolFilter = document.getElementById('rol-filter').value;
-
-        let empleadosFiltrados = empleadosData.filter(empleado => {
-            // Búsqueda más inteligente
-            let cumpleBusqueda = false;
-
-            if (searchTerm === '') {
-                cumpleBusqueda = true; // Si no hay término de búsqueda, mostrar todos
-            } else {
-                // Buscar en nombre completo
-                const nombreCompleto = empleado.nombre.toLowerCase();
-
-                // Buscar por palabras que empiecen con el término
-                const palabras = nombreCompleto.split(' ');
-                cumpleBusqueda = palabras.some(palabra => palabra.startsWith(searchTerm));
-
-                // También buscar en teléfono si es numérico
-                if (!cumpleBusqueda && /^\d+$/.test(searchTerm)) {
-                    cumpleBusqueda = empleado.telefono.includes(searchTerm);
-                }
-            }
-
-            // Filtro por rol
-            const cumpleRol = !rolFilter || empleado.rol.toLowerCase().includes(rolFilter.toLowerCase());
-
-            return cumpleBusqueda && cumpleRol;
-        });
-
-        mostrarEmpleados(empleadosFiltrados);
-
-        // Solo abrir modal si hay un resultado y se está buscando algo específico
+        // Si hay un solo resultado y se está buscando, mostrar detalles automáticamente
         if (empleadosFiltrados.length === 1 && searchTerm !== '') {
             mostrarDetallesEmpleado(empleadosFiltrados[0].id);
-        } else if (empleadosFiltrados.length === 0 && searchTerm !== '') {
-            alert('No se encontraron empleados con ese criterio de búsqueda');
-        } else if (empleadosFiltrados.length > 1) {
-            alert(`Se encontraron ${empleadosFiltrados.length} empleados. Haz clic en uno para ver sus detalles.`);
         }
     }
 
     // Función para mostrar empleados en la tabla
     function mostrarEmpleados(empleados) {
-        console.log('Mostrando empleados:', empleados.length);
         const tbody = document.querySelector('#empleados .empleados-table tbody');
-
-        if (!tbody) {
-            console.error('No se encontró el tbody de la tabla');
-            return;
-        }
 
         if (empleados.length === 0) {
             tbody.innerHTML = `
@@ -1746,7 +1513,7 @@
             return;
         }
 
-        const html = empleados.map(empleado => `
+        tbody.innerHTML = empleados.map(empleado => `
             <tr onclick="mostrarDetallesEmpleado(${empleado.id})" style="cursor: pointer;">
                 <td class="phone-cell">${empleado.telefono}</td>
                 <td class="name-cell">${empleado.nombre}</td>
@@ -1768,15 +1535,6 @@
                 </td>
             </tr>
         `).join('');
-
-        tbody.innerHTML = html;
-        console.log('HTML generado y aplicado');
-
-        // Actualizar el contador de empleados si existe
-        const contador = document.querySelector('#empleados .empleados-count');
-        if (contador) {
-            contador.textContent = `Mostrando ${empleados.length} empleado(s)`;
-        }
     }
 
     // Funciones para las acciones de empleados
@@ -1787,43 +1545,19 @@
 
     function editarEmpleado(id) {
         const empleado = empleadosData.find(e => e.id === id);
-        if (!empleado) return;
-
-        // Mostrar modal de edición
-        mostrarModalEdicion(empleado);
+        alert(`Editar empleado: ${empleado.nombre}`);
     }
 
-    async function eliminarEmpleado(id) {
+    function eliminarEmpleado(id) {
         const empleado = empleadosData.find(e => e.id === id);
-        if (!empleado) return;
-
-        // Mostrar modal de confirmación bonito
-        mostrarModalConfirmacion(
-            'Eliminar Empleado',
-            `¿Estás seguro de que quieres eliminar a <strong>${empleado.nombre}</strong>?`,
-            'Esta acción eliminará permanentemente el empleado de la base de datos.',
-            async () => {
-                try {
-                    // Eliminar de la base de datos
-                    const response = await fetch(`/Cruds/Empleados/eliminar/${id}`, {
-                        method: 'POST'
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        // Recargar la lista desde la BD
-                        await cargarEmpleados();
-                        mostrarNotificacionBonita('success', 'Empleado Eliminado', `${empleado.nombre} ha sido eliminado permanentemente.`);
-                    } else {
-                        mostrarNotificacionBonita('error', 'Error', result.message);
-                    }
-                } catch (error) {
-                    console.error('Error al eliminar empleado:', error);
-                    mostrarNotificacionBonita('error', 'Error', 'Error al eliminar el empleado. Intente nuevamente.');
-                }
-            }
-        );
+        if (confirm(`¿Está seguro de eliminar a ${empleado.nombre}?`)) {
+            // Remover de la lista
+            const index = empleadosData.findIndex(e => e.id === id);
+            empleadosData.splice(index, 1);
+            // Refiltrar y mostrar
+            filtrarEmpleados();
+            alert('Empleado eliminado exitosamente');
+        }
     }
 
     // Función para cargar empleados desde la base de datos
@@ -1903,151 +1637,18 @@
         // Limpiar formulario
         document.getElementById('formCrearEmpleado').reset();
         document.getElementById('modalCrear').classList.add('show');
-
-        // Agregar event listeners para generar código automáticamente
-        const rolSelect = document.getElementById('crear_rol');
-        const telefonoInput = document.getElementById('crear_telefono');
-        const codigoInput = document.getElementById('crear_codigo');
-
-        function generarCodigo() {
-            const rol = rolSelect.value;
-            const dni = document.getElementById('crear_dni').value;
-
-            if (rol && dni) {
-                let prefijo = '';
-                switch (rol) {
-                    case '1': prefijo = 'RE'; break; // Recepcionista
-                    case '2': prefijo = 'AD'; break; // Administrador
-                    case '3': prefijo = 'LI'; break; // Limpieza
-                }
-
-                // Usar el DNI completo
-                const codigo = prefijo + dni;
-
-                codigoInput.value = codigo;
-            } else {
-                codigoInput.value = '';
-            }
-        }
-
-        // Event listeners
-        rolSelect.addEventListener('change', generarCodigo);
-        document.getElementById('crear_dni').addEventListener('input', function (e) {
-            // Solo permitir números
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
-            generarCodigo();
-        });
     }
 
     function cerrarModal(modalId) {
         document.getElementById(modalId).classList.remove('show');
     }
 
-    function mostrarModalEdicion(empleado) {
-        empleadoEditando = empleado;
-
-        // Llenar formulario con datos del empleado
-        document.getElementById('editar_nombres').value = empleado.nombres || '';
-        document.getElementById('editar_ape_paterno').value = empleado.ape_paterno || '';
-        document.getElementById('editar_ape_materno').value = empleado.ape_materno || '';
-        document.getElementById('editar_dni').value = empleado.dni || '';
-        document.getElementById('editar_telefono').value = empleado.telefono || '';
-        document.getElementById('editar_sexo').value = empleado.sexo || '';
-        document.getElementById('editar_rol').value = empleado.rol_id || '';
-        document.getElementById('editar_codigo').value = empleado.codigo || '';
-        document.getElementById('editar_estado').value = empleado.estado || '';
-
-        // Agregar event listeners para generar código automáticamente
-        const rolSelect = document.getElementById('editar_rol');
-        const dniInput = document.getElementById('editar_dni');
-        const codigoInput = document.getElementById('editar_codigo');
-
-        function generarCodigoEdicion() {
-            const rol = rolSelect.value;
-            const dni = dniInput.value;
-
-            if (rol && dni) {
-                let prefijo = '';
-                switch (rol) {
-                    case '1': prefijo = 'RE'; break; // Recepcionista
-                    case '2': prefijo = 'AD'; break; // Administrador
-                    case '3': prefijo = 'LI'; break; // Limpieza
-                }
-
-                // Usar el DNI completo
-                const codigo = prefijo + dni;
-                codigoInput.value = codigo;
-            } else {
-                codigoInput.value = '';
-            }
-        }
-
-        // Event listeners
-        rolSelect.addEventListener('change', generarCodigoEdicion);
-        dniInput.addEventListener('input', function (e) {
-            // Solo permitir números
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
-            generarCodigoEdicion();
-        });
-
-        // Validación para teléfono (solo números)
-        document.getElementById('editar_telefono').addEventListener('input', function (e) {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
-        });
-
-        // Mostrar modal
-        document.getElementById('modalEditar').classList.add('show');
-    }
-
-    async function actualizarEmpleado() {
-        if (!empleadoEditando) return;
-
-        const form = document.getElementById('formEditarEmpleado');
-        const formData = new FormData(form);
-
-        // Validar campos requeridos
-        const camposRequeridos = ['nombres', 'ape_paterno', 'ape_materno', 'dni', 'telefono', 'sexo', 'rol', 'estado'];
-        let camposFaltantes = [];
-
-        camposRequeridos.forEach(campo => {
-            if (!formData.get(campo)) {
-                camposFaltantes.push(campo);
-            }
-        });
-
-        if (camposFaltantes.length > 0) {
-            mostrarNotificacionBonita('error', 'Campos Faltantes', 'Por favor complete todos los campos requeridos');
-            return;
-        }
-
-        try {
-            // Enviar datos al servidor
-            const response = await fetch(`/Cruds/Empleados/actualizar/${empleadoEditando.id}`, {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                cerrarModal('modalEditar');
-                cargarEmpleados();
-                mostrarNotificacionBonita('success', 'Empleado Actualizado', result.message);
-            } else {
-                mostrarNotificacionBonita('error', 'Error', result.message);
-            }
-        } catch (error) {
-            console.error('Error al actualizar empleado:', error);
-            mostrarNotificacionBonita('error', 'Error', 'Error al actualizar el empleado. Intente nuevamente.');
-        }
-    }
-
-    async function guardarEmpleado() {
+    function guardarEmpleado() {
         const form = document.getElementById('formCrearEmpleado');
         const formData = new FormData(form);
 
-        // Validar campos requeridos (excluyendo codigo ya que se genera automáticamente)
-        const camposRequeridos = ['nombres', 'ape_paterno', 'ape_materno', 'dni', 'telefono', 'sexo', 'rol'];
+        // Validar campos requeridos
+        const camposRequeridos = ['nombres', 'ape_paterno', 'ape_materno', 'dni', 'telefono', 'sexo', 'rol', 'codigo'];
         let camposFaltantes = [];
 
         camposRequeridos.forEach(campo => {
@@ -2061,185 +1662,15 @@
             return;
         }
 
-        try {
-            // Enviar datos al servidor
-            const response = await fetch('/Cruds/Empleados/crear', {
-                method: 'POST',
-                body: formData
-            });
+        // Aquí iría la lógica para guardar el empleado
+        console.log('Guardando empleado:', Object.fromEntries(formData));
 
-            const result = await response.json();
+        // Simular guardado exitoso
+        alert('Empleado creado exitosamente');
+        cerrarModal('modalCrear');
 
-            if (result.success) {
-                cerrarModal('modalCrear');
-                cargarEmpleados();
-                mostrarNotificacionBonita('success', 'Empleado Creado', result.message);
-            } else {
-                mostrarNotificacionBonita('error', 'Error', result.message);
-            }
-        } catch (error) {
-            console.error('Error al guardar empleado:', error);
-            alert('Error al guardar el empleado. Intente nuevamente.');
-        }
-    }
-
-
-    // Funciones para notificaciones bonitas
-    function mostrarNotificacionBonita(tipo, titulo, mensaje) {
-        const toast = document.getElementById('notification-toast');
-        const icon = toast.querySelector('.notification-toast-icon i');
-        const title = toast.querySelector('.notification-toast-title');
-        const message = toast.querySelector('.notification-toast-message');
-
-        // Configurar contenido
-        title.textContent = titulo;
-        message.textContent = mensaje;
-
-        // Configurar tipo
-        toast.className = `notification-toast ${tipo}`;
-
-        if (tipo === 'success') {
-            icon.className = 'fas fa-check';
-        } else {
-            icon.className = 'fas fa-times';
-        }
-
-        // Mostrar notificación
-        toast.style.display = 'block';
-        toast.classList.add('show');
-
-        // Auto-cerrar después de 4 segundos
-        setTimeout(() => {
-            cerrarNotificacionToast();
-        }, 4000);
-    }
-
-    function cerrarNotificacionToast() {
-        const toast = document.getElementById('notification-toast');
-        toast.classList.remove('show');
-        setTimeout(() => {
-            toast.style.display = 'none';
-        }, 300);
-    }
-
-    function mostrarModalConfirmacion(titulo, mensaje, descripcion, callback) {
-        const modal = document.getElementById('modal-confirm');
-        const title = modal.querySelector('.modal-confirm-title');
-        const message = modal.querySelector('.modal-confirm-message');
-
-        title.textContent = titulo;
-        message.innerHTML = mensaje + '<br><small>' + descripcion + '</small>';
-
-        confirmCallback = callback;
-        modal.style.display = 'flex';
-        modal.classList.add('show');
-    }
-
-    function confirmarAccion() {
-        if (confirmCallback) {
-            confirmCallback();
-        }
-        cerrarModalConfirmacion();
-    }
-
-    function cancelarAccion() {
-        cerrarModalConfirmacion();
-    }
-
-    function cerrarModalConfirmacion() {
-        const modal = document.getElementById('modal-confirm');
-        modal.classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300);
-        confirmCallback = null;
-    }
-
-    // Funciones para asignar turno
-    async function asignarTurno(id) {
-        const empleado = empleadosData.find(e => e.id === id);
-        if (!empleado) return;
-
-        // Limpiar formulario y llenar datos
-        document.getElementById('formAsignarTurno').reset();
-        document.getElementById('asignar_dni').value = empleado.dni;
-        document.getElementById('asignar_empleado').value = empleado.nombre;
-        document.getElementById('asignar_empleado_id').value = empleado.id;
-
-        // Cargar turnos y turno actual
-        await cargarTurnosParaAsignar();
-        await cargarTurnoActual(empleado.id);
-
-        // Mostrar modal
-        document.getElementById('modalAsignarTurno').classList.add('show');
-    }
-
-    async function guardarTurno() {
-        const form = document.getElementById('formAsignarTurno');
-        const formData = new FormData(form);
-
-        const empleado_id = formData.get('empleado_id');
-        const turno = formData.get('turno');
-
-        if (!empleado_id || !turno) {
-            mostrarNotificacionBonita('error', 'Campos Faltantes', 'Complete todos los campos requeridos');
-            return;
-        }
-
-        try {
-            const response = await fetch('/Cruds/Empleados/asignar-turno', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                cerrarModal('modalAsignarTurno');
-                cargarEmpleados();
-                mostrarNotificacionBonita('success', 'Turno Asignado', result.message);
-            } else {
-                mostrarNotificacionBonita('error', 'Error', result.message);
-            }
-        } catch (error) {
-            console.error('Error al asignar turno:', error);
-            mostrarNotificacionBonita('error', 'Error', 'Error al asignar turno');
-        }
-    }
-
-    async function cargarTurnosParaAsignar() {
-        try {
-            const response = await fetch('/Cruds/Empleados/turnos');
-            const result = await response.json();
-            const selectTurno = document.getElementById('asignar_turno');
-            selectTurno.innerHTML = '<option value="">Seleccione turno</option>';
-            if (result.success && result.turnos) {
-                result.turnos.forEach(turno => {
-                    const option = document.createElement('option');
-                    option.value = turno.id;
-                    option.textContent = turno.nombre;
-                    selectTurno.appendChild(option);
-                });
-            }
-        } catch (error) {
-            console.error('Error al cargar turnos:', error);
-            mostrarNotificacionBonita('error', 'Error', 'No se pudieron cargar los turnos.');
-        }
-    }
-
-    async function cargarTurnoActual(empleado_id) {
-        try {
-            const response = await fetch(`/Cruds/Empleados/turno-actual/${empleado_id}`);
-            const result = await response.json();
-            const selectTurno = document.getElementById('asignar_turno');
-
-            if (result.success && result.turno) {
-                // Seleccionar el turno actual
-                selectTurno.value = result.turno.id;
-            }
-        } catch (error) {
-            console.error('Error al cargar turno actual:', error);
-        }
+        // Recargar la lista de empleados
+        cargarEmpleados();
     }
 
     // Cerrar modales al hacer clic fuera de ellos
@@ -2247,8 +1678,885 @@
         if (e.target.classList.contains('modal')) {
             e.target.classList.remove('show');
         }
-        if (e.target.classList.contains('modal-confirm')) {
-            cerrarModalConfirmacion();
+    });
+
+    // ============================================
+    // FUNCIONES PARA GESTIONAR INCIDENCIAS
+    // ============================================
+
+    let tiposIncidencia = [];
+    let incidenciaActual = null;
+    let todasLasIncidencias = [];
+    let esAdministrador = false; // Variable para detectar si es administrador
+
+    // Cargar tipos de incidencia al inicio
+    async function cargarTiposIncidencia() {
+        try {
+            const response = await fetch('/incidentes/tipos');
+            const data = await response.json();
+            
+            if (data.success) {
+                tiposIncidencia = data.tipos;
+                const select = document.getElementById('incidencia-tipo');
+                select.innerHTML = '<option value="">Seleccione...</option>';
+                
+                tiposIncidencia.forEach(tipo => {
+                    const option = document.createElement('option');
+                    option.value = tipo.id_tipo;
+                    option.textContent = tipo.nombre;
+                    select.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error al cargar tipos de incidencia:', error);
+        }
+    }
+
+    // Cargar incidencias del cliente o todas si es administrador
+    async function cargarIncidencias() {
+        try {
+            // Detectar si es administrador (rol_id = 1)
+            const rolId = parseInt('{{ session.get("rol_id", 0) }}');
+            esAdministrador = (rolId === 1);
+            
+            console.log('🔍 Debug cargarIncidencias:');
+            console.log('- rolId:', rolId);
+            console.log('- esAdministrador:', esAdministrador);
+            
+            let url = '/incidentes/mis-incidencias';
+            if (esAdministrador) {
+                url = '/incidentes/todas'; // Endpoint para todas las incidencias
+                console.log('✅ Usuario es administrador, cargando todas las incidencias');
+            } else {
+                console.log('👤 Usuario normal, cargando solo sus incidencias');
+            }
+            
+            console.log('- URL a consultar:', url);
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            console.log('- Respuesta del servidor:', data);
+            
+            if (data.success) {
+                todasLasIncidencias = data.incidencias;
+                mostrarTablaIncidencias(data.incidencias);
+                
+                // Actualizar título si es administrador
+                if (esAdministrador) {
+                    const titulo = document.querySelector('#panel-incidencias h2');
+                    if (titulo) {
+                        titulo.textContent = 'Todas las Incidencias';
+                    }
+                }
+            } else {
+                mostrarErrorTabla(data.message || 'Error al cargar incidencias');
+            }
+        } catch (error) {
+            console.error('Error al cargar incidencias:', error);
+            mostrarErrorTabla('Error al cargar las incidencias');
+        }
+    }
+
+    // Mostrar tabla de incidencias
+    function mostrarTablaIncidencias(incidencias) {
+        const tbody = document.getElementById('tabla-incidencias');
+        
+        if (incidencias.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="padding: 40px; text-align: center; color: #999;">
+                        <i class="fas fa-inbox" style="font-size: 48px; color: #ddd; margin-bottom: 15px;"></i>
+                        <h4 style="color: #666; margin-bottom: 10px;">No hay incidencias registradas</h4>
+                        <p>Haz clic en "Crear Incidencia" para reportar un problema</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        incidencias.forEach(inc => {
+            // Determinar color del estado
+            let estadoColor = '#ffc107';
+            let estadoIcon = 'fa-clock';
+            let estadoTexto = 'En proceso';
+            
+            if (inc.estado === 1) {
+                estadoColor = '#28a745';
+                estadoIcon = 'fa-check-circle';
+                estadoTexto = 'Aprobado';
+            } else if (inc.estado === 2) {
+                estadoColor = '#dc3545';
+                estadoIcon = 'fa-times-circle';
+                estadoTexto = 'Rechazado';
+            }
+
+            html += `
+                <tr style="border-bottom: 1px solid #e0e0e0;">
+                    <td style="padding: 15px;">${inc.fecha_envio}</td>
+                    <td style="padding: 15px;">${inc.fecha_resolucion || '-'}</td>
+                    <td style="padding: 15px; font-weight: 600;">${inc.titulo}</td>
+                    <td style="padding: 15px;">
+                        <span style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: ${estadoColor}20; color: ${estadoColor};">
+                            <i class="fas ${estadoIcon}"></i> ${estadoTexto}
+                        </span>
+                    </td>
+                    <td style="padding: 15px; text-align: center;">
+                        <button onclick="verIncidencia(${inc.incidencia_id})" style="background: #17a2b8; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; margin-right: 5px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;" title="Ver incidencia">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button onclick="console.log('🔧 Botón editar clickeado para ID:', ${inc.incidencia_id}); console.log('🔍 Función editarIncidencia existe:', typeof editarIncidencia); if (typeof editarIncidencia === 'function') { editarIncidencia(${inc.incidencia_id}); } else { console.error('❌ Función editarIncidencia no encontrada'); }" style="background: #ffc107; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;" title="Editar incidencia">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+    }
+
+    // Mostrar error en tabla
+    function mostrarErrorTabla(mensaje) {
+        const tbody = document.getElementById('tabla-incidencias');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="padding: 40px; text-align: center; color: #dc3545;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 32px;"></i>
+                    <p style="margin-top: 15px;">${mensaje}</p>
+                </td>
+            </tr>
+        `;
+    }
+
+    // Buscar incidencias
+    function buscarIncidencias() {
+        const termino = document.getElementById('buscar-incidencias').value.toLowerCase();
+        const incidenciasFiltradas = todasLasIncidencias.filter(inc => 
+            inc.titulo.toLowerCase().includes(termino) ||
+            inc.descripcion.toLowerCase().includes(termino) ||
+            inc.tipo_incidencia.toLowerCase().includes(termino)
+        );
+        mostrarTablaIncidencias(incidenciasFiltradas);
+    }
+
+    // Mostrar lista de incidencias
+    function mostrarListaIncidencias(incidencias) {
+        const contenedor = document.getElementById('contenedor-incidencias');
+        
+        let html = '<div style="display: grid; gap: 20px;">';
+        
+        incidencias.forEach(inc => {
+            // Determinar color según estado
+            let estadoColor = '#ffc107'; // En proceso (amarillo)
+            let estadoIcon = 'fa-clock';
+            
+            if (inc.estado === 1) {
+                estadoColor = '#28a745'; // Aprobado (verde)
+                estadoIcon = 'fa-check-circle';
+            } else if (inc.estado === 2) {
+                estadoColor = '#dc3545'; // Rechazado (rojo)
+                estadoIcon = 'fa-times-circle';
+            }
+            
+            html += `
+                <div style="background: white; border: 2px solid #e0e0e0; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.3s; cursor: pointer;" onclick="verDetalleIncidencia(${inc.incidencia_id})">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">
+                                <i class="fas fa-file-alt" style="color: #328336;"></i> 
+                                ${inc.titulo}
+                            </h4>
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap; font-size: 13px; color: #666;">
+                                <span><i class="fas fa-tag"></i> ${inc.tipo_incidencia}</span>
+                                <span><i class="fas fa-calendar"></i> ${inc.fecha_envio}</span>
+                                ${inc.numero_comprobante ? `<span><i class="fas fa-receipt"></i> ${inc.numero_comprobante}</span>` : ''}
+                            </div>
+                        </div>
+                        <div style="padding: 8px 16px; background: ${estadoColor}; color: white; border-radius: 20px; font-weight: 600; font-size: 13px; white-space: nowrap;">
+                            <i class="fas ${estadoIcon}"></i> ${inc.estado_texto}
+                        </div>
+                    </div>
+                    
+                    <p style="margin: 0; color: #666; line-height: 1.6;">${inc.descripcion.substring(0, 150)}${inc.descripcion.length > 150 ? '...' : ''}</p>
+                    
+                    ${inc.respuesta ? `
+                        <div style="margin-top: 15px; padding: 15px; background: #e8f5e9; border-left: 4px solid #28a745; border-radius: 5px;">
+                            <strong style="color: #155724; display: block; margin-bottom: 5px;">
+                                <i class="fas fa-reply"></i> Respuesta del hotel:
+                            </strong>
+                            <p style="margin: 0; color: #155724;">${inc.respuesta}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="event.stopPropagation(); editarIncidencia(${inc.incidencia_id})" class="btn-secondary" style="padding: 8px 16px; background: #ffc107; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 13px;">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button onclick="event.stopPropagation(); eliminarIncidenciaConfirm(${inc.incidencia_id})" class="btn-secondary" style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 13px;">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        contenedor.innerHTML = html;
+    }
+
+    // Mostrar formulario para nueva incidencia
+    function mostrarFormularioIncidencia() {
+        // Ocultar panel principal
+        document.getElementById('panel-incidencias').style.display = 'none';
+        
+        // Mostrar formulario
+        document.getElementById('formulario-incidencia').style.display = 'block';
+        
+        // Configurar para nueva incidencia
+        incidenciaActual = null;
+        document.getElementById('form-titulo').textContent = 'Nueva Incidencia';
+        document.getElementById('form-nueva-incidencia').reset();
+        document.getElementById('incidencia_id_edit').value = '';
+        
+        // Configurar estado por defecto
+        actualizarEstadoVisual(3);
+        
+        // Limpiar respuesta
+        const respuesta = document.getElementById('incidencia-respuesta');
+        if (respuesta) {
+            respuesta.value = '';
+            respuesta.placeholder = 'Aún no hay respuesta del hotel...';
+        }
+        
+        // Cargar tipos de incidencia
+        cargarTiposIncidencia();
+    }
+
+    // Ver incidencia (solo lectura)
+    async function verIncidencia(incidenciaId) {
+        try {
+            const response = await fetch(`/incidentes/obtener/${incidenciaId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const inc = data.incidencia;
+                
+                // Ocultar panel principal
+                document.getElementById('panel-incidencias').style.display = 'none';
+                
+                // Mostrar formulario
+                document.getElementById('formulario-incidencia').style.display = 'block';
+                
+                // Configurar para ver
+                incidenciaActual = inc;
+                document.getElementById('form-titulo').textContent = 'Ver Incidencia';
+                
+                // Llenar campos (solo lectura)
+                document.getElementById('incidencia-titulo').value = inc.titulo;
+                document.getElementById('incidencia-descripcion').value = inc.descripcion;
+                document.getElementById('incidencia-tipo').value = inc.tipo_incidencia_id;
+                document.getElementById('incidencia-comprobante').value = inc.numero_comprobante || '';
+                document.getElementById('incidencia-respuesta').value = inc.respuesta || '';
+                
+                // Hacer campos de solo lectura
+                document.getElementById('incidencia-titulo').readOnly = true;
+                document.getElementById('incidencia-descripcion').readOnly = true;
+                document.getElementById('incidencia-tipo').disabled = true;
+                document.getElementById('incidencia-comprobante').readOnly = true;
+                document.getElementById('incidencia-evidencia').disabled = true;
+                
+                // Mostrar estado actual
+                actualizarEstadoVisual(inc.estado);
+                
+                // Ocultar botón guardar
+                document.getElementById('btn-guardar-incidencia').style.display = 'none';
+                
+            } else {
+                mostrarAlertaIncidencia('Error al cargar la incidencia', 'error');
+            }
+        } catch (error) {
+            console.error('Error al cargar incidencia:', error);
+            mostrarAlertaIncidencia('Error al cargar la incidencia', 'error');
+        }
+    }
+
+    // Editar incidencia
+    async function editarIncidencia(incidenciaId) {
+        console.log('🚀 Iniciando edición de incidencia ID:', incidenciaId);
+        
+        try {
+            // Obtener datos de la incidencia
+            const response = await fetch(`/incidentes/obtener/${incidenciaId}`);
+            const data = await response.json();
+            
+            if (!data.success) {
+                mostrarAlertaIncidencia('Error al cargar la incidencia', 'error');
+                return;
+            }
+            
+            const inc = data.incidencia;
+            console.log('✅ Incidencia cargada:', inc);
+            
+            // Detectar si es administrador
+            const rolId = parseInt('{{ session.get("rol_id", 0) }}');
+            const esAdmin = (rolId === 1);
+            console.log('🔍 Rol detectado:', rolId, '- Es admin:', esAdmin);
+            
+            // Ocultar panel de lista y mostrar formulario
+            document.getElementById('panel-incidencias').style.display = 'none';
+            document.getElementById('formulario-incidencia').style.display = 'block';
+            
+            // Configurar título y ID
+            document.getElementById('form-titulo').textContent = 'Editar Incidencia';
+            document.getElementById('incidencia_id_edit').value = inc.incidencia_id;
+            incidenciaActual = inc;
+            
+            // Llenar campos básicos
+            document.getElementById('incidencia-titulo').value = inc.titulo;
+            document.getElementById('incidencia-descripcion').value = inc.descripcion;
+            document.getElementById('incidencia-tipo').value = inc.tipo_incidencia_id;
+            document.getElementById('incidencia-comprobante').value = inc.numero_comprobante || '';
+            
+            // Cargar tipos de incidencia
+            await cargarTiposIncidencia();
+            
+            // Configurar sección de evaluación solo para administradores
+            const seccionEvaluacion = document.getElementById('seccion-evaluacion');
+            
+            if (esAdmin) {
+                console.log('✅ Mostrando controles de administrador');
+                
+                // Mostrar sección de evaluación
+                if (seccionEvaluacion) {
+                    seccionEvaluacion.style.display = 'block';
+                }
+                
+                // Configurar estado actual
+                const estadoActual = inc.estado || 3;
+                console.log('📊 Estado actual:', estadoActual);
+                
+                // Marcar el radio button correspondiente
+                const radioEstado = document.querySelector(`input[name="estado_incidencia"][value="${estadoActual}"]`);
+                if (radioEstado) {
+                    radioEstado.checked = true;
+                    console.log('✅ Radio button marcado para estado:', estadoActual);
+                }
+                
+                // Llenar respuesta del hotel
+                const campoRespuesta = document.getElementById('incidencia-respuesta');
+                if (campoRespuesta) {
+                    campoRespuesta.value = inc.respuesta || '';
+                    campoRespuesta.readOnly = false;
+                    console.log('✅ Campo de respuesta configurado');
+                }
+                
+                // Hacer campos básicos editables
+                document.getElementById('incidencia-titulo').readOnly = false;
+                document.getElementById('incidencia-descripcion').readOnly = false;
+                document.getElementById('incidencia-tipo').disabled = false;
+                document.getElementById('incidencia-comprobante').readOnly = false;
+                document.getElementById('incidencia-evidencia').disabled = false;
+                
+            } else {
+                console.log('👤 Usuario normal - modo solo lectura');
+                
+                // Ocultar sección de evaluación para usuarios normales
+                if (seccionEvaluacion) {
+                    seccionEvaluacion.style.display = 'none';
+                }
+                
+                // Hacer campos de solo lectura
+                document.getElementById('incidencia-titulo').readOnly = true;
+                document.getElementById('incidencia-descripcion').readOnly = true;
+                document.getElementById('incidencia-tipo').disabled = true;
+                document.getElementById('incidencia-comprobante').readOnly = true;
+                document.getElementById('incidencia-evidencia').disabled = true;
+            }
+            
+            // Mostrar botón guardar
+            document.getElementById('btn-guardar-incidencia').style.display = 'inline-block';
+            
+            console.log('✅ Formulario de edición configurado correctamente');
+            
+        } catch (error) {
+            console.error('❌ Error al cargar incidencia:', error);
+            mostrarAlertaIncidencia('Error al cargar la incidencia: ' + error.message, 'error');
+        }
+    }
+
+    // Volver a la lista
+    function volverALista() {
+        document.getElementById('formulario-incidencia').style.display = 'none';
+        document.getElementById('panel-incidencias').style.display = 'block';
+        
+        // Limpiar formulario
+        document.getElementById('form-nueva-incidencia').reset();
+        incidenciaActual = null;
+    }
+
+    // Cancelar formulario
+    function cancelarFormularioIncidencia() {
+        document.getElementById('formulario-incidencia').style.display = 'none';
+        document.getElementById('form-nueva-incidencia').reset();
+        incidenciaActual = null;
+    }
+
+    // Función de debug
+    function debugFormulario() {
+        console.log('🔍 === DEBUG FORMULARIO ===');
+        
+        const formulario = document.getElementById('formulario-incidencia');
+        console.log('Formulario:', formulario);
+        console.log('Display actual:', formulario ? formulario.style.display : 'NO ENCONTRADO');
+        
+        if (formulario) {
+            formulario.style.setProperty('display', 'block', 'important');
+            formulario.style.border = '3px solid red';
+            console.log('✅ Formulario forzado a mostrar con borde rojo');
+        } else {
+            console.error('❌ Formulario no encontrado');
+        }
+        
+        // Verificar otros elementos
+        console.log('Título:', document.getElementById('form-titulo'));
+        console.log('Form:', document.getElementById('form-nueva-incidencia'));
+        console.log('ID Edit:', document.getElementById('incidencia_id_edit'));
+    }
+
+    // Función para mostrar controles de estado para administradores
+    function mostrarControlesEstadoAdmin(estadoActual, respuestaActual = '') {
+        console.log('🔧 mostrarControlesEstadoAdmin llamada:');
+        console.log('- estadoActual:', estadoActual);
+        console.log('- respuestaActual:', respuestaActual);
+        
+        const seccionEvaluacion = document.getElementById('seccion-evaluacion');
+        console.log('- seccionEvaluacion encontrada:', !!seccionEvaluacion);
+        console.log('- seccionEvaluacion elemento:', seccionEvaluacion);
+        
+        if (seccionEvaluacion) {
+            // Mostrar la sección de evaluación
+            seccionEvaluacion.style.display = 'block';
+            
+            // Crear controles de estado para administrador
+            const controlesHTML = `
+                <h4 style="color: #328336; margin-bottom: 20px; font-size: 18px; border-bottom: 2px solid #328336; padding-bottom: 10px;">
+                    <i class="fas fa-cogs"></i> Evaluación (Administrador)
+                </h4>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #328336;">
+                        <i class="fas fa-cogs"></i> Estado de la Incidencia
+                    </label>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; transition: all 0.3s;">
+                            <input type="radio" name="estado_incidencia" value="3" ${estadoActual == 3 ? 'checked' : ''} style="margin: 0;">
+                            <span style="color: #ffc107; font-weight: 600;">
+                                <i class="fas fa-clock"></i> En Proceso
+                            </span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; transition: all 0.3s;">
+                            <input type="radio" name="estado_incidencia" value="1" ${estadoActual == 1 ? 'checked' : ''} style="margin: 0;">
+                            <span style="color: #28a745; font-weight: 600;">
+                                <i class="fas fa-check-circle"></i> Aprobado
+                            </span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; transition: all 0.3s;">
+                            <input type="radio" name="estado_incidencia" value="2" ${estadoActual == 2 ? 'checked' : ''} style="margin: 0;">
+                            <span style="color: #dc3545; font-weight: 600;">
+                                <i class="fas fa-times-circle"></i> Rechazado
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label for="incidencia-respuesta-admin" style="display: block; margin-bottom: 10px; font-weight: 600; color: #328336;">
+                        <i class="fas fa-reply"></i> Respuesta del Hotel
+                    </label>
+                    <textarea id="incidencia-respuesta-admin" name="respuesta" class="form-control" rows="4" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; resize: vertical;" placeholder="Escriba la respuesta del hotel...">${respuestaActual || ''}</textarea>
+                    <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                        <i class="fas fa-info-circle"></i> Esta respuesta será visible para el cliente
+                    </small>
+                </div>
+            `;
+            
+            // Reemplazar el contenido de la sección de evaluación
+            seccionEvaluacion.innerHTML = controlesHTML;
+            console.log('✅ Controles de estado creados y mostrados');
+            console.log('🔍 HTML aplicado:', seccionEvaluacion.innerHTML.substring(0, 200) + '...');
+            
+            // Agregar estilos dinámicos a los radio buttons
+            const radioButtons = seccionEvaluacion.querySelectorAll('input[type="radio"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    // Actualizar estilos visuales
+                    radioButtons.forEach(rb => {
+                        const label = rb.closest('label');
+                        if (rb.checked) {
+                            if (rb.value == '1') {
+                                label.style.borderColor = '#28a745';
+                                label.style.backgroundColor = '#d4edda';
+                            } else if (rb.value == '2') {
+                                label.style.borderColor = '#dc3545';
+                                label.style.backgroundColor = '#f8d7da';
+                            } else {
+                                label.style.borderColor = '#ffc107';
+                                label.style.backgroundColor = '#fff3cd';
+                            }
+                        } else {
+                            label.style.borderColor = '#e0e0e0';
+                            label.style.backgroundColor = 'transparent';
+                        }
+                    });
+                });
+                
+                // Aplicar estilos iniciales
+                if (radio.checked) {
+                    const label = radio.closest('label');
+                    if (radio.value == '1') {
+                        label.style.borderColor = '#28a745';
+                        label.style.backgroundColor = '#d4edda';
+                    } else if (radio.value == '2') {
+                        label.style.borderColor = '#dc3545';
+                        label.style.backgroundColor = '#f8d7da';
+                    } else {
+                        label.style.borderColor = '#ffc107';
+                        label.style.backgroundColor = '#fff3cd';
+                    }
+                }
+            });
+        }
+    }
+
+    // Función para actualizar el estado visual (solo lectura)
+    function actualizarEstadoVisual(estado) {
+        const seccionEvaluacion = document.getElementById('seccion-evaluacion');
+        if (seccionEvaluacion) {
+            // Mostrar la sección de evaluación
+            seccionEvaluacion.style.display = 'block';
+            
+            // Crear contenido de solo lectura
+            const contenidoHTML = `
+                <h4 style="color: #328336; margin-bottom: 20px; font-size: 18px; border-bottom: 2px solid #328336; padding-bottom: 10px;">
+                    <i class="fas fa-info-circle"></i> Evaluación
+                </h4>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Estado Actual</label>
+                    <div id="estado-actual" style="padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e0e0e0; text-align: center; font-weight: 600; font-size: 16px;">
+                        ${estado === 1 ? '<i class="fas fa-check-circle"></i> Aprobado' : 
+                          estado === 2 ? '<i class="fas fa-times-circle"></i> Rechazado' : 
+                          '<i class="fas fa-clock"></i> En proceso'}
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="incidencia-respuesta">Respuesta del Hotel</label>
+                    <textarea id="incidencia-respuesta" name="respuesta" class="form-control" rows="4" readonly style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; resize: vertical; background: #f8f9fa;" placeholder="Aún no hay respuesta del hotel..."></textarea>
+                    <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                        <i class="fas fa-info-circle"></i> Esta respuesta será proporcionada por el personal del hotel
+                    </small>
+                </div>
+            `;
+            
+            seccionEvaluacion.innerHTML = contenidoHTML;
+            
+            // Aplicar estilos al estado
+            const estadoActual = document.getElementById('estado-actual');
+            if (estadoActual) {
+                let estadoColor = '';
+                let backgroundColor = '';
+                
+                if (estado === 1) {
+                    estadoColor = '#28a745';
+                    backgroundColor = '#d4edda';
+                } else if (estado === 2) {
+                    estadoColor = '#dc3545';
+                    backgroundColor = '#f8d7da';
+                } else {
+                    estadoColor = '#ffc107';
+                    backgroundColor = '#fff3cd';
+                }
+                
+                estadoActual.style.color = estadoColor;
+                estadoActual.style.borderColor = estadoColor;
+                estadoActual.style.backgroundColor = backgroundColor;
+            }
+        }
+    }
+
+    // Ver detalle de incidencia
+    async function verDetalleIncidencia(incidenciaId) {
+        try {
+            const response = await fetch(`/incidentes/obtener/${incidenciaId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const inc = data.incidencia;
+                
+                // Mostrar modal o expandir detalle
+                let detalleHTML = `
+                    <div style="background: white; border-radius: 15px; padding: 30px; max-width: 800px; margin: 20px auto; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                            <h3 style="margin: 0; color: #328336;">
+                                <i class="fas fa-file-alt"></i> Detalle de Incidencia
+                            </h3>
+                            <button onclick="cerrarDetalleIncidencia()" style="background: none; border: none; font-size: 24px; color: #999; cursor: pointer;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div style="display: grid; gap: 20px;">
+                            <div>
+                                <strong style="color: #328336; display: block; margin-bottom: 5px;">Título:</strong>
+                                <p style="margin: 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">${inc.titulo}</p>
+                            </div>
+                            
+                            <div>
+                                <strong style="color: #328336; display: block; margin-bottom: 5px;">Descripción:</strong>
+                                <p style="margin: 0; padding: 10px; background: #f8f9fa; border-radius: 5px; line-height: 1.6;">${inc.descripcion}</p>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                                <div>
+                                    <strong style="color: #328336; display: block; margin-bottom: 5px;">Tipo:</strong>
+                                    <p style="margin: 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">${inc.tipo_incidencia}</p>
+                                </div>
+                                <div>
+                                    <strong style="color: #328336; display: block; margin-bottom: 5px;">Estado:</strong>
+                                    <p style="margin: 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">${inc.estado_texto}</p>
+                                </div>
+                            </div>
+                            
+                            ${inc.numero_comprobante ? `
+                                <div>
+                                    <strong style="color: #328336; display: block; margin-bottom: 5px;">Comprobante:</strong>
+                                    <p style="margin: 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">${inc.numero_comprobante}</p>
+                                </div>
+                            ` : ''}
+                            
+                            ${inc.imagen ? `
+                                <div>
+                                    <strong style="color: #328336; display: block; margin-bottom: 5px;">Evidencia:</strong>
+                                    <img src="data:image/jpeg;base64,${inc.imagen}" style="max-width: 100%; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                </div>
+                            ` : ''}
+                            
+                            ${inc.respuesta ? `
+                                <div style="padding: 20px; background: #e8f5e9; border-left: 4px solid #28a745; border-radius: 10px;">
+                                    <strong style="color: #155724; display: block; margin-bottom: 10px; font-size: 16px;">
+                                        <i class="fas fa-reply"></i> Respuesta del hotel:
+                                    </strong>
+                                    <p style="margin: 0; color: #155724; line-height: 1.6;">${inc.respuesta}</p>
+                                </div>
+                            ` : ''}
+                            
+                            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px; padding-top: 15px; border-top: 2px solid #e0e0e0;">
+                                <button onclick="cerrarDetalleIncidencia()" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cerrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Crear overlay y mostrar detalle
+                const overlay = document.createElement('div');
+                overlay.id = 'detalle-overlay';
+                overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; padding: 20px;';
+                overlay.innerHTML = detalleHTML;
+                overlay.onclick = function(e) {
+                    if (e.target === overlay) {
+                        cerrarDetalleIncidencia();
+                    }
+                };
+                document.body.appendChild(overlay);
+            }
+        } catch (error) {
+            console.error('Error al cargar detalle:', error);
+            mostrarAlertaIncidencia('Error al cargar el detalle de la incidencia', 'error');
+        }
+    }
+
+    function cerrarDetalleIncidencia() {
+        const overlay = document.getElementById('detalle-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+    }
+
+    // Función editarIncidencia duplicada eliminada - usar la versión principal
+
+    // Eliminar incidencia con confirmación
+    function eliminarIncidenciaConfirm(incidenciaId) {
+        if (confirm('¿Está seguro de eliminar esta incidencia? Esta acción no se puede deshacer.')) {
+            eliminarIncidencia(incidenciaId);
+        }
+    }
+
+    // Eliminar incidencia
+    async function eliminarIncidencia(incidenciaId) {
+        try {
+            const response = await fetch(`/incidentes/eliminar/${incidenciaId}`, {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                mostrarAlertaIncidencia('Incidencia eliminada exitosamente', 'success');
+                cargarIncidencias();
+            } else {
+                mostrarAlertaIncidencia(data.message || 'Error al eliminar incidencia', 'error');
+            }
+        } catch (error) {
+            console.error('Error al eliminar incidencia:', error);
+            mostrarAlertaIncidencia('Error al eliminar la incidencia', 'error');
+        }
+    }
+
+    // Guardar incidencia (crear o actualizar)
+    document.getElementById('form-nueva-incidencia').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const incidenciaId = document.getElementById('incidencia_id_edit').value;
+        const btnGuardar = document.getElementById('btn-guardar-incidencia');
+        
+        // Detectar si es administrador
+        const rolId = parseInt('{{ session.get("rol_id", 0) }}');
+        const esAdmin = (rolId === 1);
+        
+        console.log('💾 Preparando guardado - Es admin:', esAdmin, '- ID incidencia:', incidenciaId);
+        
+        // Para nuevas incidencias, no enviar campos de estado y respuesta
+        if (!incidenciaId) {
+            console.log('📝 Nueva incidencia - sin estado ni respuesta');
+            formData.delete('estado');
+            formData.delete('respuesta');
+        } else {
+            // Para incidencias existentes, si es administrador, incluir estado y respuesta
+            if (esAdmin) {
+                console.log('🔧 Guardando como administrador');
+                
+                // Obtener el estado seleccionado
+                const estadoSeleccionado = document.querySelector('input[name="estado_incidencia"]:checked');
+                if (estadoSeleccionado) {
+                    formData.set('estado', estadoSeleccionado.value);
+                    console.log('📊 Estado a guardar:', estadoSeleccionado.value);
+                }
+                
+                // Obtener la respuesta del hotel
+                const campoRespuesta = document.getElementById('incidencia-respuesta');
+                if (campoRespuesta) {
+                    formData.set('respuesta', campoRespuesta.value);
+                    console.log('💬 Respuesta a guardar:', campoRespuesta.value.substring(0, 50) + '...');
+                }
+            } else {
+                console.log('👤 Usuario normal - sin estado ni respuesta');
+                formData.delete('estado');
+                formData.delete('respuesta');
+            }
+        }
+        
+        btnGuardar.disabled = true;
+        btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        
+        try {
+            let url = '/incidentes/crear';
+            let method = 'POST';
+            
+            if (incidenciaId) {
+                url = `/incidentes/actualizar/${incidenciaId}`;
+                method = 'POST';
+            }
+            
+            const response = await fetch(url, {
+                method: method,
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                mostrarAlertaIncidencia(data.message || 'Incidencia guardada exitosamente', 'success');
+                volverALista();
+                cargarIncidencias();
+            } else {
+                mostrarAlertaIncidencia(data.message || 'Error al guardar la incidencia', 'error');
+            }
+        } catch (error) {
+            console.error('Error al guardar incidencia:', error);
+            mostrarAlertaIncidencia('Error al guardar la incidencia', 'error');
+        } finally {
+            btnGuardar.disabled = false;
+            btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar';
+        }
+    });
+
+    // Mostrar alertas de incidencias
+    function mostrarAlertaIncidencia(mensaje, tipo) {
+        const alertSuccess = document.getElementById('alert-incidencia-success');
+        const alertError = document.getElementById('alert-incidencia-error');
+        const successMsg = document.getElementById('incidencia-success-message');
+        const errorMsg = document.getElementById('incidencia-error-message');
+        
+        // Ocultar todas las alertas
+        alertSuccess.style.display = 'none';
+        alertError.style.display = 'none';
+        
+        if (tipo === 'success') {
+            successMsg.textContent = mensaje;
+            alertSuccess.style.display = 'block';
+            setTimeout(() => {
+                alertSuccess.style.display = 'none';
+            }, 5000);
+        } else {
+            errorMsg.textContent = mensaje;
+            alertError.style.display = 'block';
+            setTimeout(() => {
+                alertError.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Scroll a la alerta
+        document.getElementById('incidencias').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Inicializar incidencias cuando se abre la sección
+    const menuIncidencias = document.querySelector('[data-section="incidencias"]');
+    if (menuIncidencias) {
+        menuIncidencias.addEventListener('click', function() {
+            setTimeout(() => {
+                cargarIncidencias();
+            }, 100);
+        });
+    }
+
+    // Agregar búsqueda en tiempo real
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Script de incidencias cargado correctamente');
+        const buscarInput = document.getElementById('buscar-incidencias');
+        if (buscarInput) {
+            buscarInput.addEventListener('input', function() {
+                buscarIncidencias();
+            });
+        }
+    });
+
+    // Agregar event listener alternativo para el botón de nueva incidencia
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnNuevaIncidencia = document.querySelector('button[onclick="mostrarFormularioIncidencia()"]');
+        if (btnNuevaIncidencia) {
+            btnNuevaIncidencia.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Botón de nueva incidencia clickeado');
+                mostrarFormularioIncidencia();
+            });
+        } else {
+            console.error('No se encontró el botón de nueva incidencia');
         }
     });
 </script>

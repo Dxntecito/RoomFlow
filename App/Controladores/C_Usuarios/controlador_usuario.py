@@ -10,8 +10,8 @@ def hash_password(password):
 
 def verificar_usuario(usuario, contrasena):
     """
-    Verifica las credenciales del usuario
-    Retorna el usuario si es válido, None si no
+    Verifica las credenciales del usuario y obtiene datos del cliente asociado
+    Retorna el usuario con datos del cliente si es válido, None si no
     """
     try:
         conexion = get_connection()
@@ -27,7 +27,7 @@ def verificar_usuario(usuario, contrasena):
             resultado = cursor.fetchone()
             
             if resultado:
-                return {
+                usuario_data = {
                     'usuario_id': resultado[0],
                     'usuario': resultado[1],
                     'email': resultado[2],
@@ -35,6 +35,35 @@ def verificar_usuario(usuario, contrasena):
                     'rol_id': resultado[4],
                     'rol_nombre': resultado[5]
                 }
+                
+                # Intentar obtener datos del cliente asociado
+                try:
+                    sql_cliente = """
+                        SELECT nombres, ape_paterno, ape_materno, num_doc, telefono
+                        FROM CLIENTE
+                        WHERE telefono = %s OR num_doc IN (
+                            SELECT num_documento FROM PERFIL_USUARIO WHERE usuario_id = %s
+                        )
+                        LIMIT 1
+                    """
+                    cursor.execute(sql_cliente, (resultado[2], resultado[0]))  # email, usuario_id
+                    cliente_data = cursor.fetchone()
+                    
+                    if cliente_data:
+                        usuario_data.update({
+                            'nombres': cliente_data[0] or '',
+                            'apellido_paterno': cliente_data[1] or '',
+                            'apellido_materno': cliente_data[2] or '',
+                            'num_documento': cliente_data[3] or '',
+                            'telefono': cliente_data[4] or ''
+                        })
+                        print(f"✓ Datos del cliente cargados para usuario: {usuario}")
+                    else:
+                        print(f"⚠ No se encontraron datos del cliente para usuario: {usuario}")
+                except Exception as e:
+                    print(f"⚠ Error al cargar datos del cliente: {e}")
+                
+                return usuario_data
             return None
     except Exception as ex:
         print(f"Error al verificar usuario: {ex}")
@@ -45,7 +74,7 @@ def verificar_usuario(usuario, contrasena):
 
 def get_usuario_by_id(usuario_id):
     """
-    Obtiene un usuario por su ID
+    Obtiene un usuario por su ID con datos del cliente asociado
     """
     try:
         conexion = get_connection()
@@ -61,7 +90,7 @@ def get_usuario_by_id(usuario_id):
             resultado = cursor.fetchone()
             
             if resultado:
-                return {
+                usuario_data = {
                     'usuario_id': resultado[0],
                     'usuario': resultado[1],
                     'email': resultado[2],
@@ -70,6 +99,35 @@ def get_usuario_by_id(usuario_id):
                     'rol_id': resultado[5],
                     'rol_nombre': resultado[6]
                 }
+                
+                # Intentar obtener datos del cliente asociado
+                try:
+                    sql_cliente = """
+                        SELECT nombres, ape_paterno, ape_materno, num_doc, telefono
+                        FROM CLIENTE
+                        WHERE telefono = %s OR num_doc IN (
+                            SELECT num_documento FROM PERFIL_USUARIO WHERE usuario_id = %s
+                        )
+                        LIMIT 1
+                    """
+                    cursor.execute(sql_cliente, (resultado[2], usuario_id))  # email, usuario_id
+                    cliente_data = cursor.fetchone()
+                    
+                    if cliente_data:
+                        usuario_data.update({
+                            'nombres': cliente_data[0] or '',
+                            'apellido_paterno': cliente_data[1] or '',
+                            'apellido_materno': cliente_data[2] or '',
+                            'num_documento': cliente_data[3] or '',
+                            'telefono': cliente_data[4] or ''
+                        })
+                        print(f"✓ Datos del cliente cargados para usuario_id: {usuario_id}")
+                    else:
+                        print(f"⚠ No se encontraron datos del cliente para usuario_id: {usuario_id}")
+                except Exception as e:
+                    print(f"⚠ Error al cargar datos del cliente: {e}")
+                
+                return usuario_data
             return None
     except Exception as ex:
         print(f"Error al obtener usuario: {ex}")
@@ -158,29 +216,31 @@ def insert_usuario(usuario, contrasena, email, id_rol=2, nombres='', apellido_pa
             
             print(f"✓ Usuario creado con ID: {usuario_id}")
             
-            # Insertar perfil (si hay datos personales y la tabla existe)
+            # Insertar cliente (si hay datos personales)
             if nombres and apellido_paterno and num_documento:
                 try:
                     # Convertir tipo_documento_id a int
                     tipo_doc_id = int(tipo_documento_id) if tipo_documento_id else 1
                     
-                    sql_perfil = """
-                        INSERT INTO PERFIL_USUARIO 
-                        (usuario_id, nombres, apellido_paterno, apellido_materno,
-                         tipo_documento_id, num_documento, sexo, telefono)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    sql_cliente = """
+                        INSERT INTO CLIENTE 
+                        (nombres, ape_paterno, ape_materno, num_doc, telefono, 
+                         f_registro, id_tipo_cliente, id_pais, id_tipoemp, usuario_id)
+                        VALUES (%s, %s, %s, %s, %s, CURDATE(), 'N', 1, %s, %s)
                     """
-                    cursor.execute(sql_perfil, (usuario_id, nombres, apellido_paterno, apellido_materno,
-                                               tipo_doc_id, num_documento, sexo, telefono or None))
-                    print(f"✓ Perfil creado para usuario_id: {usuario_id}")
+                    cursor.execute(sql_cliente, (nombres, apellido_paterno, apellido_materno, 
+                                               num_documento, telefono or None, tipo_doc_id, usuario_id))
+                    cliente_id = cursor.lastrowid
+                    print(f"✓ Cliente creado para usuario_id: {usuario_id}")
+                    print(f"  - Cliente ID: {cliente_id}")
                     print(f"  - Nombres: {nombres} {apellido_paterno} {apellido_materno}")
                     print(f"  - Documento: {num_documento}")
                 except Exception as e:
-                    print(f"⚠ Error al crear PERFIL_USUARIO: {e}")
+                    print(f"⚠ Error al crear CLIENTE: {e}")
                     print(f"  Datos: usuario_id={usuario_id}, nombres={nombres}")
                     # No es crítico, el usuario se creó correctamente
             else:
-                print(f"⚠ No se creó perfil (faltan datos personales)")
+                print(f"⚠ No se creó cliente (faltan datos personales)")
             
             conexion.commit()
             return {'success': True, 'message': 'Usuario registrado exitosamente', 'usuario_id': usuario_id}
@@ -386,32 +446,34 @@ def get_perfil_completo(usuario_id):
             
             print(f"✓ Usuario encontrado: {resultado[1]} (ID: {resultado[0]})")
             
-            # Intentar obtener datos del perfil (si existe la tabla)
+            # Obtener datos del cliente asociado al usuario
             try:
-                sql_perfil = """
-                    SELECT nombres, apellido_paterno, apellido_materno, 
-                           tipo_documento_id, num_documento, sexo, telefono
-                    FROM PERFIL_USUARIO
+                # Buscar cliente por usuario_id
+                sql_cliente = """
+                    SELECT nombres, ape_paterno, ape_materno, 
+                           id_tipoemp, num_doc, telefono
+                    FROM CLIENTE
                     WHERE usuario_id = %s
+                    LIMIT 1
                 """
-                cursor.execute(sql_perfil, (usuario_id,))
-                perfil_data = cursor.fetchone()
+                cursor.execute(sql_cliente, (usuario_id,))
+                cliente_data = cursor.fetchone()
                 
-                if perfil_data:
-                    print(f"✓ Perfil encontrado en PERFIL_USUARIO")
-                    perfil['nombres'] = perfil_data[0] or ''
-                    perfil['apellido_paterno'] = perfil_data[1] or ''
-                    perfil['apellido_materno'] = perfil_data[2] or ''
-                    perfil['tipo_documento_id'] = perfil_data[3] or 1
-                    perfil['num_documento'] = perfil_data[4] or ''
-                    perfil['sexo'] = perfil_data[5] or 'M'
-                    perfil['telefono'] = perfil_data[6] or ''
+                if cliente_data:
+                    print(f"✓ Cliente encontrado en CLIENTE")
+                    perfil['nombres'] = cliente_data[0] or ''
+                    perfil['apellido_paterno'] = cliente_data[1] or ''
+                    perfil['apellido_materno'] = cliente_data[2] or ''
+                    perfil['tipo_documento_id'] = cliente_data[3] or 1
+                    perfil['num_documento'] = cliente_data[4] or ''
+                    perfil['telefono'] = cliente_data[5] or ''
                     print(f"  - Nombres: {perfil['nombres']} {perfil['apellido_paterno']}")
                     print(f"  - Documento: {perfil['num_documento']}")
                 else:
-                    print(f"⚠ No hay perfil en PERFIL_USUARIO para usuario_id: {usuario_id}")
+                    print(f"⚠ No hay cliente asociado para usuario_id: {usuario_id}")
+                    print(f"  - Email del usuario: {resultado[3]}")
             except Exception as e:
-                print(f"⚠ Error al buscar en PERFIL_USUARIO: {e}")
+                print(f"⚠ Error al buscar en CLIENTE: {e}")
                 # No es un error crítico, continuar con valores por defecto
             
             return perfil
@@ -434,36 +496,37 @@ def update_perfil_usuario(usuario_id, email, nombres, apellido_paterno, apellido
             sql_usuario = "UPDATE USUARIO SET email = %s WHERE usuario_id = %s"
             cursor.execute(sql_usuario, (email, usuario_id))
             
-            # Intentar actualizar/crear perfil (si la tabla existe)
+            # Intentar actualizar/crear cliente
             try:
-                # Verificar si existe perfil
-                sql_check = "SELECT perfil_id FROM PERFIL_USUARIO WHERE usuario_id = %s"
+                # Verificar si existe cliente por usuario_id
+                sql_check = "SELECT cliente_id FROM CLIENTE WHERE usuario_id = %s"
                 cursor.execute(sql_check, (usuario_id,))
-                perfil_existe = cursor.fetchone()
+                cliente_existe = cursor.fetchone()
                 
-                if perfil_existe:
-                    # Actualizar perfil existente
-                    sql_perfil = """
-                        UPDATE PERFIL_USUARIO 
-                        SET nombres = %s, apellido_paterno = %s, apellido_materno = %s,
-                            tipo_documento_id = %s, num_documento = %s, sexo = %s, telefono = %s
+                if cliente_existe:
+                    # Actualizar cliente existente
+                    sql_cliente = """
+                        UPDATE CLIENTE 
+                        SET nombres = %s, ape_paterno = %s, ape_materno = %s,
+                            id_tipoemp = %s, telefono = %s, num_doc = %s
                         WHERE usuario_id = %s
                     """
-                    cursor.execute(sql_perfil, (nombres, apellido_paterno, apellido_materno,
-                                               tipo_documento_id, num_documento, sexo, telefono,
-                                               usuario_id))
+                    cursor.execute(sql_cliente, (nombres, apellido_paterno, apellido_materno,
+                                               tipo_documento_id, telefono, num_documento, usuario_id))
+                    print(f"✓ Cliente actualizado para usuario_id: {usuario_id}")
                 else:
-                    # Crear nuevo perfil
+                    # Crear nuevo cliente
                     sql_insert = """
-                        INSERT INTO PERFIL_USUARIO 
-                        (usuario_id, nombres, apellido_paterno, apellido_materno,
-                         tipo_documento_id, num_documento, sexo, telefono)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        INSERT INTO CLIENTE 
+                        (nombres, ape_paterno, ape_materno, num_doc, telefono, 
+                         f_registro, id_tipo_cliente, id_pais, id_tipoemp, usuario_id)
+                        VALUES (%s, %s, %s, %s, %s, CURDATE(), 'N', 1, %s, %s)
                     """
-                    cursor.execute(sql_insert, (usuario_id, nombres, apellido_paterno, apellido_materno,
-                                               tipo_documento_id, num_documento, sexo, telefono))
+                    cursor.execute(sql_insert, (nombres, apellido_paterno, apellido_materno,
+                                               num_documento, telefono, tipo_documento_id, usuario_id))
+                    print(f"✓ Cliente creado para usuario_id: {usuario_id}")
             except Exception as e:
-                print(f"Nota: No se pudo actualizar PERFIL_USUARIO (tabla no existe): {e}")
+                print(f"Nota: No se pudo actualizar CLIENTE: {e}")
                 # Solo actualizar el email es suficiente por ahora
             
             conexion.commit()
