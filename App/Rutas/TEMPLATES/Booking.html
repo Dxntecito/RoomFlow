@@ -207,7 +207,7 @@
 
     <div class="button_group">
       <button type="button" id="back_to_client">← Regresar</button>
-      <button type="submit" id="finalizar_reserva">Finalizar Reserva</button>
+      <button type="submit" id="payment_phase">Realizar pago</button>
     </div>
   </div>
 </div>
@@ -700,6 +700,7 @@ function recolectarDatosReserva() {
       hora_salida: hora_salida
     };
   }
+
 if (finalizarReserva) {
     finalizarReserva.addEventListener("click", async () => {
       const dataReserva = recolectarDatosReserva();

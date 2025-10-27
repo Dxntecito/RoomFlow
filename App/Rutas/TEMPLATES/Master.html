@@ -116,6 +116,27 @@
 {% block scripts %}
     <script src="{{ url_for('static', filename='CSS/main.css') }}"></script>
     <script src="{{ url_for('static', filename='CSS/Home.css') }}"></script>
+    <script>
+    // Toggle user dropdown
+    document.addEventListener('DOMContentLoaded', function() {
+        const userToggle = document.getElementById('userToggle');
+        const userDropdown = document.getElementById('userDropdown');
+        
+        if (userToggle && userDropdown) {
+            userToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            // Cerrar dropdown al hacer clic fuera
+            document.addEventListener('click', function(e) {
+                if (!userToggle.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
 {% endblock scripts %}
 <style>
     /* Estilos para el menú de usuario */
