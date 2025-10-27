@@ -1,0 +1,566 @@
+-- =====================================================
+-- BASE DE DATOS ROOMFLOW COMPLETA 
+-- =====================================================
+
+-- Tabla de Amenidades
+CREATE TABLE AMENIDAD (
+  amenidad_id     INT(11) NOT NULL AUTO_INCREMENT,
+  nombre_amenidad VARCHAR(50) NOT NULL,
+  precio          DECIMAL(8,2) NOT NULL,
+  estado          TINYINT(1) NOT NULL,
+  PRIMARY KEY (amenidad_id)
+);
+
+INSERT INTO AMENIDAD (nombre_amenidad, precio, estado) VALUES
+('Champaña', 100.00, 1),
+('Flores', 60.00, 1),
+('Inka Cola', 5.00, 1),
+('Coca Cola', 15.00, 1),
+('Keke de vainilla', 10.00, 1);
+
+
+-- Tabla de Categorías de Habitaciones
+CREATE TABLE CATEGORIA (
+  categoria_id     INT(10) NOT NULL AUTO_INCREMENT,
+  nombre_categoria VARCHAR(50) NOT NULL UNIQUE,
+  precio_categoria DECIMAL(10,2) NOT NULL,
+  estado           TINYINT(1) NOT NULL,
+  capacidad        INT(11) DEFAULT 1,
+  PRIMARY KEY (categoria_id)
+);
+
+INSERT INTO CATEGORIA (nombre_categoria, precio_categoria, estado, capacidad) VALUES
+('Económica', 120.00, 1, 2),
+('Ejecutiva', 220.00, 1, 3),
+('Suite', 350.00, 1, 4),
+('Estándar', 150.00, 1, 2);
+
+
+-- Tabla de Países
+CREATE TABLE PAIS (
+  pais_id INT(10) NOT NULL AUTO_INCREMENT,
+  nombre  VARCHAR(50) NOT NULL,
+  estado  TINYINT(1) NOT NULL,
+  PRIMARY KEY (pais_id)
+);
+
+INSERT INTO PAIS (nombre, estado) VALUES
+('Perú', 1),
+('Chile', 1),
+('Colombia', 1),
+('México', 1);
+
+
+-- Tabla de Tipos de Clientes
+CREATE TABLE TIPO_CLIENTE (
+  tipo_cliente_id CHAR(1) NOT NULL,
+  descripcion     VARCHAR(50) NOT NULL,
+  estado          TINYINT(1) NOT NULL,
+  PRIMARY KEY (tipo_cliente_id)
+);
+
+INSERT INTO TIPO_CLIENTE (tipo_cliente_id, descripcion, estado) VALUES
+('N', 'Natural', 1),
+('J', 'Jurídico', 1),
+('V', 'VIP', 1);
+
+
+-- Tabla de Tipos de Documentos
+CREATE TABLE TIPO_DOCUMENTO (
+  tipo_doc_id     INT(10) NOT NULL AUTO_INCREMENT,
+  nombre_tipo_doc VARCHAR(20) NOT NULL,
+  estado          TINYINT(1) NOT NULL,
+  PRIMARY KEY (tipo_doc_id)
+);
+
+INSERT INTO TIPO_DOCUMENTO (nombre_tipo_doc, estado) VALUES
+('DNI', 1),
+('RUC', 1),
+('Pasaporte', 1);
+
+
+-- Tabla de Tipos de Empresa
+CREATE TABLE TIPO_EMPRESA (
+  tipo_id     INT(10) NOT NULL AUTO_INCREMENT,
+  nombre_tipo VARCHAR(50) NOT NULL,
+  estado      TINYINT(1) NOT NULL,
+  PRIMARY KEY (tipo_id)
+);
+
+INSERT INTO TIPO_EMPRESA (nombre_tipo, estado) VALUES
+('Individual', 1),
+('Sociedad Anónima', 1),
+('EIRL', 1);
+
+
+-- Tabla de Tipos de Evento
+CREATE TABLE TIPO_EVENTO (
+  tipo_evento_id     INT(11) NOT NULL AUTO_INCREMENT,
+  nombre_tipo_evento VARCHAR(50) NOT NULL,
+  estado             TINYINT(1) NOT NULL,
+  PRIMARY KEY (tipo_evento_id)
+);
+
+INSERT INTO TIPO_EVENTO (nombre_tipo_evento, estado) VALUES
+('Conferencia', 1),
+('Cumpleaños', 1);
+
+
+-- Tabla de Métodos de Pago
+CREATE TABLE METODO_PAGO (
+  id_metodo_pago INT(10) NOT NULL AUTO_INCREMENT,
+  nombre         VARCHAR(20) NOT NULL,
+  estado         TINYINT(1) NOT NULL,
+  PRIMARY KEY (id_metodo_pago)
+);
+
+INSERT INTO METODO_PAGO (nombre, estado) VALUES
+('Efectivo', 1),
+('Tarjeta', 1),
+('Yape', 1);
+
+
+-- Tabla de Pisos
+CREATE TABLE PISO (
+  piso_id INT(10) NOT NULL AUTO_INCREMENT,
+  numero  CHAR(3) NOT NULL,
+  estado  TINYINT(1) NOT NULL,
+  precio  DECIMAL(5,2),
+  PRIMARY KEY (piso_id)
+);
+
+INSERT INTO PISO (numero, estado, precio) VALUES
+('01', 1, 10.00),
+('02', 1, 15.00),
+('03', 1, 20.00);
+
+
+-- Tabla de Habitaciones
+CREATE TABLE HABITACION (
+  habitacion_id INT(10) NOT NULL AUTO_INCREMENT,
+  numero        CHAR(3) NOT NULL,
+  estado        TINYINT(1) NOT NULL,
+  id_categoria  INT(10) NOT NULL,
+  piso_id       INT(10) NOT NULL,
+  PRIMARY KEY (habitacion_id),
+  FOREIGN KEY (id_categoria) REFERENCES CATEGORIA(categoria_id),
+  FOREIGN KEY (piso_id) REFERENCES PISO(piso_id)
+);
+
+INSERT INTO HABITACION (numero, estado, id_categoria, piso_id) VALUES
+('101', 1, 1, 1),
+('102', 1, 1, 1),
+('202', 1, 2, 2),
+('303', 1, 3, 3);
+
+
+-- Tabla de Tipos de Promoción
+CREATE TABLE TIPO_PROMOCION (
+  id_tipo_promocion INT(11) NOT NULL AUTO_INCREMENT,
+  nombre            VARCHAR(20) NOT NULL,
+  estado            TINYINT(1) NOT NULL,
+  PRIMARY KEY (id_tipo_promocion)
+);
+
+INSERT INTO TIPO_PROMOCION (nombre, estado) VALUES
+('Descuento', 1),
+('2x1', 1),
+('Temporada Baja', 1),
+('Temporada Alta', 1);
+
+
+-- Tabla de Promociones
+CREATE TABLE PROMOCION (
+  id_promocion      INT(11) NOT NULL AUTO_INCREMENT,
+  porcentaje        INT(11) NOT NULL,
+  descripcion       VARCHAR(25) NOT NULL,
+  estado            TINYINT(1) NOT NULL,
+  fecha_inicio      DATE NOT NULL,
+  fecha_fin         DATE NOT NULL,
+  tipo_promocion_id INT(11) NOT NULL,
+  PRIMARY KEY (id_promocion),
+  FOREIGN KEY (tipo_promocion_id) REFERENCES TIPO_PROMOCION(id_tipo_promocion)
+);
+
+INSERT INTO PROMOCION (porcentaje, descripcion, estado, fecha_inicio, fecha_fin, tipo_promocion_id) VALUES
+(10, 'Descuento de temporada', 1, '2025-10-01', '2025-10-31', 1),
+(20, 'Promoción 2x1', 1, '2025-09-01', '2025-12-31', 2),
+(15, 'Oferta especial', 1, '2025-10-15', '2025-11-15', 3);
+
+
+-- Tabla de Clientes
+CREATE TABLE CLIENTE (
+  cliente_id      INT(10) NOT NULL AUTO_INCREMENT,
+  direccion       VARCHAR(255),
+  telefono        CHAR(9) UNIQUE,
+  f_registro      DATE NOT NULL,
+  num_doc         VARCHAR(20) UNIQUE,
+  id_tipo_cliente CHAR(1) NOT NULL,
+  id_pais         INT(10) NOT NULL,
+  tipo_doc_id     INT(10),
+  tipoemp_id      INT(10),
+  ape_paterno     VARCHAR(50),
+  ape_materno     VARCHAR(50),
+  nombres         VARCHAR(50),
+  razon_social    VARCHAR(50),
+  PRIMARY KEY (cliente_id),
+  FOREIGN KEY (id_tipo_cliente) REFERENCES TIPO_CLIENTE(tipo_cliente_id),
+  FOREIGN KEY (id_pais) REFERENCES PAIS(pais_id),
+  FOREIGN KEY (tipo_doc_id) REFERENCES TIPO_DOCUMENTO(tipo_doc_id),
+  FOREIGN KEY (tipoemp_id) REFERENCES TIPO_EMPRESA(tipo_id)
+);
+
+INSERT INTO CLIENTE (direccion, telefono, f_registro, num_doc, id_tipo_cliente, id_pais, tipo_doc_id, ape_paterno, ape_materno, nombres, razon_social) VALUES
+('Av. Larco 123', '999888777', CURDATE(), '44556677', 'N', 1, 1, 'Pérez', 'Rojas', 'María', NULL),
+('Jr. Grau 234', '988776655', CURDATE(), '10456789011', 'J', 1, 2, NULL, NULL, NULL, 'Hotel Amazonia SAC'),
+('Calle Sol 45', '934567890', '2025-09-20', '99887766', 'V', 2, 1, 'Ramos', 'García', 'Claudia', NULL);
+
+
+-- Tabla de Empleados
+CREATE TABLE TIPO_EMPLEADO (
+  tipo_id     INT(10) NOT NULL AUTO_INCREMENT,
+  nombre_tipo VARCHAR(100) NOT NULL UNIQUE,
+  PRIMARY KEY (tipo_id)
+);
+
+INSERT INTO TIPO_EMPLEADO (nombre_tipo) VALUES
+('Recepcionista'),
+('Administrador'),
+('Limpieza');
+
+
+-- Tabla de Empleados
+CREATE TABLE EMPLEADO (
+  empleado_id      INT(10) NOT NULL AUTO_INCREMENT,
+  cod_empleado     VARCHAR(11) NOT NULL UNIQUE,
+  dni              VARCHAR(8) NOT NULL UNIQUE,
+  ape_paterno      VARCHAR(50) NOT NULL,
+  ape_materno      VARCHAR(50) NOT NULL,
+  nombres          VARCHAR(50) NOT NULL,
+  sexo             CHAR(1) NOT NULL,
+  movil            VARCHAR(9) NOT NULL,
+  tipo_empleado_id INT(10) NOT NULL,
+  estado           VARCHAR(10) NOT NULL,
+  PRIMARY KEY (empleado_id),
+  FOREIGN KEY (tipo_empleado_id) REFERENCES TIPO_EMPLEADO(tipo_id)
+);
+
+INSERT INTO EMPLEADO (cod_empleado, dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id, estado) VALUES
+('RE45678912', '45678912', 'Torres', 'Vega', 'Lucía', 'F', '912345678', 1, 'Activo'),
+('AD12345678', '12345678', 'Ramírez', 'Gómez', 'Carlos', 'M', '987654321', 2, 'Activo'),
+('LI56781234', '56781234', 'Vega', 'Soto', 'Carlos', 'M', '987333444', 3, 'Activo');
+
+
+-- Tabla de Roles
+CREATE TABLE ROL (
+  rol_id      INT(10) NOT NULL AUTO_INCREMENT,
+  nombre_rol  VARCHAR(50) NOT NULL,
+  descripcion VARCHAR(100) NOT NULL,
+  estado      TINYINT(1) NOT NULL,
+  PRIMARY KEY (rol_id)
+);
+
+INSERT INTO ROL (nombre_rol, descripcion, estado) VALUES
+('Administrador', 'Acceso total al sistema', 1),
+('Empleado', 'Acceso limitado', 1),
+('Cliente', 'Solo reservas y eventos', 1);
+
+
+-- Tabla de Usuarios
+CREATE TABLE USUARIO (
+  usuario_id     INT(10) NOT NULL AUTO_INCREMENT,
+  usuario        VARCHAR(50) NOT NULL UNIQUE,
+  contrasena     CHAR(64) NOT NULL,
+  email          VARCHAR(100) NOT NULL UNIQUE,
+  estado         TINYINT(1) NOT NULL,
+  fecha_creacion DATE NOT NULL,
+  id_rol         INT(10) NOT NULL,
+  cliente_id	 INT(10),
+  empleado_id	 INT(10),
+  PRIMARY KEY (usuario_id),
+  FOREIGN KEY (id_rol) REFERENCES ROL(rol_id)
+);
+
+INSERT INTO USUARIO (usuario, contrasena, email, estado, fecha_creacion, id_rol) VALUES
+('admin', SHA2('admin123', 256), 'admin@hotel.com', 1, CURDATE(), 1),
+('lucia', SHA2('1234', 256), 'lucia@hotel.com', 1, CURDATE(), 2),
+('cliente1', SHA2('cli123', 256), 'cliente1@hotel.com', 1, CURDATE(), 3);
+
+
+-- Tabla de Reservas
+CREATE TABLE RESERVA (
+  reserva_id     INT(10) NOT NULL AUTO_INCREMENT,
+  fecha_registro DATE NOT NULL,
+  hora_registro  TIME(4) NOT NULL,
+  monto_total    DECIMAL(10,2) DEFAULT 0 NOT NULL,
+  promocion_id   INT(11),
+  cliente_id     INT(10) NOT NULL,
+  empleado_id    INT(10),
+  tipo_reserva   CHAR(1),
+  fecha_ingreso  DATE,
+  hora_ingreso   TIME,
+  fecha_salida   DATE,
+  hora_salida    TIME,
+  estado         TINYINT(1) DEFAULT 1 NOT NULL,
+  motivo         VARCHAR(200),
+  PRIMARY KEY (reserva_id),
+  FOREIGN KEY (cliente_id) REFERENCES CLIENTE(cliente_id),
+  FOREIGN KEY (empleado_id) REFERENCES EMPLEADO(empleado_id),
+  FOREIGN KEY (promocion_id) REFERENCES PROMOCION(id_promocion)
+);
+
+INSERT INTO RESERVA (fecha_registro, hora_registro, monto_total, cliente_id, empleado_id, tipo_reserva, estado,fecha_ingreso, hora_ingreso, fecha_salida, hora_salida, motivo, promocion_id)
+VALUES
+(CURDATE(), CURTIME(), 450.00, 1, 1, 'H', 1, '2025-10-25', '14:00:00', '2025-10-27', '12:00:00', 'Vacaciones familiares', 1),
+('2025-10-06', '12:00:00', 450.00, 2, 2, 'H', 1, '2025-10-15', '15:00:00', '2025-10-18', '12:00:00', 'Viaje de negocios', 2),
+('2025-10-07', '11:00:00', 600.00, 3, 3, 'H', 1, '2025-10-20', '09:00:00', '2025-10-22', '12:00:00', 'Evento especial', 3);
+
+
+-- Tabla de Reserva de Habitaciones
+CREATE TABLE RESERVA_HABITACION (
+  reserva_habitacion_id INT(11) NOT NULL AUTO_INCREMENT,
+  reserva_id            INT(10) NOT NULL,
+  habitacion_id         INT(10) NOT NULL,
+  PRIMARY KEY (reserva_habitacion_id),
+  FOREIGN KEY (reserva_id) REFERENCES RESERVA(reserva_id),
+  FOREIGN KEY (habitacion_id) REFERENCES HABITACION(habitacion_id)
+);
+
+INSERT INTO RESERVA_HABITACION (reserva_id, habitacion_id) VALUES
+(1, 1),
+(2, 2),
+(3, 3);
+
+-- Tabla de Room Service
+CREATE TABLE ROOM_SERVICE (
+  room_service_id       INT(11) NOT NULL AUTO_INCREMENT,
+  reserva_habitacion_id INT(11) NOT NULL,
+  fecha_pedido          DATE NOT NULL,
+  hora_pedido           TIME(4) NOT NULL,
+  PRIMARY KEY (room_service_id),
+  FOREIGN KEY (reserva_habitacion_id) REFERENCES RESERVA_HABITACION(reserva_habitacion_id)
+);
+
+INSERT INTO ROOM_SERVICE (reserva_habitacion_id, fecha_pedido, hora_pedido) VALUES
+(1, CURDATE(), CURTIME());
+
+
+-- Tabla de Room Service Amenidades
+CREATE TABLE ROOM_SERVICE_AMENIDAD (
+  room_service_id INT(10) NOT NULL,
+  amenidad_id     INT(11) NOT NULL,
+  cantidad        INT(11) DEFAULT 1 NOT NULL,
+  detalle_id      INT(10),
+  PRIMARY KEY (room_service_id, amenidad_id),
+  FOREIGN KEY (room_service_id) REFERENCES ROOM_SERVICE(room_service_id),
+  FOREIGN KEY (amenidad_id) REFERENCES AMENIDAD(amenidad_id),
+  FOREIGN KEY (detalle_id) REFERENCES DETALLE_COMPROBANTE(detalle_id)
+);
+
+INSERT INTO ROOM_SERVICE_AMENIDAD (room_service_id, amenidad_id, cantidad) VALUES
+(1, 1, 1),
+(1, 2, 1);
+
+
+-- Tabla de Eventos
+CREATE TABLE EVENTO (
+  id_evento      INT(10) NOT NULL AUTO_INCREMENT,
+  nombre_evento  VARCHAR(100) NOT NULL,
+  fecha          DATE NOT NULL,
+  hora_inicio    TIME(4) NOT NULL,
+  hora_fin       TIME(4) NOT NULL,
+  numero_horas   DECIMAL(5,2) NOT NULL,
+  precio_final   DECIMAL(10,2) NOT NULL,
+  tipo_evento_id INT(11) NOT NULL,
+  reserva_id     INT(10) NOT NULL,
+  PRIMARY KEY (id_evento),
+  FOREIGN KEY (tipo_evento_id) REFERENCES TIPO_EVENTO(tipo_evento_id),
+  FOREIGN KEY (reserva_id) REFERENCES RESERVA(reserva_id)
+);
+
+INSERT INTO EVENTO (nombre_evento, fecha, hora_inicio, hora_fin, numero_horas, precio_final, tipo_evento_id, reserva_id) VALUES
+('Boda Martínez', '2025-10-15', '16:00:00', '22:00:00', 6, 1200.00, 1, 1),
+('Conferencia Tech 2025', '2025-10-20', '09:00:00', '13:00:00', 4, 800.00, 2, 2),
+('Cumpleaños Ana', '2025-10-25', '18:00:00', '23:00:00', 5, 1000.00, 3, 3);
+
+
+-- Tabla de Servicios
+CREATE TABLE SERVICIO (
+  servicio_id     INT(11) NOT NULL AUTO_INCREMENT,
+  nombre_servicio VARCHAR(50) NOT NULL,
+  descripcion     VARCHAR(100) NOT NULL,
+  precio          DECIMAL(5,2) NOT NULL,
+  estado          TINYINT(1) NOT NULL,
+  PRIMARY KEY (servicio_id)
+);
+
+INSERT INTO SERVICIO (nombre_servicio, descripcion, precio, estado) VALUES
+('Spa', 'Masajes relajantes', 80.00, 1),
+('Desayuno Buffet', 'Incluye desayuno variado', 50.00, 1);
+
+
+-- Tabla de Reserva de Servicios
+CREATE TABLE RESERVA_SERVICIO (
+  reserva_servicio_id INT(11) NOT NULL AUTO_INCREMENT,
+  reserva_id          INT(10) NOT NULL,
+  servicio_id         INT(11) NOT NULL,
+  cantidad            INT(10) NOT NULL,
+  precio_unitario     DECIMAL(10,2),
+  PRIMARY KEY (reserva_servicio_id),
+  FOREIGN KEY (reserva_id) REFERENCES RESERVA(reserva_id),
+  FOREIGN KEY (servicio_id) REFERENCES SERVICIO(servicio_id)
+);
+
+
+-- Tabla de Transacciones
+CREATE TABLE TRANSACCION (
+  transaccion_id INT(11) NOT NULL AUTO_INCREMENT,
+  metodo_pago_id INT(10) NOT NULL,
+  fecha_pago     DATE NOT NULL,
+  monto          DECIMAL(10,2) NOT NULL,
+  estado         TINYINT(1) NOT NULL,
+  reserva_id     INT(10) NOT NULL UNIQUE,
+  PRIMARY KEY (transaccion_id),
+  FOREIGN KEY (metodo_pago_id) REFERENCES METODO_PAGO(id_metodo_pago),
+  FOREIGN KEY (reserva_id) REFERENCES RESERVA(reserva_id)
+);
+
+INSERT INTO TRANSACCION (metodo_pago_id, fecha_pago, monto, estado, reserva_id) VALUES
+(2, CURDATE(), 450.00, 1, 1),
+(1, '2025-10-11', 400.00, 1, 2),
+(3, '2025-10-12', 180.00, 1, 3);
+
+
+-- Tabla de Comprobantes
+CREATE TABLE COMPROBANTE (
+  comprobante_id     INT(11) NOT NULL AUTO_INCREMENT,
+  tipo_comprobante   CHAR(1) NOT NULL,
+  numero_comprobante VARCHAR(20) NOT NULL UNIQUE,
+  fecha_comprobante  DATE NOT NULL,
+  hora_comprobante   TIME NOT NULL,
+  monto_total        DECIMAL(10,2) NOT NULL,
+  transaccion_id     INT(11) NOT NULL UNIQUE,
+  PRIMARY KEY (comprobante_id),
+  FOREIGN KEY (transaccion_id) REFERENCES TRANSACCION(transaccion_id)
+);
+
+INSERT INTO COMPROBANTE (tipo_comprobante, numero_comprobante, fecha_comprobante, hora_comprobante, monto_total, transaccion_id) VALUES
+('B', 'B001-000123', CURDATE(), CURTIME(), 450.00, 1),
+('F', 'F001-0002', '2025-10-11', '11:45:00', 400.00, 2),
+('B', 'B001-0003', '2025-10-12', '09:15:00', 180.00, 3);
+
+
+-- Tabla de Detalle de Comprobantes
+CREATE TABLE DETALLE_COMPROBANTE (
+  detalle_id          INT(10) NOT NULL AUTO_INCREMENT,
+  comprobante_id      INT(11) NOT NULL,
+  reserva_habitacion_id INT(11),
+  evento_id           INT(10),
+  habitacion_id       INT(10),
+  cantidad            INT(10) NOT NULL,
+  precio_unitario     DECIMAL(10,2) NOT NULL,
+  subtotal            DECIMAL(10,2) NOT NULL,
+  PRIMARY KEY (detalle_id),
+  FOREIGN KEY (comprobante_id) REFERENCES COMPROBANTE(comprobante_id),
+  FOREIGN KEY (reserva_habitacion_id) REFERENCES RESERVA_HABITACION(reserva_habitacion_id),
+  FOREIGN KEY (evento_id) REFERENCES EVENTO(id_evento),
+  FOREIGN KEY (habitacion_id) REFERENCES HABITACION(habitacion_id)
+);
+
+INSERT INTO DETALLE_COMPROBANTE (comprobante_id, cantidad, precio_unitario, subtotal) VALUES
+(1, 1, 450.00, 450.00),
+(2, 2, 200.00, 400.00),
+(3, 1, 180.00, 180.00);
+
+
+-- Tabla de Notas de Crédito
+CREATE TABLE NOTA_CREDITO (
+  nota_credito_id INT(11) NOT NULL AUTO_INCREMENT,
+  comprobante_id  INT(11) NOT NULL UNIQUE,
+  fecha_emision   DATE NOT NULL,
+  motivo          VARCHAR(100) NOT NULL,
+  monto_credito   DECIMAL(10,2) NOT NULL,
+  estado          TINYINT(1) NOT NULL,
+  PRIMARY KEY (nota_credito_id),
+  FOREIGN KEY (comprobante_id) REFERENCES COMPROBANTE(comprobante_id)
+);
+
+
+-- Tabla de Tipos de Incidencia
+CREATE TABLE TIPO_INCIDENCIA (
+  id_tipo INT(10) NOT NULL AUTO_INCREMENT,
+  nombre  VARCHAR(20) NOT NULL UNIQUE,
+  estado  TINYINT(1) NOT NULL,
+  PRIMARY KEY (id_tipo)
+);
+
+INSERT INTO TIPO_INCIDENCIA (nombre, estado) VALUES
+('Queja', 1),
+('Reclamo', 1),
+('Sugerencia', 1),
+('Mantenimiento', 1);
+
+
+-- Tabla de Incidencias
+CREATE TABLE INCIDENCIA (
+  incidencia_id      INT(10) NOT NULL AUTO_INCREMENT,
+  nombre_incidencia  VARCHAR(255) NOT NULL,
+  fecha_envio        DATE NOT NULL,
+  fecha_resolucion   DATE,
+  estado             TINYINT(1) NOT NULL,
+  tipo_incidencia_id INT(10) NOT NULL,
+  mensaje            VARCHAR(200) NOT NULL,
+  prueba             BLOB,
+  cliente_id         INT(10),
+  empleado_id        INT(10),
+  PRIMARY KEY (incidencia_id),
+  FOREIGN KEY (tipo_incidencia_id) REFERENCES TIPO_INCIDENCIA(id_tipo),
+  FOREIGN KEY (cliente_id) REFERENCES CLIENTE(cliente_id),
+  FOREIGN KEY (empleado_id) REFERENCES EMPLEADO(empleado_id)
+);
+
+
+-- Tabla de Huéspedes
+CREATE TABLE HUESPED (
+  huesped_id            INT(11) NOT NULL AUTO_INCREMENT,
+  num_doc               CHAR(9) NOT NULL,
+  nombre                VARCHAR(50) NOT NULL,
+  ape_paterno           VARCHAR(50) NOT NULL,
+  ape_materno           VARCHAR(50) NOT NULL,
+  id_cliente            INT(10) NOT NULL,
+  reserva_habitacion_id INT(11),
+  PRIMARY KEY (huesped_id),
+  FOREIGN KEY (id_cliente) REFERENCES CLIENTE(cliente_id),
+  FOREIGN KEY (reserva_habitacion_id) REFERENCES RESERVA_HABITACION(reserva_habitacion_id)
+);
+
+
+-- Tabla de Turnos
+CREATE TABLE TURNO (
+  turno_id      INT(10) NOT NULL AUTO_INCREMENT,
+  nombre_turno  VARCHAR(50) NOT NULL,
+  hora_inicio   TIME NOT NULL,
+  hora_fin      TIME NOT NULL,
+  PRIMARY KEY (turno_id)
+);
+
+INSERT INTO TURNO (nombre_turno, hora_inicio, hora_fin) VALUES
+('Mañana', '08:00:00', '16:00:00'),
+('Tarde', '16:00:00', '00:00:00'),
+('Noche', '00:00:00', '08:00:00');
+
+
+-- Tabla de Detalle de Turnos
+CREATE TABLE DETALLE_TURNO (
+  empleado_id INT(10) NOT NULL,
+  turno_id    INT(10) NOT NULL,
+  fecha       DATE NOT NULL,
+  PRIMARY KEY (empleado_id, turno_id, fecha),
+  FOREIGN KEY (empleado_id) REFERENCES EMPLEADO(empleado_id),
+  FOREIGN KEY (turno_id) REFERENCES TURNO(turno_id)
+);
+
+INSERT INTO DETALLE_TURNO (empleado_id, turno_id, fecha) VALUES
+(1, 1, '2025-10-25'),
+(2, 2, '2025-10-25'),
+(3, 3, '2025-10-25');
