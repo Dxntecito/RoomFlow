@@ -1,6 +1,6 @@
 # routes/ruta_huesped.py
 from flask import Blueprint, request, jsonify
-from App.Controladores.C_Reserva.controlador_huesped import guardar_huesped
+from App.Controladores.C_Cliente.controlador_huesped import guardar_huesped
 
 huesped_bp = Blueprint('huesped_bp', __name__)
 

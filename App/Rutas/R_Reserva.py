@@ -5,7 +5,8 @@ import App.Controladores.C_Reserva.controlador_categoria as controller_category
 import App.Controladores.C_Reserva.controlador_piso as controller_floor
 import App.Controladores.C_Reserva.controlador_reserva as controller_reserva
 import App.Controladores.C_Reserva.controlador_pais as controller_pais
-
+import App.Controladores.C_Cliente.controlador_tipo_doc as controller_type_doc
+import App.Controladores.C_Cliente.controlador_tipo_emp as controller_type_emp
 bookingroom_bp = Blueprint('bookingroom',__name__,template_folder='TEMPLATES',url_prefix='/Rutas/TEMPLATES')
 
 @bookingroom_bp.route('/', methods=['GET'])
@@ -30,12 +31,14 @@ def BookingRoom():
     categories = controller_category.get_categories()
     floors = controller_floor.get_floors()
     countries = controller_pais.get_countries()
+    types_doc = controller_type_doc.get_types_doc()
+    types_emp = controller_type_emp.get_types_emp()
     print("start:", start)
     print("end:", end)
     print("start_dt:", start_dt)
     print("end_dt:", end_dt)
 
-    return render_template("Booking.html", rooms=rooms, categories=categories, floors=floors ,start_dt =start_dt, end_dt=end_dt , countries=countries)
+    return render_template("Booking.html", rooms=rooms, categories=categories, floors=floors ,start_dt =start_dt, end_dt=end_dt , countries=countries, types_doc=types_doc, types_emp=types_emp )
 
 
 @bookingroom_bp.route('/guardar_reserva', methods=['POST'])

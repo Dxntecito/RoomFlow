@@ -1,18 +1,18 @@
 from bd import get_connection
 
-def get_countries(limit=20, offset=0):
+def get_types_doc(limit=20, offset=0):
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT
-                    p.pais_id,
-                    p.nombre,
-                    p.estado
-                FROM PAIS p
+                    TD.tipo_doc_id,
+                    TD.nombre_tipo_doc,
+                    TD.estado
+                FROM TIPO_DOCUMENTO TD
                 LIMIT %s OFFSET %s
             """, (limit, offset))
-            countries = cursor.fetchall()
+            types_doc = cursor.fetchall()
     finally:
         connection.close()
-    return countries
+    return types_doc

@@ -1,6 +1,6 @@
 # routes/ruta_cliente.py
 from flask import Blueprint, request, jsonify, render_template
-from App.Controladores.C_Reserva.controlador_cliente import guardar_cliente
+from App.Controladores.C_Cliente.controlador_cliente import guardar_cliente
 
 cliente_bp = Blueprint('cliente_bp', __name__)
 

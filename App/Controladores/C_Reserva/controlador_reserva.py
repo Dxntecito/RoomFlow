@@ -3,7 +3,7 @@ from datetime import date, datetime
 from bd import get_connection
 from flask import jsonify, request
 import traceback
-import App.Controladores.C_Reserva.controlador_cliente as controller_client 
+import App.Controladores.C_Cliente.controlador_cliente as controller_client 
 
 # def guardar_reserva(data):
 #     print("🟢 [DEBUG] Entrando a guardar_reserva()")
@@ -177,7 +177,8 @@ def guardar_reserva(data):
                         'ape_materno': cliente.get('ape_materno'),
                         'telefono': cliente.get('telefono'),
                         'pais_id': pais_id,
-                        'tipo': 'N'
+                        'tipo': 'N',
+                        'tipo_doc_id':cliente.get('tipo_doc_id')
                     }
                     cliente_id = registrar_cliente_natural(cursor, c)
                     if not cliente_id:
@@ -190,7 +191,9 @@ def guardar_reserva(data):
                         'telefono': cliente.get('telefono'),
                         'pais_id': pais_id,
                         'tipo': 'J',
-                        'direccion': cliente.get('direccion')
+                        'direccion': cliente.get('direccion'),
+                        'tipoemp_id': cliente.get('tipo_emp_id'),
+                        'tipo_doc_id': 2
                     }
                     cliente_id = registrar_cliente_juridico(cursor, c)
                     if not cliente_id:
@@ -204,8 +207,8 @@ def guardar_reserva(data):
 
             cursor.execute("""
                 INSERT INTO RESERVA (fecha_registro, hora_registro, cliente_id, monto_total, estado,
-                                     fecha_ingreso, hora_ingreso, fecha_salida, hora_salida)
-                VALUES (CURDATE(), CURTIME(), %s, %s, 1, %s, %s, %s, %s)
+                                     fecha_ingreso, hora_ingreso, fecha_salida, hora_salida,tipo_reserva)
+                VALUES (CURDATE(), CURTIME(), %s, %s, 1, %s, %s, %s, %s, 'H' )
             """, (cliente_id, total_val, fecha_ingreso, hora_ingreso, fecha_salida, hora_salida))
 
             reserva_id = cursor.lastrowid
@@ -278,7 +281,7 @@ def registrar_cliente_natural(cursor, cliente):
                     data = dict(cliente._mapping)
                 else:
                     # si es tupla/lista asumimos orden (ajusta si tu orden es distinto)
-                    keys = ['num_doc', 'nombres', 'ape_paterno', 'ape_materno', 'telefono', 'pais_id', 'correo', 'tipo']
+                    keys = ['num_doc', 'nombres', 'ape_paterno', 'ape_materno', 'telefono', 'pais_id', 'correo', 'tipo' ,'tipo_doc_id']
                     data = {k: (cliente[i] if i < len(cliente) else None) for i, k in enumerate(keys)}
             except Exception as e:
                 print(f"⚠️ [registrar_cliente_natural] no pude normalizar entrada: {e}")
@@ -291,6 +294,7 @@ def registrar_cliente_natural(cursor, cliente):
         ape_materno = data.get('ape_materno') or data.get('apeMaterno') or None
         telefono = data.get('telefono') or data.get('movil') or None
         correo = data.get('correo') or data.get('email') or None
+        tipo_doc_id = data.get('tipo_doc_id') or None
 
         # Normalizar pais_id (acepta 'pais_id' o 'id_pais' o 'pais')
         pais_id_raw = data.get('pais_id') or data.get('id_pais') or data.get('pais') or None
@@ -325,13 +329,13 @@ def registrar_cliente_natural(cursor, cliente):
         # Preparar tuple de insert — ajustado a tu esquema CLIENTE
         # Tabla CLIENTE (según tu DDL): direccion, telefono, f_registro, num_doc, id_tipo_cliente, id_pais, id_tipoemp, ape_paterno, ape_materno, nombres, razon_social
         # Vamos a insertar sólo los campos esenciales (otros NULL)
-        params = (num_doc, nombres, ape_paterno, ape_materno, telefono, pais_id, tipo_cliente)
+        params = (num_doc, nombres, ape_paterno, ape_materno, telefono, pais_id, tipo_cliente,tipo_doc_id)
         print("DEBUG [registrar_cliente_natural] params a insertar (num_doc,nombres,ape_p,ape_m,pais_id,tipo):", params)
 
         # Inserción: usar columnas explícitas para evitar desorden
         cursor.execute("""
-            INSERT INTO CLIENTE (num_doc, nombres, ape_paterno, ape_materno, telefono, id_pais, id_tipo_cliente,f_registro)
-            VALUES (%s, %s, %s, %s, %s, %s, %s,CURDATE())
+            INSERT INTO CLIENTE (num_doc, nombres, ape_paterno, ape_materno, telefono, id_pais, id_tipo_cliente, tipo_doc_id,f_registro)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s ,CURDATE())
         """, params)
 
         last_id = cursor.lastrowid
@@ -370,6 +374,8 @@ def registrar_cliente_juridico(cursor, cliente):
         telefono = data.get('telefono') or None
         pais_id_raw = data.get('pais_id') or data.get('id_pais') or None
         direccion = data.get('direccion') or None
+        tipoemp_id = data.get('tipoemp_id') or None
+        tipo_doc_id = data.get('tipo_doc_id') or None
         try:
             pais_id = int(pais_id_raw) if pais_id_raw not in (None, '', []) else None
         except Exception:
@@ -394,13 +400,13 @@ def registrar_cliente_juridico(cursor, cliente):
             print("⚠️ [registrar_cliente_juridico] pais_id es None. data:", data)
             return None
 
-        params = (ruc, razon_social,direccion, telefono, pais_id, tipo_cliente)
+        params = (ruc, razon_social,direccion, telefono, pais_id, tipo_cliente,tipoemp_id,tipo_doc_id)
         print("DEBUG [registrar_cliente_juridico] params a insertar (ruc,razon,telefono,pais_id,tipo):", params)
 
         # Insertar: guardamos razon_social en campo 'nombres' para unificar tabla CLIENTE
         cursor.execute("""
-            INSERT INTO CLIENTE (num_doc, razon_social, direccion, telefono, id_pais, id_tipo_cliente, f_registro)
-            VALUES (%s, %s, %s, %s, %s, %s,CURDATE())
+            INSERT INTO CLIENTE (num_doc, razon_social, direccion, telefono, id_pais, id_tipo_cliente, tipoemp_id, tipo_doc_id, f_registro)
+            VALUES (%s, %s, %s, %s, %s, %s , %s, %s ,CURDATE())
         """, (ruc, razon_social, direccion, telefono, pais_id, tipo_cliente,))
 
         last_id = cursor.lastrowid

@@ -6,6 +6,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='CSS/Booking_huespedes.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/pago.css') }}">
+
 
 {% endblock %}
 
@@ -136,7 +139,17 @@
   <label id="tipo_cliente_label">Persona Natural</label>
   <!-- ---------- Campos Persona Natural ---------- -->
   <div id="natural_fields">
-    <label for="num_doc_natural">DNI</label>
+    <label for="num_doc_natural">Tipo Documento</label>
+    <select id="tipo_doc_natural">
+      <option value="">-- Seleccione Tipo Documento --</option>
+      {% for type_doc in types_doc %}
+        {% if type_doc[1] != "RUC" %}
+          <option value="{{ type_doc[0] }}" data-nombre="{{ type_doc[1] }}">{{ type_doc[1] }}</option>
+        {% endif %}
+      {% endfor %}
+    </select>
+
+    </select>
     <input type="text" id="num_doc_natural" maxlength="8" placeholder="Ej: 87654321">
 
     <label for="nombres">Nombres</label>
@@ -157,7 +170,6 @@
       {% for country in countries %}
       <option value="{{ country[0] }}">{{ country[1] }}</option>
       {% endfor %}
-      <!-- si tienes la lista desde el backend, reemplaza estas opciones dinamicamente -->
     </select>
   </div>
 
@@ -169,11 +181,19 @@
     <label for="razon_social">Razón Social</label>
     <input type="text" id="razon_social" placeholder="Nombre de la empresa">
 
+        <label for="tipo_empresa">Tipo de Empresa</label>
+    <select id="tipo_empresa">
+      <option value="">-- Seleccione Tipo de Empresa --</option>
+      {% for type_emp in types_emp %}
+      <option value="{{ type_emp[0] }}">{{ type_emp[1] }}</option>
+      {% endfor %}
+    </select>
+
     <label for="direccion_juridica">Dirección</label>
     <input type="text" id="direccion_juridica" placeholder="Dirección fiscal">
 
     <label for="telefono_juridico">Teléfono</label>
-    <input type="text" id="telefono_juridico" placeholder="987654321">
+    <input type="text" id="telefono_juridico" placeholder="987654321" maxlength="9">
 
     <!-- <label for="tipo_empresa">Tipo de Empresa</label>
     <select id="tipo_empresa">
@@ -207,9 +227,57 @@
 
     <div class="button_group">
       <button type="button" id="back_to_client">← Regresar</button>
-      <button type="submit" id="payment_phase">Realizar pago</button>
+      <button type="submit" id="payment_phase">Continuar al Pago</button>
+      <!-- <button type="submit" id="finalizar_reserva">Finalizar Reserva</button> -->
     </div>
   </div>
+
+  <!-- PASO 4: Facturación / Pago -->
+<div id="step4" style="display:none;">
+  <h2>Facturación y pago</h2>
+
+  <section id="payment_method_section">
+    <label class="booking_label">Método de pago:</label>
+    <div>
+      <label><input type="radio" name="payment_method" value="card" checked> Tarjeta (crédito/débito)</label>
+      <label style="margin-left:1rem;"><input type="radio" name="payment_method" value="wallet"> Billetera electrónica</label>
+    </div>
+  </section>
+
+  <form id="card_form" autocomplete="off">
+    <h3>Datos de la tarjeta</h3>
+    <div>
+      <label class="booking_label">Titular</label>
+      <input type="text" id="card_holder" placeholder="Nombre como en la tarjeta" required>
+    </div>
+    <div>
+      <label class="booking_label">Número de tarjeta</label>
+      <input type="text" id="card_number" placeholder="1234 5678 9012 3456" maxlength="19" inputmode="numeric" required>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <div style="flex:1;">
+        <label class="booking_label">Expiración (MM/AA)</label>
+        <input type="text" id="card_exp" placeholder="MM/AA" maxlength="5" required>
+      </div>
+      <div style="width:120px;">
+        <label class="booking_label">CVV</label>
+        <input type="password" id="card_cvv" placeholder="123" maxlength="4" required>
+      </div>
+    </div>
+  </form>
+
+  <section id="payment_summary">
+    <h3>Resumen de pago</h3>
+    <div id="payment_items"></div>
+    <p id="payment_total"><strong>Total:</strong> S/. <span id="payment_total_amount">0.00</span></p>
+  </section>
+
+  <div class="button_group">
+    <button type="button" id="back_to_step3">← Volver</button>
+    <button type="button" id="process_payment">Realizar pago</button>
+  </div>
+</div>
+
 </div>
 <script src="{{ url_for('static', filename='JS/Booking.js') }}"></script>
 <script>
@@ -227,6 +295,7 @@
   const backToClient = document.getElementById("back_to_client");
   const finalizarReserva = document.getElementById("finalizar_reserva");
   const habitacionesContainer = document.getElementById("habitaciones_container");
+  
 
   // --- Variables de estado ---
   let total = 0;
@@ -343,11 +412,11 @@
     filterRows();
 
   // --- Datos de habitaciones generados con Jinja ---
-  const roomCapacities = {
-    {% for room in rooms %}
-      "{{ room[0] }}": {% for category in categories %}{% if room[3] == category[0] %}{{ category[4] }}{% endif %}{% endfor %}{% if not loop.last %},{% endif %}
-    {% endfor %}
-  };
+const roomCapacities = {
+  {% for room in rooms %}
+    "{{ room[0] }}": {% for category in categories %}{% if room[3] == category[0] %}{{ category[4] }}{% endif %}{% endfor %}{% if not loop.last %},{% endif %}
+  {% endfor %}
+};
 
   // --- Selección de habitaciones ---
   document.querySelectorAll('.checkbox_booking').forEach(cb => {
@@ -424,12 +493,15 @@
   const paisSelect = document.getElementById("pais_select");
   const startDateInput = document.getElementById("Start_booking_date");
   const endDateInput = document.getElementById("End_booking_date");
+  const tipo_doc_natural_select = document.getElementById("tipo_doc_natural");
   // inputs juridicos
   const numDocJuridico = document.getElementById("num_doc_juridico");
   const paisjuridica = document.getElementById("pais_select_j");
   const razonSocial = document.getElementById("razon_social");
   const direccionJuridica = document.getElementById("direccion_juridica");
   const telefonojuridica = document.getElementById("telefono_juridico");
+  const tipoempresa = document.getElementById("tipo_empresa");
+  let tipo_validacion;
   // const tipoEmpresa = document.getElementById("tipo_empresa");
 
   // correo (opcional/global)
@@ -473,6 +545,30 @@
   }
 
   // validar DNI (8 dígitos) y RUC (11 dígitos) - solo números
+  document.getElementById("tipo_doc_natural").addEventListener("change", function() {
+  const selectedOption = this.options[this.selectedIndex];
+  const tipoNombre = selectedOption.getAttribute("data-nombre");
+  const inputNumDoc = document.getElementById("num_doc_natural");
+
+  if (tipoNombre === "DNI") {
+    inputNumDoc.maxLength = 8;
+    inputNumDoc.placeholder = "Ej: 87654321";
+    inputNumDoc.oninput = function () {
+      this.value = this.value.replace(/\D/g, ""); // Solo números
+    };
+    tipo_validacion = 1;
+  } else if (tipoNombre === "Pasaporte") {
+    inputNumDoc.maxLength = 12; // puedes ajustar según el formato que uses
+    inputNumDoc.placeholder = "Ej: ABC123456";
+    tipo_validacion = 0;
+  } else {
+    inputNumDoc.maxLength = 20;
+    inputNumDoc.placeholder = "Ingrese documento";
+  }
+
+  // Limpiamos el campo cuando se cambia el tipo
+  inputNumDoc.value = "";
+});
   function esDniValido(dni) {
     return /^[0-9]{8}$/.test(dni);
   }
@@ -480,11 +576,33 @@
     return /^[0-9]{11}$/.test(ruc);
   }
 
+  function esPasaporteValido(pasaporte) {
+  return /^[A-Za-z0-9]{6,12}$/.test(pasaporte);
+}
+
+const telefonoInput = document.getElementById("telefono_natural");
+
+telefonoInput.addEventListener("input", function () {
+  // Eliminar todo lo que no sea número
+  this.value = this.value.replace(/\D/g, "");
+
+  // Forzar que empiece con 9
+  if (this.value.length === 1 && this.value !== "9") {
+    this.value = ""; // Si el primer dígito no es 9, se borra
+  }
+
+  // Limitar a 9 dígitos
+  if (this.value.length > 9) {
+    this.value = this.value.slice(0, 9);
+  }
+});
+
+
   // on switch change
   tipoSwitch.addEventListener("change", () => {
     toggleClienteView();
     // opcional: limpiar campos para evitar datos sucios entre vistas
-    // limpiarCampos();
+    limpiarCampos();
   });
 
   // inicializar vista
@@ -517,16 +635,26 @@
         const apeMatVal = apeMaterno.value.trim();
         const telefonoVal = telefonoNatural.value.trim();
         const paisVal = paisSelect.value;
+        const tipo_doc_n =tipo_doc_natural_select.value;
 
         // validaciones
-        if (!dniVal || !nombresVal || !apePatVal || !apeMatVal || !paisVal) {
+        if (!dniVal || !nombresVal || !apePatVal || !apeMatVal || !paisVal || !tipo_doc_n) {
           alert("Complete todos los campos obligatorios para Persona Natural (DNI, nombres, apellidos y país).");
           return;
         }
-        if (!esDniValido(dniVal)) {
-          alert("DNI inválido. Debe contener 8 dígitos numéricos.");
-          return;
+        if (tipo_validacion == 1) {
+            if (!esDniValido(dniVal)) {
+            alert("DNI inválido. Debe contener 8 dígitos numéricos.");
+            return;
+          }
         }
+        else{
+           if (!esPasaporteValido(dniVal)) {
+            alert("Pasaporte inválido. Debe contener 12 dígitos numéricos.");
+            return;
+          }
+        }
+        
 
         clientData = {
           tipo: "N",
@@ -536,6 +664,7 @@
           ape_materno: apeMatVal,
           telefono: telefonoVal || null,
           pais_id: paisVal,
+          tipo_doc_id: tipo_doc_n,
         };
 
       } else {
@@ -545,10 +674,11 @@
         const direccionVal = direccionJuridica.value.trim();
         const paisj = paisjuridica.value;
         const telefonoj = telefonojuridica.value.trim();
+        const tipoempresaj = tipoempresa.value;
         // const tipoEmpVal = tipoEmpresa.value;
 
         // validaciones
-        if (!rucVal || !razonVal || !direccionVal || !paisj || !telefonoj ) {
+        if (!rucVal || !razonVal || !direccionVal || !paisj || !telefonoj || !tipoempresaj ) {
           alert("Complete todos los campos obligatorios para Persona Jurídica (RUC, razón social, dirección, tipo de empresa).");
           return;
         }
@@ -564,6 +694,7 @@
           direccion: direccionVal,
           pais_id: paisj,
           telefono: telefonoj,
+          tipoemp_id: tipoempresaj,
         };
       }
 
@@ -585,48 +716,96 @@
     });
   }
 
+// --- Después de generar las habitaciones (en generarFormulariosHuespedes) ---
+function bindYoMeHospedareControls() {
+  // seleccionamos siempre los checkboxes actuales
+  const checkboxes = document.querySelectorAll(".yoHospedare");
+
+  checkboxes.forEach(cb => {
+    // evitar añadir múltiples listeners si ya hay uno
+    cb.removeEventListener('_yoHospedare_change_', cb._yoHospedareHandler); // noop si no existe
+
+    const handler = (e) => {
+      const target = e.target;
+      const currentId = target.id; // ej "yoHospedare_3"
+      // Si está marcado -> ocultar y deshabilitar los demás
+      if (target.checked) {
+        checkboxes.forEach(other => {
+          if (other === target) return; // saltar el propio
+          // desmarcar por si acaso
+          other.checked = false;
+          // deshabilitar para que no se pueda activar
+          other.disabled = true;
+          // ocultar checkbox y su label asociado (si existe)
+          other.style.display = "none";
+          const lab = document.querySelector(`label[for="${other.id}"]`);
+          if (lab) lab.style.display = "none";
+        });
+      } else {
+        // Si se desmarca -> restaurar todos los demás
+        checkboxes.forEach(other => {
+          if (other === target) return;
+          other.disabled = false;
+          // restaurar display (vacio para que recupere su estilo por defecto)
+          other.style.display = "";
+          const lab = document.querySelector(`label[for="${other.id}"]`);
+          if (lab) lab.style.display = "";
+        });
+      }
+
+      // además: ajustar campos de huespedes según el checkbox activo
+      // (mantengo tu lógica original: si se marca, reducir la cantidad de huéspedes en esa habitación)
+      const roomId = target.dataset.room;
+      const select = document.getElementById(`numPersonas_${roomId}`);
+      if (target.checked) {
+        // ocultar otros switches visualmente ya hecho; ahora regeneramos campos
+        const num = parseInt(select.value) || 1;
+        generarCamposHuespedes(roomId, Math.max(num - 1, 0));
+      } else {
+        generarCamposHuespedes(roomId);
+      }
+    };
+
+    // Guardar referencia para poder remover listener en regeneraciones posteriores
+    cb._yoHospedareHandler = handler;
+    cb.addEventListener('change', handler);
+  });
+}
+
+// Llama a bindYoMeHospedareControls() al final de generarFormulariosHuespedes()
+// por ejemplo, modifica tu función así:
+
 function generarFormulariosHuespedes() {
-    habitacionesContainer.innerHTML = "";
-    selectedRooms.forEach(roomId => {
-      const capacidad = parseInt(roomCapacities[roomId]) || 1;
-      const div = document.createElement("div");
-      div.className = "habitacion_form";
-      div.innerHTML = `
-        <h3>Habitación ${roomNames[roomId]}</h3>
-        <label>Cantidad de personas:</label>
-        <select class="numPersonas" id="numPersonas_${roomId}" data-room="${roomId}">
-          ${Array.from({length: capacidad}, (_, i) => `<option value="${i+1}">${i+1}</option>`).join('')}
-        </select>
-        <div>
-          <input type="checkbox" class="yoHospedare" data-room="${roomId}" id="yoHospedare_${roomId}">
-          <label for="yoHospedare_${roomId}">Yo me hospedaré aquí</label>
-        </div>
-        <div class="contenedorHuespedes" id="huespedes_${roomId}"></div>
-      `;
-      habitacionesContainer.appendChild(div);
+  habitacionesContainer.innerHTML = "";
+  selectedRooms.forEach(roomId => {
+    const capacidad = parseInt(roomCapacities[roomId]) || 1;
+    const div = document.createElement("div");
+    div.className = "habitacion_form";
+    div.innerHTML = `
+      <h3>Habitación ${roomNames[roomId]}</h3>
+      <label>Cantidad de personas:</label>
+      <select class="numPersonas" id="numPersonas_${roomId}" data-room="${roomId}">
+        ${Array.from({length: capacidad}, (_, i) => `<option value="${i+1}">${i+1}</option>`).join('')}
+      </select>
+      <div class="yo_container">
+        <input type="checkbox" class="yoHospedare" data-room="${roomId}" id="yoHospedare_${roomId}">
+        <label for="yoHospedare_${roomId}">Yo me hospedaré aquí</label>
+      </div>
+      <div class="contenedorHuespedes" id="huespedes_${roomId}"></div>
+    `;
+    habitacionesContainer.appendChild(div);
 
-      const select = div.querySelector(".numPersonas");
-      select.addEventListener("change", () => generarCamposHuespedes(roomId));
-      generarCamposHuespedes(roomId);
-    });
+    const select = div.querySelector(".numPersonas");
+    select.addEventListener("change", () => generarCamposHuespedes(roomId));
+    generarCamposHuespedes(roomId);
+  });
 
-    const checkboxes = document.querySelectorAll(".yoHospedare");
-    checkboxes.forEach(cb => {
-      cb.addEventListener("change", e => {
-        const roomId = e.target.dataset.room;
-        const select = document.getElementById(`numPersonas_${roomId}`);
-        if (e.target.checked) {
-          checkboxes.forEach(other => { if (other !== cb) other.style.display = "none"; });
-          const num = parseInt(select.value);
-          generarCamposHuespedes(roomId, Math.max(num - 1, 0));
-        } else {
-          checkboxes.forEach(other => { other.style.display = "inline-block"; });
-          generarCamposHuespedes(roomId);
-        }
-      });
-    });
-  }
-function generarCamposHuespedes(roomId, cantidadManual = null) {
+  // bindear comportamiento de "yoHospedare"
+  bindYoMeHospedareControls();
+}
+
+
+  function generarCamposHuespedes(roomId, cantidadManual = null) {
     const contenedor = document.getElementById(`huespedes_${roomId}`);
     const cantidad = cantidadManual ?? parseInt(document.getElementById(`numPersonas_${roomId}`)?.value) ?? 1;
     if (!contenedor) return;
@@ -638,7 +817,7 @@ function generarCamposHuespedes(roomId, cantidadManual = null) {
           <input class="nombre_huesped" placeholder="Nombre">
           <input class="apellido_huesped" placeholder="Apellido Paterno">
           <input class ="apellido_huesped_m" placeholder="Apellido Materno">
-          <input class="doc_huesped" placeholder="N° Documento">
+          <input class="doc_huesped" placeholder="N° Documento" maxlength="8">
         </div>
       `;
     }
@@ -723,6 +902,164 @@ if (finalizarReserva) {
       }
     });
   }
+
+
+// --- STEP4: Facturación / Pago ---
+const step3El = document.getElementById("step3");
+const step4El = document.getElementById("step4");
+const backToStep3Btn = document.getElementById("back_to_step3");
+const processPaymentBtn = document.getElementById("process_payment");
+const paymentItemsDiv = document.getElementById("payment_items");
+const paymentTotalAmount = document.getElementById("payment_total_amount");
+const cardForm = document.getElementById("card_form");
+const paymentMethodInputs = document.getElementsByName("payment_method");
+
+// Mostrar step4 cuando el usuario haga click en "Realizar pago" (en step3)
+document.getElementById("payment_phase")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  // valida que haya habitaciones seleccionadas
+  if (!selectedRooms || selectedRooms.length === 0) {
+    alert("Seleccione al menos una habitación antes de proceder al pago.");
+    return;
+  }
+  // ocultar paso 3, mostrar paso 4
+  if (step3El) step3El.style.display = "none";
+  if (step4El) {
+    populatePaymentSummary();
+    step4El.style.display = "block";
+  }
+});
+
+// Volver a step3
+backToStep3Btn?.addEventListener("click", () => {
+  if (step4El) step4El.style.display = "none";
+  if (step3El) step3El.style.display = "block";
+});
+
+// Si el usuario cambia el método de pago, ocultar/mostrar formularios
+Array.from(paymentMethodInputs).forEach(r => {
+  r.addEventListener("change", () => {
+    const method = document.querySelector('input[name="payment_method"]:checked')?.value;
+    if (method === "card") {
+      cardForm.style.display = "block";
+    } else {
+      // por ahora no implementado -> ocultar formulario de tarjeta
+      cardForm.style.display = "none";
+    }
+  });
+});
+
+// Rellena el resumen con las habitaciones seleccionadas y el total
+function populatePaymentSummary() {
+  paymentItemsDiv.innerHTML = "";
+  let localTotal = 0;
+
+  if (!selectedRooms || selectedRooms.length === 0) {
+    paymentItemsDiv.innerHTML = "<p>No hay habitaciones seleccionadas.</p>";
+    paymentTotalAmount.textContent = "0.00";
+    return;
+  }
+
+  selectedRooms.forEach(id => {
+    const name = (typeof roomNames !== 'undefined' && roomNames[id]) ? roomNames[id] : id;
+    const price = (typeof roomPrices !== 'undefined' && roomPrices[id]) ? parseFloat(roomPrices[id]) : 0;
+    localTotal += price;
+    const item = document.createElement("div");
+    item.className = "payment_item";
+    item.innerHTML = `<span>Habitación ${name}</span> <span>S/. ${price.toFixed(2)}</span>`;
+    paymentItemsDiv.appendChild(item);
+  });
+
+  // si la variable global total existe, preferimos usarla (por si hay descuentos o cálculo adicional)
+  const finalTotal = (typeof total !== 'undefined' && !isNaN(total)) ? parseFloat(total) : localTotal;
+  paymentTotalAmount.textContent = finalTotal.toFixed(2);
+}
+
+// Procesar pago (simulado) y enviar al backend para generar comprobante
+processPaymentBtn?.addEventListener("click", async () => {
+  const method = document.querySelector('input[name="payment_method"]:checked')?.value || 'card';
+
+  // Validar método tarjeta si está seleccionado
+  if (method === 'card') {
+    const holder = document.getElementById("card_holder").value.trim();
+    const number = document.getElementById("card_number").value.replace(/\s+/g, '');
+    const exp = document.getElementById("card_exp").value.trim();
+    const cvv = document.getElementById("card_cvv").value.trim();
+
+    if (!holder || !number || !exp || !cvv) {
+      alert("Complete todos los datos de la tarjeta.");
+      return;
+    }
+    if (!/^\d{13,19}$/.test(number)) {
+      alert("Número de tarjeta inválido.");
+      return;
+    }
+    if (!/^\d{2}\/\d{2}$/.test(exp)) {
+      alert("Fecha de expiración inválida. Formato MM/AA.");
+      return;
+    }
+    if (!/^\d{3,4}$/.test(cvv)) {
+      alert("CVV inválido.");
+      return;
+    }
+  }
+
+  // Recolectar datos de reserva desde tu función existente
+  const reservaObj = (typeof recolectarDatosReserva === 'function') ? recolectarDatosReserva() : null;
+  if (!reservaObj) {
+    alert("No se pudieron obtener los datos de la reserva. Verifica la selección.");
+    return;
+  }
+
+  // Armar payload con datos de pago mínimos (NO envíes datos de tarjeta sensibles a servidores no seguros)
+  const payload = {
+    reserva: reservaObj,
+    pago: {
+      metodo: method,
+      // solo para demo; en un entorno real usarías un gateway y tokenización
+      tarjeta: method === 'card' ? {
+        titular: document.getElementById("card_holder").value.trim(),
+        numero_mask: "**** **** **** " + (document.getElementById("card_number").value.slice(-4)),
+      } : null,
+      monto: parseFloat(paymentTotalAmount.textContent) || reservaObj.total || 0
+    }
+  };
+
+  try {
+    processPaymentBtn.disabled = true;
+    processPaymentBtn.textContent = "Procesando...";
+
+    const res = await fetch("/Rutas/TEMPLATES/procesar_pago", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+    if (result && result.success) {
+      // Suponemos que el servidor devuelve { success: true, comprobante_id: 123 }
+      alert("Pago realizado correctamente. Comprobante ID: " + (result.comprobante_id || "N/A"));
+      // redirigir al comprobante (ajusta la ruta si tu backend la tiene distinta)
+      if (result.comprobante_id) {
+        window.location.href = `/Rutas/TEMPLATES/comprobante/${result.comprobante_id}`;
+      } else {
+        // si no hay redirección, puedes limpiar la UI o recargar
+        window.location.reload();
+      }
+    } else {
+      const msg = (result && result.error) ? result.error : "Error procesando el pago.";
+      alert("Error: " + msg);
+      processPaymentBtn.disabled = false;
+      processPaymentBtn.textContent = "Realizar pago";
+    }
+
+  } catch (err) {
+    console.error("Error al procesar pago:", err);
+    alert("Ocurrió un error al intentar procesar el pago.");
+    processPaymentBtn.disabled = false;
+    processPaymentBtn.textContent = "Realizar pago";
+  }
+});
 
 </script>
 

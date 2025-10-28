@@ -1,0 +1,156 @@
+/* === Estilo general === */
+#step4 {
+  max-width: 480px;
+  margin: 3rem auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  font-family: 'Arial', sans-serif;
+  transition: all 0.3s ease;
+}
+
+#step4 h2 {
+  text-align: center;
+  font-size: 1.6rem;
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+
+/* === Campos e inputs === */
+#step4 input[type="text"],
+#step4 input[type="password"] {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 0.6rem;
+  font-size: 0.95rem;
+  color: #333;
+  background-color: #fafafa;
+  transition: 0.3s;
+}
+
+#step4 input:focus {
+  border-color: #007bff;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  outline: none;
+}
+
+/* === Sección de método de pago === */
+#payment_method_section {
+  margin-bottom: 1.8rem;
+  padding: 1rem;
+  border: 1px dashed #ccc;
+  border-radius: 0.8rem;
+  background-color: #fafafa;
+}
+
+#payment_method_section label {
+  cursor: pointer;
+  font-weight: 500;
+}
+
+#payment_method_section input {
+  margin-right: 0.4rem;
+}
+
+#payment_method_section label::before {
+  content: "\f09d"; /* Icono de tarjeta */
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  margin-right: 0.4rem;
+  color: #007bff;
+}
+
+#payment_method_section label[for="wallet"]::before {
+  content: "\f555"; /* Icono de billetera */
+}
+
+/* === Sección de tarjeta === */
+#card_form h3, #payment_summary h3 {
+  font-size: 1.2rem;
+  color: #222;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #007bff;
+  padding-left: 0.5rem;
+}
+
+#card_form div {
+  margin-bottom: 1rem;
+}
+
+/* === Resumen de pago === */
+#payment_summary {
+  background-color: #f9fafc;
+  padding: 1.2rem;
+  border-radius: 0.8rem;
+  border: 1px solid #eee;
+}
+
+#payment_total {
+  font-size: 1.1rem;
+  text-align: right;
+  color: #333;
+  margin-top: 1rem;
+}
+
+/* === Botones === */
+.button_group {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+.button_group button {
+  flex: 1;
+  margin: 0 0.4rem;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#back_to_step3 {
+  background-color: #e9ecef;
+  color: #333;
+}
+
+#back_to_step3:hover {
+  background-color: #d6d8db;
+}
+
+#process_payment {
+  background-color: #007bff;
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(0, 123, 255, 0.3);
+}
+
+#process_payment:hover {
+  background-color: #0056b3;
+}
+
+/* === Íconos dentro de los inputs (decorativo opcional) === */
+#card_number::placeholder {
+  content: "\f09d  Número de tarjeta";
+  font-family: "Font Awesome 6 Free";
+}
+
+#card_holder::placeholder {
+  content: "\f2c2  Nombre del titular";
+}
+
+/* === Animación de entrada === */
+#step4 {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -143,7 +143,7 @@
     <script src="{{ url_for('static', filename='JS/main.js') }}"></script>
     <script src="{{ url_for('static', filename='JS/home.js') }}"></script>
 
-<script>
+<!-- <script>
 document.querySelector(".booking-form").addEventListener("submit", function(event) {
   const entrada = document.getElementById("fechaEntrada").value.trim();
   const salida = document.getElementById("fechaSalida").value.trim();
@@ -152,6 +152,58 @@ document.querySelector(".booking-form").addEventListener("submit", function(even
     event.preventDefault(); // evita el envío del formulario
     alert("⚠️ Debes completar ambas fechas antes de buscar.");
   }
+});
+</script> -->
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const entrada = document.getElementById("fechaEntrada");
+  const salida = document.getElementById("fechaSalida");
+
+  // ⏰ Establecer fecha y hora mínima (actual)
+  const ahora = new Date();
+  const formatoLocal = ahora.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+  entrada.min = formatoLocal;
+
+  // 🎯 Cuando se seleccione una fecha de entrada:
+  entrada.addEventListener("change", function () {
+    if (entrada.value) {
+      salida.disabled = false;
+
+      // Bloquear fechas anteriores a la de entrada
+      salida.min = entrada.value;
+    } else {
+      salida.disabled = true;
+      salida.value = "";
+    }
+  });
+
+  // 🧾 Validación al enviar formulario
+  document.querySelector(".booking-form").addEventListener("submit", function (event) {
+    const entradaVal = entrada.value.trim();
+    const salidaVal = salida.value.trim();
+
+    if (!entradaVal || !salidaVal) {
+      event.preventDefault();
+      alert("⚠️ Debes completar ambas fechas antes de buscar.");
+      return;
+    }
+
+    const fechaEntrada = new Date(entradaVal);
+    const fechaSalida = new Date(salidaVal);
+    const ahora = new Date();
+
+    if (fechaEntrada < ahora) {
+      event.preventDefault();
+      alert("⚠️ La fecha de entrada no puede ser anterior a la fecha actual.");
+      return;
+    }
+
+    if (fechaSalida <= fechaEntrada) {
+      event.preventDefault();
+      alert("⚠️ La fecha de salida debe ser posterior a la de entrada.");
+    }
+  });
 });
 </script>
 
