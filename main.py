@@ -10,6 +10,7 @@ from App.Rutas.R_Reserva_Habitacion import reserva_habitacion_bp
 from App.Rutas.R_Huesped  import huesped_bp
 from App.Rutas.R_Usuario import usuarios_bp
 from App.Rutas.R_Incidente import incidentes_bp
+from App.Rutas.R_Reporte import reportes_bp
 # from App.Rutas.RutasFacturacion import facturaciones_bp
 # from App.Rutas.RutasRoomService import RoomService_bp
 
@@ -23,6 +24,7 @@ app.register_blueprint(empleados_bp)
 app.register_blueprint(eventos_bp)
 app.register_blueprint(usuarios_bp)
 app.register_blueprint(incidentes_bp)
+app.register_blueprint(reportes_bp)
 
 @app.route("/")
 @app.route("/RoomFlow")

@@ -2,11 +2,11 @@ import pymysql
 
 def get_connection():
     conexion = pymysql.connect(
-        host='localhost',
+        host='switchyard.proxy.rlwy.net',
         user='root',
-        port=3306,
-        password='',
-        db='roomflowdb',
+        port=21592,
+        password='mnNJDFhyYUysKijkrSpMRTpjjelkoptN',
+        db='roomflow',
         charset='utf8mb4'
     )
     with conexion.cursor() as cursor:

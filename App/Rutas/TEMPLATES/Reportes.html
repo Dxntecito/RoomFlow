@@ -1,0 +1,444 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+<!-- Chart.js para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    .reportes-container {
+        max-width: 1400px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .reportes-header {
+        text-align: center;
+        margin-bottom: 40px;
+        margin-top: 20px;
+        padding-top: 30px;
+    }
+
+    .reportes-header h1 {
+        font-size: 2.5rem;
+        color: #2c3e50;
+        margin-bottom: 10px;
+        margin-top: 0;
+    }
+
+    .reportes-header p {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    /* Estilos para tarjetas de estadísticas */
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+    }
+
+    .stat-info h3 {
+        margin: 0;
+        font-size: 36px;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    .stat-info p {
+        margin: 5px 0 0 0;
+        color: #6c757d;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    /* Estilos para gráficos */
+    .charts-section {
+        background: white;
+        border-radius: 15px;
+        padding: 35px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 40px;
+    }
+
+    .charts-section h2 {
+        margin: 0 0 30px 0;
+        font-size: 1.8rem;
+        color: #2c3e50;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #328336;
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 30px;
+    }
+
+    .chart-wrapper {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+    }
+
+    .chart-wrapper h3 {
+        margin: 0 0 20px 0;
+        font-size: 1.2rem;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    .chart-canvas {
+        max-width: 100%;
+        height: 300px !important;
+    }
+
+    /* Información de BD */
+    .db-info-section {
+        background: white;
+        border-radius: 15px;
+        padding: 35px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .db-info-section h2 {
+        margin: 0 0 25px 0;
+        font-size: 1.8rem;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .db-info-section h2 i {
+        color: #328336;
+        font-size: 1.5rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .info-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 20px;
+        border: 2px solid #328336;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .info-value {
+        font-weight: 700;
+        color: #328336;
+        font-size: 28px;
+    }
+
+    @media (max-width: 768px) {
+        .reportes-container {
+            padding: 0 15px;
+        }
+
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reportes-container">
+    <!-- Encabezado -->
+    <div class="reportes-header">
+        <h1><i class="fas fa-chart-bar" style="color: #328336;"></i> Reportes y Estadísticas</h1>
+        <p>Información detallada del sistema Hostal Bolívar</p>
+    </div>
+
+    <!-- Tarjetas de estadísticas -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #e3f2fd;">
+                <i class="fas fa-users" style="color: #1976d2;"></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="total-empleados">0</h3>
+                <p>Total Empleados</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #f3e5f5;">
+                <i class="fas fa-user-friends" style="color: #7b1fa2;"></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="total-clientes">0</h3>
+                <p>Total Clientes</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #fff3e0;">
+                <i class="fas fa-bed" style="color: #e65100;"></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="total-habitaciones">0</h3>
+                <p>Habitaciones Disponibles</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #e8f5e9;">
+                <i class="fas fa-calendar-check" style="color: #388e3c;"></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="total-reservas">0</h3>
+                <p>Total Reservas</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de gráficos -->
+    <div class="charts-section">
+        <h2><i class="fas fa-chart-pie"></i> Análisis Visual</h2>
+        <div class="charts-grid">
+            <div class="chart-wrapper">
+                <h3>Empleados por Rol</h3>
+                <canvas id="chartEmpleadosRol" class="chart-canvas"></canvas>
+            </div>
+
+            <div class="chart-wrapper">
+                <h3>Estado de Empleados</h3>
+                <canvas id="chartEstadoEmpleados" class="chart-canvas"></canvas>
+            </div>
+
+            <div class="chart-wrapper">
+                <h3>Reservas por Estado</h3>
+                <canvas id="chartReservas" class="chart-canvas"></canvas>
+            </div>
+
+            <div class="chart-wrapper">
+                <h3>Tipos de Clientes</h3>
+                <canvas id="chartTiposClientes" class="chart-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de BD -->
+    <div class="db-info-section">
+        <h2><i class="fas fa-database"></i> Información de la Base de Datos</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-label">Tablas en la BD</div>
+                <div class="info-value" id="total-tablas">0</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Total de Registros</div>
+                <div class="info-value" id="total-registros">0</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Empleados Activos</div>
+                <div class="info-value" id="empleados-activos">0</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Empleados por Turno</div>
+                <div class="info-value" id="empleados-turnos">-</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cargar datos de reportes al cargar la página
+    document.addEventListener('DOMContentLoaded', function () {
+        cargarReportes();
+    });
+
+    async function cargarReportes() {
+        try {
+            // Cargar datos de empleados
+            const empleadosResponse = await fetch('/Cruds/Empleados/api/empleados');
+            const empleadosData = await empleadosResponse.json();
+
+            if (empleadosData.empleados) {
+                const total = empleadosData.empleados.length;
+                const activos = empleadosData.empleados.filter(e => e.estado === 'Activo').length;
+
+                document.getElementById('total-empleados').textContent = total;
+                document.getElementById('empleados-activos').textContent = activos;
+
+                // Datos para gráficos
+                const empleadosPorRol = {};
+                empleadosData.empleados.forEach(e => {
+                    empleadosPorRol[e.rol] = (empleadosPorRol[e.rol] || 0) + 1;
+                });
+
+                // Contar por estado
+                const inactivos = empleadosData.empleados.filter(e => e.estado === 'Inactivo').length;
+
+                // Crear gráficos
+                crearGraficoEmpleadosRol(empleadosPorRol);
+                crearGraficoEstadoEmpleados(activos, inactivos);
+
+                console.log('Datos de empleados cargados:', empleadosData.empleados);
+            }
+
+            // Placeholder para otros datos
+            document.getElementById('total-clientes').textContent = 'Por implementar';
+            document.getElementById('total-habitaciones').textContent = 'Por implementar';
+            document.getElementById('total-reservas').textContent = 'Por implementar';
+            document.getElementById('total-tablas').textContent = 'Por implementar';
+            document.getElementById('total-registros').textContent = 'Por implementar';
+            document.getElementById('empleados-turnos').textContent = 'Por implementar';
+
+            // Mostrar mensaje en gráficos no implementados
+            mostrarMensajeGraficoVacio('chartReservas', 'Datos no disponibles');
+            mostrarMensajeGraficoVacio('chartTiposClientes', 'Datos no disponibles');
+
+        } catch (error) {
+            console.error('Error al cargar reportes:', error);
+        }
+    }
+
+    // Función para crear gráfico de empleados por rol
+    function crearGraficoEmpleadosRol(datos) {
+        const ctx = document.getElementById('chartEmpleadosRol').getContext('2d');
+        const labels = Object.keys(datos);
+        const values = Object.values(datos);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Cantidad de Empleados',
+                    data: values,
+                    backgroundColor: [
+                        'rgba(25, 118, 210, 0.8)',
+                        'rgba(123, 31, 162, 0.8)',
+                        'rgba(230, 81, 0, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(25, 118, 210, 1)',
+                        'rgba(123, 31, 162, 1)',
+                        'rgba(230, 81, 0, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Función para crear gráfico de estado de empleados
+    function crearGraficoEstadoEmpleados(activos, inactivos) {
+        const ctx = document.getElementById('chartEstadoEmpleados').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Activos', 'Inactivos'],
+                datasets: [{
+                    label: 'Estado de Empleados',
+                    data: [activos, inactivos],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(220, 53, 69, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Función para mostrar mensaje en gráficos vacíos
+    function mostrarMensajeGraficoVacio(canvasId, mensaje) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const width = canvas.offsetWidth;
+        const height = canvas.offsetHeight;
+
+        // Configurar canvas
+        canvas.width = width;
+        canvas.height = height;
+
+        // Fondo gris claro
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(0, 0, width, height);
+
+        // Texto centrado
+        ctx.fillStyle = '#6c757d';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(mensaje, width / 2, height / 2);
+    }
+</script>
+{% endblock %}

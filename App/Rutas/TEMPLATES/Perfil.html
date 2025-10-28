@@ -485,6 +485,16 @@
         font-size: 14px;
     }
 
+    /* Estilos específicos para encabezados de columna */
+    .empleados-table th:nth-child(3) {
+        text-align: center;
+    }
+
+    .empleados-table th:nth-child(4) {
+        text-align: right;
+        padding-right: 55px;
+    }
+
     .empleados-table tbody tr {
         border-bottom: 1px solid #e9ecef;
         transition: background-color 0.3s ease;
@@ -515,7 +525,8 @@
     }
 
     .shift-cell {
-        text-align: center;
+        text-align: center !important;
+        vertical-align: middle;
     }
 
     .shift-badge {
@@ -526,16 +537,18 @@
         font-size: 12px;
         font-weight: 600;
         display: inline-block;
-    }
-
-    .actions-cell {
         text-align: center;
     }
 
+    .actions-cell {
+        text-align: right !important;
+        padding-right: 25px !important;
+    }
+
     .action-buttons {
-        display: flex;
+        display: flex !important;
         gap: 8px;
-        justify-content: center;
+        justify-content: flex-end !important;
     }
 
     .action-btn {
@@ -561,6 +574,18 @@
         color: white;
         text-decoration: none;
         transform: scale(1.1);
+    }
+
+    .calendar-btn.disabled {
+        background: #6c757d !important;
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .calendar-btn.disabled:hover {
+        background: #6c757d !important;
+        transform: none;
     }
 
     .edit-btn {
@@ -759,6 +784,27 @@
         background: #f8f9fa;
         border-radius: 6px;
         border: 1px solid #e9ecef;
+    }
+
+    .estado-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .estado-activo {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .estado-inactivo {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
     }
 
     @keyframes slideIn {
@@ -1353,66 +1399,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td class="phone-cell">987654321</td>
-                                <td class="name-cell">Juan Pérez Gómez</td>
-                                <td class="shift-cell">
-                                    <span class="shift-badge">Tarde</span>
-                                </td>
-                                <td class="actions-cell">
-                                    <div class="action-buttons">
-                                        <button class="action-btn calendar-btn" title="Asignar turno">
-                                            <i class="fas fa-calendar"></i>
-                                        </button>
-                                        <button class="action-btn edit-btn" title="Actualizar empleado">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="action-btn delete-btn" title="Eliminar empleado">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="phone-cell">987111222</td>
-                                <td class="name-cell">María López Ruiz</td>
-                                <td class="shift-cell">
-                                    <span class="shift-badge">Mañana</span>
-                                </td>
-                                <td class="actions-cell">
-                                    <div class="action-buttons">
-                                        <button class="action-btn calendar-btn" title="Asignar turno">
-                                            <i class="fas fa-calendar"></i>
-                                        </button>
-                                        <button class="action-btn edit-btn" title="Actualizar empleado">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="action-btn delete-btn" title="Eliminar empleado">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="phone-cell">987333444</td>
-                                <td class="name-cell">Carlos Vega Soto</td>
-                                <td class="shift-cell">
-                                    <span class="shift-badge">Noche</span>
-                                </td>
-                                <td class="actions-cell">
-                                    <div class="action-buttons">
-                                        <button class="action-btn calendar-btn" title="Asignar turno">
-                                            <i class="fas fa-calendar"></i>
-                                        </button>
-                                        <button class="action-btn edit-btn" title="Actualizar empleado">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="action-btn delete-btn" title="Eliminar empleado">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            <!-- Los empleados se cargarán dinámicamente desde la API -->
                         </tbody>
                     </table>
                 </div>
@@ -1501,7 +1488,7 @@
                     <div class="detail-group">
                         <label class="detail-label" for="crear_telefono">Teléfono *</label>
                         <input type="text" id="crear_telefono" name="telefono" class="detail-value" maxlength="9"
-                            required>
+                            pattern="^9[0-9]{8}$" title="El teléfono debe tener 9 dígitos y empezar con 9" required>
                     </div>
                     <div class="detail-group">
                         <label class="detail-label" for="crear_sexo">Sexo *</label>
@@ -1929,7 +1916,12 @@
             return;
         }
 
-        tbody.innerHTML = empleados.map(empleado => `
+        tbody.innerHTML = empleados.map(empleado => {
+            const esInactivo = empleado.estado && empleado.estado.toLowerCase() === 'inactivo';
+            const disabledClass = esInactivo ? 'disabled' : '';
+            const buttonTitle = esInactivo ? 'Para asignar un turno, el empleado debe estar activo' : 'Asignar turno';
+
+            return `
             <tr onclick="mostrarDetallesEmpleado(${empleado.id})" style="cursor: pointer;">
                 <td class="phone-cell">${empleado.telefono}</td>
                 <td class="name-cell">${empleado.nombre}</td>
@@ -1938,7 +1930,9 @@
                 </td>
                 <td class="actions-cell">
                     <div class="action-buttons">
-                        <button class="action-btn calendar-btn" title="Asignar turno" onclick="event.stopPropagation(); asignarTurno(${empleado.id})">
+                        <button class="action-btn calendar-btn ${disabledClass}" title="${buttonTitle}" 
+                                ${esInactivo ? 'disabled' : ''} 
+                                onclick="event.stopPropagation(); if (!${esInactivo}) asignarTurno(${empleado.id}); else alert('Para asignar un turno, el empleado debe estar activo');">
                             <i class="fas fa-calendar"></i>
                         </button>
                         <button class="action-btn edit-btn" title="Actualizar empleado" onclick="event.stopPropagation(); editarEmpleado(${empleado.id})">
@@ -1950,7 +1944,8 @@
                     </div>
                 </td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
     }
 
     // Variables para modales y notificaciones
@@ -1961,6 +1956,12 @@
     async function asignarTurno(id) {
         const empleado = empleadosData.find(e => e.id === id);
         if (!empleado) return;
+
+        // Validar que el empleado esté activo
+        if (empleado.estado && empleado.estado.toLowerCase() === 'inactivo') {
+            alert('Para asignar un turno, el empleado debe estar activo');
+            return;
+        }
 
         // Limpiar formulario y llenar datos
         document.getElementById('formAsignarTurno').reset();
@@ -2059,30 +2060,45 @@
         if (!empleado) return;
 
         const detallesContainer = document.getElementById('detallesEmpleado');
+
+        // Determinar la clase CSS según el estado
+        const estadoClass = empleado.estado && empleado.estado.toLowerCase() === 'activo' ? 'estado-activo' : 'estado-inactivo';
+        const estadoTexto = empleado.estado || 'Sin definir';
+
         detallesContainer.innerHTML = `
             <div class="detail-group">
-                <label class="detail-label">Nombres</label>
-                <div class="detail-value">${empleado.nombre.split(' ')[0] || ''}</div>
+                <label class="detail-label">Nombre Completo</label>
+                <div class="detail-value">${empleado.nombre || 'N/A'}</div>
             </div>
             <div class="detail-group">
-                <label class="detail-label">Apellido Paterno</label>
-                <div class="detail-value">${empleado.nombre.split(' ')[1] || ''}</div>
+                <label class="detail-label">Código de Empleado</label>
+                <div class="detail-value">${empleado.codigo || 'N/A'}</div>
             </div>
             <div class="detail-group">
-                <label class="detail-label">Apellido Materno</label>
-                <div class="detail-value">${empleado.nombre.split(' ')[2] || ''}</div>
+                <label class="detail-label">DNI</label>
+                <div class="detail-value">${empleado.dni || 'N/A'}</div>
+            </div>
+            <div class="detail-group">
+                <label class="detail-label">Sexo</label>
+                <div class="detail-value">${empleado.sexo === 'M' ? 'Masculino' : empleado.sexo === 'F' ? 'Femenino' : 'N/A'}</div>
             </div>
             <div class="detail-group">
                 <label class="detail-label">Teléfono</label>
-                <div class="detail-value">${empleado.telefono}</div>
+                <div class="detail-value">${empleado.telefono || 'N/A'}</div>
             </div>
             <div class="detail-group">
                 <label class="detail-label">Rol</label>
-                <div class="detail-value">${empleado.rol}</div>
+                <div class="detail-value">${empleado.rol || 'N/A'}</div>
             </div>
             <div class="detail-group">
-                <label class="detail-label">Turno</label>
-                <div class="detail-value">${empleado.turno}</div>
+                <label class="detail-label">Turno Asignado</label>
+                <div class="detail-value">${empleado.turno || 'Sin turno'}</div>
+            </div>
+            <div class="detail-group">
+                <label class="detail-label">Estado</label>
+                <div class="detail-value">
+                    <span class="estado-badge ${estadoClass}">${estadoTexto}</span>
+                </div>
             </div>
         `;
 
@@ -2129,9 +2145,25 @@
             generarCodigo();
         });
 
-        // Validación para teléfono (solo números)
+        // Validación para teléfono (solo números, debe empezar con 9)
         document.getElementById('crear_telefono').addEventListener('input', function (e) {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            let value = e.target.value.replace(/[^0-9]/g, '');
+
+            // Si no empieza con 9, no permitir el ingreso
+            if (value.length > 0 && !value.startsWith('9')) {
+                value = '9';
+            }
+
+            e.target.value = value;
+
+            // Validar en tiempo real
+            if (value.length > 0 && value.length < 9) {
+                e.target.setCustomValidity('El teléfono debe tener 9 dígitos');
+            } else if (value.length === 9 && value.startsWith('9')) {
+                e.target.setCustomValidity('');
+            } else if (value.length === 9 && !value.startsWith('9')) {
+                e.target.setCustomValidity('El teléfono debe empezar con 9');
+            }
         });
 
         // Validación para nombres (solo letras)
