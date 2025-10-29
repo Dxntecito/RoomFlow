@@ -1,16 +1,18 @@
 {% extends "Master.html" %}
 
 {% block stiles %}
-    <link rel="stylesheet" href="/App/Static/CSS/Events.css">
-    <link rel="stylesheet" href="../Static/Fonts/Arimo/static/Arimo-Medium.ttf">
-    <link rel="stylesheet" href="/App/Static/CSS/style.css">
-    <link rel="stylesheet" href="/App/Static/CSS/home.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="../../Static/CSS/Events.css">
+<link rel="stylesheet" href="../../Static/Fonts/Arimo/static/Arimo-Medium.ttf">
+<link rel="stylesheet" href="../../Static/CSS/style.css">
+<link rel="stylesheet" href="../../Static/CSS/home.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
 <div class="container">
+    <div class="separar_inicio"></div>
     <h1>RESERVA PARA EVENTOS</h1>
+    <div id="search-error"></div>
 
     <div class="search-bar">
         <div>
@@ -18,17 +20,17 @@
         </div>
         <div>
             <label style="font-size: 12px; color: #999;">Fecha de reserva</label>
-            <input id="search-fecha" type="date" value="2025-02-20" style="color: #328336; font-weight: 500;">
+            <input id="search-fecha" type="date" value="" style="color: #328336; font-weight: 500;">
         </div>
         <div class="divider"></div>
         <div>
             <label style="font-size: 12px; color: #999;">Hora de entrada</label>
-            <input id="search-hora-entrada" type="time" value="19:00">
+            <input id="search-hora-entrada" type="time" value="" step="1800" min="00:00" max="23:30">
         </div>
         <div class="divider"></div>
         <div>
             <label style="font-size: 12px; color: #999;">Hora de salida</label>
-            <input id="search-hora-salida" type="time" value="23:00">
+            <input id="search-hora-salida" type="time" value="" step="1800" min="00:00" max="23:30">
         </div>
         <button id="search-button" class="search-button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
@@ -39,159 +41,462 @@
     </div>
 
     <div class="main-content">
-        <div class="form-card">
-            <h3 class="section-title-events">DATOS DEL EVENTO</h3>
+        <form action="{{ url_for('eventos.procesar_pago_route') }}" method="POST" id="form-pago" >
+            <div class="form-card" >
+                <h3 class="section-title-events">DATOS DEL EVENTO</h3>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Fecha</label>
-                    <input id="evento-fecha" type="date" readonly style="background-color: #efefef;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input id="evento-fecha" type="date" name="fecha_evento" readonly
+                            style="background-color: #efefef;">
+                    </div>
+                    <div class="form-group">
+                        <label>Hora entrada</label>
+                        <input id="evento-hora-entrada" type="time" name="hora_inicio" readonly
+                            style="background-color: #efefef;">
+                    </div>
+                    <div class="form-group">
+                        <label>Hora salida</label>
+                        <input id="evento-hora-salida" type="time" name="hora_fin" readonly
+                            style="background-color: #efefef;">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Hora entrada</label>
-                    <input id="evento-hora-entrada" type="time" readonly style="background-color: #efefef;">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo de evento</label>
+                        <select name="tipo_evento_id" class="form-control" required>
+                            <option value="">Seleccionar</option>
+                            {% for evento in tipos_evento %}
+                            <option value="{{ evento[0] }}">{{ evento[1] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nombre de evento</label>
+                        <input type="text" name="nombre_evento" class="form-control">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Hora salida</label>
-                    <input id="evento-hora-salida" type="time" readonly style="background-color: #efefef;">
+
+
+                <h2 class="section-title-events">DATOS DEL CLIENTE</h2>
+
+                <!-- Toggle para cambiar tipo de cliente -->
+                <div class="switch-container">
+                    <span class="switch-label">Cliente </span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggleCliente">
+                        <span class="slider"></span>
+                    </label>
+                    <span style="margin-left:10px;" id="tipoTexto">Natural</span>
+
+                    <!-- Campo oculto que enviará el valor 'N' o 'J' -->
+                    <input type="hidden" name="tipo_cliente" id="tipo_cliente" value="N">
                 </div>
+
+
+                <!-- FORMULARIO CLIENTE NATURAL -->
+                <div id="formNatural">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Apellido paterno</label>
+                            <input type="text" name="ape_paterno">
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido materno</label>
+                            <input type="text" name="ape_materno">
+                        </div>
+
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nombres</label>
+                            <input type="text" name="nombres">
+                        </div>
+
+                        <div class="form-group">
+                            <label>País</label>
+                            <select id="pais_select" name="pais_id">
+                                <option value="">-- Seleccione país --</option>
+                                {% for country in countries %}
+                                <option value="{{ country[0] }}">{{ country[1] }}</option>
+                                {% endfor %}
+                                <!-- si tienes la lista desde el backend, reemplaza estas opciones dinamicamente -->
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="tel" name="telefono">
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de documento</label>
+                            <select id="tipo_doc_id" name="tipo_doc_id">
+                                <option value="">-- Seleccione tipo --</option>
+                                {% for doc in tipo_doc %}
+                                <option value="{{ doc[0] }}">{{ doc[1] }}</option>
+                                {% endfor %}
+                                <!-- si tienes la lista desde el backend, reemplaza estas opciones dinamicamente -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nro. de documento</label>
+                            <input type="text" name="nro_doc">
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <!-- FORMULARIO CLIENTE JURÍDICO -->
+                <div id="formJuridico" class="hidden">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>RUC</label>
+                            <input type="text" name="ruc">
+                        </div>
+                        <div class="form-group">
+                            <label>Razón Social</label>
+                            <input type="text" name="razon_social">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="tel" name="telefono">
+                        </div>
+                        <div class="form-group">
+                            <label>País</label>
+                            <select id="pais_select" name="pais_id">
+                                <option value="">-- Seleccione país --</option>
+                                {% for country in countries %}
+                                <option value="{{ country[0] }}">{{ country[1] }}</option>
+                                {% endfor %}
+                                <!-- si tienes la lista desde el backend, reemplaza estas opciones dinamicamente -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Dirección</label>
+                            <input type="text" name="direccion">
+                        </div>
+                    </div>
+
+                </div>
+                <h3 class="section-title-events">Métodos de Pago</h3>
+
+                <!-- Radios de selección de método -->
+                <div class="radio-group" style="margin-bottom: 20px;">
+                    {% for metodo in metodos_pago %}
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+                        <input type="radio" name="metodo_pago_id" value="{{ metodo[0] }}"
+                            data-nombre="{{ metodo[1]|lower }}" {% if loop.first %}checked{% endif %}>
+
+
+                        {{ metodo[1] }}
+                    </label>
+                    {% endfor %}
+                </div>
+
+                <!-- Campos adicionales según método -->
+                <div id="tarjeta-fields" class="form-row hidden" style="flex-direction: column; gap: 10px;">
+                    <div class="form-group">
+                        <label>Nro. de tarjeta</label>
+                        <input type="text" name="num_tarjeta" maxlength="16" placeholder="1234 5678 9012 3456"
+                            class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Código de seguridad</label>
+                        <input type="text" name="codigo_seguridad" maxlength="3" placeholder="123" class="form-control">
+                    </div>
+                </div>
+
+                <div id="efectivo-fields" class="form-row hidden" style="flex-direction: column; gap: 10px;">
+                    <div class="form-group">
+                        <label>Monto entregado</label>
+                        <input type="number" name="monto_efectivo" placeholder="0.00" step="0.01" class="form-control">
+                    </div>
+                </div>
+
+                <div id="monedero-fields" class="form-row hidden" style="flex-direction: column; gap: 10px;">
+                    <div class="form-group">
+                        <label>Número de teléfono</label>
+                        <input type="text" name="telefono_monedero" maxlength="9" placeholder="987654321"
+                            class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Clave del monedero</label>
+                        <input type="password" name="clave_monedero" maxlength="3" placeholder="***"
+                            class="form-control">
+                    </div>
+                </div>
+
+                <style>
+                    .hidden {
+                        display: none;
+                    }
+                </style>
+
+
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Tipo de evento</label>
-                    <select>
-                        <option value="">Seleccionar</option>
-                        <option value="cumpleaños">Cumpleaños</option>
-                        <option value="boda">Boda</option>
-                        <option value="corporativo">Corporativo</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Nombre de evento</label>
-                    <input type="text">
-                </div>
-            </div>
+            <div class="summary-card" >
+                <h2 class="section-title-events">Resumen de pago</h2>
 
-            <h2 class="section-title-events">DATOS PERSONALES</h2>
+                <div class="summary-row">
+                    <span style="color: #666;">Datos de evento</span>
+                    <span id="resumen-fecha" style="font-weight: 500; color: #328336;">—</span>
+                </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Apellido paterno</label>
-                    <input type="text">
+                <div class="summary-row">
+                    <span style="color: #666;">Nro. Horas</span>
+                    <span id="resumen-horas">—</span>
                 </div>
-                <div class="form-group">
-                    <label>Apellido materno</label>
-                    <input type="text">
-                </div>
-                <div class="form-group">
-                    <label>Nombres</label>
-                    <input type="text">
-                </div>
-            </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="tel">
+                <div class="summary-row total">
+                    <span>Total</span>
+                    <span id="resumen-total">S/ 0</span>
                 </div>
-                <div class="form-group">
-                    <label>Sexo</label>
-                    <select>
-                        <option value="">Seleccionar</option>
-                        <option value="masculino">Masculino</option>
-                        <option value="femenino">Femenino</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Tipo de documento</label>
-                    <select>
-                        <option value="">Seleccionar</option>
-                        <option value="dni">DNI</option>
-                        <option value="pasaporte">Pasaporte</option>
-                        <option value="ce">Carnet de Extranjería</option>
-                    </select>
-                </div>
-            </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Nro. de documento</label>
-                    <input type="text">
-                </div>
-            </div>
-
-            <h2 class="section-title-events" >MÉTODO DE PAGO</h2>
-
-            <div class="radio-group">
                 <label>
-                    <input type="radio" name="payment" value="tarjeta" checked>
-                    Tarjeta
+                    <input type="radio" name="tipo_comprobante" value="B" checked>
+                    Boleta
                 </label>
+                <label for="" style="margin-left: 15px;"></label>
                 <label>
-                    <input type="radio" name="payment" value="billetera">
-                    Billetera digital
+                    <input type="radio" name="tipo_comprobante" value="F">
+                    Factura
                 </label>
+
+                <button class="pay-button" id="btn-pagar" type="submit">Pagar</button>
+
+
+
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Nro. de tarjeta</label>
-                    <input type="text" maxlength="16" placeholder="1234 5678 9012 3456">
-                </div>
-                <div class="form-group">
-                    <label>Código de seguridad</label>
-                    <input type="text" maxlength="3" placeholder="123">
-                </div>
-            </div>
+        </form>
 
-        </div>
-
-        <div class="summary-card">
-            <h2 class="section-title-events">Resumen de pago</h2>
-
-            <div class="summary-row">
-                <span style="color: #666;">Datos de evento</span>
-            </div>
-            <div class="summary-row">
-                <span style="color: #666;">Nro. Horas</span>
-                <span>4 × S/ 100</span>
-            </div>
-
-            <div class="summary-row total">
-                <span>Total</span>
-                <span>S/ 400</span>
-            </div>
-
-            <button class="pay-button">Pagar</button>
-        </div>
     </div>
+    <div class="separar_final"></div>
 </div>
 
 <script>
-    const paymentRadios = document.querySelectorAll('input[name="payment"]');
-    const cardFields = document.querySelectorAll('.form-row:last-of-type .form-group');
+    document.addEventListener('DOMContentLoaded', () => {
+        const radios = document.querySelectorAll('input[name="metodo_pago_id"]');
+        const tarjetaFields = document.getElementById('tarjeta-fields');
+        const efectivoFields = document.getElementById('efectivo-fields');
+        const monederoFields = document.getElementById('monedero-fields');
 
-    paymentRadios.forEach(radio => {
-        radio.addEventListener('change', function () {
-            if (this.value === 'billetera') {
-                cardFields.forEach(field => field.style.display = 'none');
-            } else {
-                cardFields.forEach(field => field.style.display = 'flex');
-            }
+        function mostrarCampos(nombreMetodo) {
+            // Ocultamos todos los campos
+            tarjetaFields.classList.add('hidden');
+            efectivoFields.classList.add('hidden');
+            monederoFields.classList.add('hidden');
+
+            // Mostramos el que corresponde
+            if (nombreMetodo === 'tarjeta') tarjetaFields.classList.remove('hidden');
+            else if (nombreMetodo === 'efectivo') efectivoFields.classList.remove('hidden');
+            else if (nombreMetodo === 'yape' || nombreMetodo === 'monedero virtual') monederoFields.classList.remove('hidden');
+        }
+
+        // Escuchamos los cambios
+        radios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                const nombre = radio.dataset.nombre;
+                mostrarCampos(nombre);
+            });
         });
+
+        // Si ya hay uno marcado por defecto
+        const checked = document.querySelector('input[name="metodo_pago_id"]:checked');
+        if (checked) mostrarCampos(checked.dataset.nombre);
     });
 
-    document.getElementById("search-button").addEventListener("click", function () {
-        const fecha = document.getElementById("search-fecha").value;
-        const horaEntrada = document.getElementById("search-hora-entrada").value;
-        const horaSalida = document.getElementById("search-hora-salida").value;
+    (function () {
+        const btn = document.getElementById("search-button");
+        const fechaInput = document.getElementById("search-fecha");
+        const entradaInput = document.getElementById("search-hora-entrada");
+        const salidaInput = document.getElementById("search-hora-salida");
 
-        document.getElementById("evento-fecha").value = fecha;
-        document.getElementById("evento-hora-entrada").value = horaEntrada;
-        document.getElementById("evento-hora-salida").value = horaSalida;
+        const eventoFecha = document.getElementById("evento-fecha");
+        const eventoEntrada = document.getElementById("evento-hora-entrada");
+        const eventoSalida = document.getElementById("evento-hora-salida");
+
+        const errorBox = document.getElementById("search-error");
+
+        function showError(msg) {
+            errorBox.textContent = msg;
+            errorBox.style.display = "block";
+        }
+        function hideError() {
+            errorBox.textContent = "";
+            errorBox.style.display = "none";
+        }
+
+        function limpiarSearch() {
+            fechaInput.value = "";
+            entradaInput.value = "";
+            salidaInput.value = "";
+        }
+        function limpiarEvento() {
+            if (eventoFecha) eventoFecha.value = "";
+            if (eventoEntrada) eventoEntrada.value = "";
+            if (eventoSalida) eventoSalida.value = "";
+        }
+
+        btn.addEventListener("click", function (e) {
+            e.preventDefault(); // evita comportamiento por defecto
+
+            hideError(); // cerrar errores previos
+
+            const fecha = fechaInput.value;
+            const horaEntrada = entradaInput.value;
+            const horaSalida = salidaInput.value;
+
+            // Campos obligatorios
+            if (!fecha || !horaEntrada || !horaSalida) {
+                showError("Por favor completa todos los campos de fecha y hora.");
+                limpiarSearch();
+                limpiarEvento();
+                return;
+            }
+
+            // Construimos fechas completas
+            const fechaReserva = new Date(`${fecha}T${horaEntrada}`);
+            const fechaSalida = new Date(`${fecha}T${horaSalida}`);
+
+            // Normalizar hoy (sin horas)
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const fechaSeleccionada = new Date(fecha);
+            fechaSeleccionada.setHours(0, 0, 0, 0);
+
+            // 1) Fecha no puede ser anterior a hoy
+            if (fechaSeleccionada < hoy) {
+                showError("No puedes seleccionar una fecha anterior al día de hoy.");
+                limpiarSearch();
+                limpiarEvento();
+                return;
+            }
+
+            // 2) Hora de salida debe ser posterior a la de entrada (si quieres permitir overnight, 
+            // cambiar la lógica; aquí asumimos mismo día)
+            if (fechaSalida <= fechaReserva) {
+                showError("La hora de salida debe ser posterior a la hora de entrada.");
+                limpiarSearch();
+                limpiarEvento();
+                return;
+            }
+
+            // 3) Reserva mínimo 3 horas antes
+            const ahora = new Date();
+            const tresHorasAntes = new Date(fechaReserva.getTime() - 3 * 60 * 60 * 1000);
+            if (ahora > tresHorasAntes) {
+                showError("Las reservas deben realizarse con al menos 3 horas de anticipación.");
+                limpiarSearch();
+                limpiarEvento();
+                return;
+            }
+
+            // Si llegamos aquí, todo está OK -> copiamos los valores en el formulario del evento
+            hideError();
+            if (eventoFecha) eventoFecha.value = fecha;
+            if (eventoEntrada) eventoEntrada.value = horaEntrada;
+            if (eventoSalida) eventoSalida.value = horaSalida;
+
+            // Si quieres, puedes también deshabilitar los inputs search para evitar cambios hasta confirmar
+            // fechaInput.disabled = true; entradaInput.disabled = true; salidaInput.disabled = true;
+
+        }, { once: false });
+    })();
+</script>
+
+
+<script>
+    const PRECIO_POR_HORA = 50;
+    let horas = 0;      // 👈 declaramos global
+    let total = 0;      // 👈 declaramos global
+
+    // Función para calcular diferencia de horas
+    function calcularHoras(entrada, salida) {
+        if (!entrada || !salida) return 0;
+        const [h1, m1] = entrada.split(":").map(Number);
+        const [h2, m2] = salida.split(":").map(Number);
+
+        const t1 = h1 * 60 + m1;
+        const t2 = h2 * 60 + m2;
+        const diffMin = t2 - t1;
+        return diffMin > 0 ? diffMin / 60 : 0;
+    }
+
+    // Actualizar resumen de pago
+    function actualizarResumen() {
+        const fecha = document.getElementById("search-fecha").value;
+        const entrada = document.getElementById("search-hora-entrada").value;
+        const salida = document.getElementById("search-hora-salida").value;
+
+        horas = calcularHoras(entrada, salida);       // 👈 actualizamos variable global
+        total = horas * PRECIO_POR_HORA;             // 👈 también total
+
+        document.getElementById("resumen-fecha").textContent = fecha || "—";
+        document.getElementById("resumen-horas").textContent =
+            horas > 0 ? `${horas} × S/ ${PRECIO_POR_HORA}` : "—";
+        document.getElementById("resumen-total").textContent =
+            horas > 0 ? `S/ ${total.toFixed(2)}` : "S/ 0";
+    }
+
+    // Escuchar cambios en los campos
+    ["search-fecha", "search-hora-entrada", "search-hora-salida"].forEach(id => {
+        document.getElementById(id).addEventListener("change", actualizarResumen);
+    });
+
+    // Al enviar el formulario
+    document.getElementById("btn-pagar").addEventListener("click", async (e) => {
+        e.preventDefault();
+
+        const form = document.getElementById("form-pago");
+        const formData = new FormData(form);
+
+        formData.append("numero_horas", horas);
+        formData.append("precio_final", total);
+
+        const response = await fetch("/Eventos/procesar_pago", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+        alert(data.message || data.error || "Error procesando pago");
+    });
+</script>
+<script>
+    const toggle = document.getElementById('toggleCliente');
+    const formNatural = document.getElementById('formNatural');
+    const formJuridico = document.getElementById('formJuridico');
+    const tipoTexto = document.getElementById('tipoTexto');
+
+    toggle.addEventListener('change', function () {
+        if (this.checked) {
+            // Cliente jurídico
+            formNatural.classList.add('hidden');
+            formJuridico.classList.remove('hidden');
+            tipoTexto.textContent = 'Jurídico';
+            tipoClienteInput.value = 'J';
+        } else {
+            // Cliente natural
+            formNatural.classList.remove('hidden');
+            formJuridico.classList.add('hidden');
+            tipoTexto.textContent = 'Natural';
+            tipoClienteInput.value = 'N';
+        }
     });
 </script>
 {% endblock %}
