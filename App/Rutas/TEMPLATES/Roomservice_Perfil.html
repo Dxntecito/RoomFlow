@@ -1,0 +1,388 @@
+<style>
+    .search-filters-section {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        flex-wrap: wrap;
+    }
+
+    .search-section {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .search-label {
+        font-weight: 600;
+        color: #2c3e50;
+        white-space: nowrap;
+    }
+
+    .search-form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+        min-width: 200px;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #28a745;
+    }
+
+    .search-button {
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .search-button:hover {
+        background: #218838;
+    }
+
+    .filters-section {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .filter-label {
+        font-weight: 600;
+        color: #2c3e50;
+        white-space: nowrap;
+    }
+
+    .filter-form {
+        display: flex;
+        align-items: center;
+    }
+
+    .rol-select {
+        padding: 12px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        background: white;
+        font-size: 14px;
+        cursor: pointer;
+        transition: border-color 0.3s ease;
+        min-width: 150px;
+    }
+
+    .rol-select:focus {
+        outline: none;
+        border-color: #28a745;
+    }
+
+    .actions-section {
+        margin-left: auto;
+    }
+
+    .create-button {
+        background: #28a745;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color 0.3s ease;
+        white-space: nowrap;
+        border: none;
+        cursor: pointer;
+    }
+
+    .create-button:hover {
+        background: #218838;
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Tabla de empleados */
+    .table-container {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .empleados-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    .empleados-table thead {
+        background: #2c3e50;
+        color: white;
+    }
+
+    .empleados-table th {
+        padding: 16px 20px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    /* Estilos específicos para encabezados de columna */
+    .empleados-table th:nth-child(3) {
+        text-align: center;
+    }
+
+    .empleados-table th:nth-child(4) {
+        text-align: right;
+        padding-right: 55px;
+    }
+
+    .empleados-table tbody tr {
+        border-bottom: 1px solid #e9ecef;
+        transition: background-color 0.3s ease;
+    }
+
+    .empleados-table tbody tr:hover {
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+
+    .empleados-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .empleados-table td {
+        padding: 16px 20px;
+        vertical-align: middle;
+    }
+
+    .phone-cell {
+        font-weight: 500;
+        color: #495057;
+    }
+
+    .name-cell {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .shift-cell {
+        text-align: center !important;
+        vertical-align: middle;
+    }
+
+    .shift-badge {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .actions-cell {
+        text-align: right !important;
+        padding-right: 25px !important;
+    }
+
+    .action-buttons {
+        display: flex !important;
+        gap: 8px;
+        justify-content: flex-end !important;
+    }
+
+    .action-btn {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .calendar-btn {
+        background: #28a745;
+        color: white;
+    }
+
+    .calendar-btn:hover {
+        background: #218838;
+        color: white;
+        text-decoration: none;
+        transform: scale(1.1);
+    }
+
+    .calendar-btn.disabled {
+        background: #6c757d !important;
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .calendar-btn.disabled:hover {
+        background: #6c757d !important;
+        transform: none;
+    }
+
+    .edit-btn {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .edit-btn:hover {
+        background: #e0a800;
+        color: #212529;
+        text-decoration: none;
+        transform: scale(1.1);
+    }
+
+    .delete-btn {
+        background: #dc3545;
+        color: white;
+        border: none;
+    }
+
+    .delete-btn:hover {
+        background: #c82333;
+        color: white;
+        text-decoration: none;
+        transform: scale(1.1);
+    }
+
+    
+</style>
+<link rel="stylesheet" href="../../Static/CSS/style.css">
+<link rel="stylesheet" href="../../Static/CSS/style.css">
+<link rel="stylesheet" href="../../Static/CSS/home.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<div class="search-filters-section">
+    <!-- 🔍 Buscar reserva -->
+    <div class="search-section">
+        <label for="fecha-reserva" class="search-label">Ingresa tu fecha de reserva</label>
+        <div class="search-form">
+            <input type="date" id="fecha-reserva" class="search-input">
+            <button type="button" class="search-button" onclick="buscarReserva()">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 🏨 Fechas y habitación -->
+    <div class="filters-section" style="flex-wrap: wrap; gap: 20px;">
+        <div>
+            <label for="fecha-entrada" class="filter-label">Fecha entrada</label>
+            <input type="date" id="fecha-entrada" class="rol-select">
+        </div>
+        <div>
+            <label for="fecha-salida" class="filter-label">Fecha salida</label>
+            <input type="date" id="fecha-salida" class="rol-select">
+        </div>
+        <div>
+            <label for="habitaciones" class="filter-label">Habitaciones</label>
+            <select id="habitaciones" class="rol-select">
+                <option value="">Seleccione</option>
+                <option value="101">101</option>
+                <option value="102">102</option>
+                <option value="103">103</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- 🧾 Sección de servicio -->
+<div class="search-filters-section" style="align-items: flex-end;">
+    <div>
+        <label for="producto" class="filter-label">Productos a llevar</label>
+        <div class="filter-form" style="display:flex; gap:10px;">
+            <select id="producto" class="rol-select">
+                <option value="">Seleccione</option>
+                <option value="Inka Cola 500 ml">Inka Cola 500 ml</option>
+                <option value="Coca Cola 500 ml">Coca Cola 500 ml</option>
+                <option value="Agua 500 ml">Agua 500 ml</option>
+            </select>
+            <button class="action-btn calendar-btn" onclick="agregarProducto()">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 🧮 Tabla de productos -->
+<div class="table-container">
+    <table class="empleados-table" id="tabla-productos">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Subtotal</th>
+                <th>Total</th>
+                <th>ACCIONES</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Inka Cola 500 ml</td>
+                <td>1</td>
+                <td>5.00</td>
+                <td>5.00</td>
+                <td class="actions-cell">
+                    <div class="action-buttons">
+                        <button class="action-btn calendar-btn"><i class="fas fa-plus"></i></button>
+                        <button class="action-btn delete-btn"><i class="fas fa-ban"></i></button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Coca Cola 500 ml</td>
+                <td>1</td>
+                <td>5.00</td>
+                <td>5.00</td>
+                <td class="actions-cell">
+                    <div class="action-buttons">
+                        <button class="action-btn calendar-btn"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn edit-btn"><i class="fas fa-pen"></i></button>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 💰 Total y botón solicitar -->
+<div style="display: flex; justify-content: flex-end; align-items: center; gap: 20px; margin-top: 10px;">
+    <div style="font-weight:600;">Total: <span id="total">S/. 10.00</span></div>
+    <button class="create-button" style="background:#28a745;" onclick="solicitarPedido()">
+        Solicitar
+    </button>
+</div>

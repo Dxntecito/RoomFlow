@@ -12,7 +12,7 @@ from App.Rutas.R_Usuario import usuarios_bp
 from App.Rutas.R_Incidente import incidentes_bp
 from App.Rutas.R_Reporte import reportes_bp
 # from App.Rutas.RutasFacturacion import facturaciones_bp
-# from App.Rutas.RutasRoomService import RoomService_bp
+from App.Rutas.R_RoomService import roomservice_bp
 
 app = Flask(__name__, template_folder="./App/Rutas/TEMPLATES", static_folder="./App/Static")
 app.secret_key = 'clave_super_secreta_123'
@@ -25,6 +25,7 @@ app.register_blueprint(eventos_bp)
 app.register_blueprint(usuarios_bp)
 app.register_blueprint(incidentes_bp)
 app.register_blueprint(reportes_bp)
+app.register_blueprint(roomservice_bp)
 
 @app.route("/")
 @app.route("/RoomFlow")
