@@ -23,3 +23,7 @@ sqlalchemy
 WeasyPrint==65.1.0
 flask-socketio
 matplotlib
+
+reportlab 
+qrcode[pil] 
+pillow

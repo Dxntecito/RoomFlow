@@ -228,11 +228,11 @@
     <div class="button_group">
       <button type="button" id="back_to_client">← Regresar</button>
       <button type="submit" id="payment_phase">Continuar al Pago</button>
-      <!-- <button type="submit" id="finalizar_reserva">Finalizar Reserva</button> -->
+      <button type="submit" id="finalizar_reserva" style="display:none">Finalizar Reserva</button>
     </div>
   </div>
 
-  <!-- PASO 4: Facturación / Pago -->
+  <!-- PASO 4: Facturación / Pago
 <div id="step4" style="display:none;">
   <h2>Facturación y pago</h2>
 
@@ -276,7 +276,70 @@
     <button type="button" id="back_to_step3">← Volver</button>
     <button type="button" id="process_payment">Realizar pago</button>
   </div>
+</div> -->
+
+<!-- PASO 4: Facturación / Pago (lo dejamos, pero lo ocultamos al guardar reserva) -->
+<div id="step4" style="display:none;">
+  <h2>Facturación y pago</h2>
+
+  <section id="payment_method_section">
+    <label class="booking_label">Método de pago:</label>
+    <div>
+      <label><input type="radio" name="payment_method" value="2" checked> Tarjeta (crédito/débito)</label>
+      <label style="margin-left:1rem;"><input type="radio" name="payment_method" value="3"> Billetera electrónica</label>
+    </div>
+  </section>
+
+  <form id="card_form" autocomplete="off">
+    <h3>Datos de la tarjeta</h3>
+    <div>
+      <label class="booking_label">Titular</label>
+      <input type="text" id="card_holder" placeholder="Nombre como en la tarjeta" required>
+    </div>
+    <div>
+      <label class="booking_label">Número de tarjeta</label>
+      <input type="text" id="card_number" placeholder="1234 5678 9012 3456" maxlength="19" inputmode="numeric" required>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <div style="flex:1;">
+        <label class="booking_label">Expiración (MM/AA)</label>
+        <input type="text" id="card_exp" placeholder="MM/AA" maxlength="5" required>
+      </div>
+      <div style="width:120px;">
+        <label class="booking_label">CVV</label>
+        <input type="password" id="card_cvv" placeholder="123" maxlength="4" required>
+      </div>
+    </div>
+  </form>
+
+  <section id="payment_summary">
+    <h3>Resumen de pago</h3>
+    <div id="payment_items"></div>
+    <p id="payment_total"><strong>Total:</strong> S/. <span id="payment_total_amount">0.00</span></p>
+  </section>
+
+  <div class="button_group">
+    <button type="button" id="back_to_step3">← Volver</button>
+    <button type="button" id="process_payment">Realizar pago</button>
+  </div>
 </div>
+
+<!-- PASO 5: Comprobante / Descarga -->
+<div id="step5" style="display:none;">
+  <h2>Pago completado — Comprobante</h2>
+  <p>Tu reserva se guardó correctamente. Descarga tu comprobante aquí:</p>
+
+  <div style="display:flex; gap:12px; align-items:center;">
+    <a id="download_comprobante_link" class="btn" href="#" target="_blank" download style="display:none;">Descargar comprobante (PDF)</a>
+    <button id="open_comprobante_newtab" style="display:none;">Abrir comprobante en nueva pestaña</button>
+    <p id="comprobante_status" style="margin:0 0 0 8px;color:#333;"></p>
+  </div>
+
+  <div style="margin-top:16px;">
+    <button id="volver_home">Volver al inicio</button>
+  </div>
+</div>
+
 
 </div>
 <script src="{{ url_for('static', filename='JS/Booking.js') }}"></script>
@@ -539,9 +602,6 @@ const roomCapacities = {
     direccionJuridica.value = "";
     paisjuridica.value="";
     // tipoEmpresa.value = "";
-
-    // correo
-    correoCliente.value = "";
   }
 
   // validar DNI (8 dígitos) y RUC (11 dígitos) - solo números
@@ -880,31 +940,9 @@ function recolectarDatosReserva() {
     };
   }
 
-if (finalizarReserva) {
-    finalizarReserva.addEventListener("click", async () => {
-      const dataReserva = recolectarDatosReserva();
-      try {
-        const response = await fetch("/Rutas/TEMPLATES/guardar_reserva", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dataReserva)
-        });
-        const result = await response.json();
-        if (result && result.success) {
-          alert("Reserva guardada correctamente.");
-          window.location.href = "/RoomFlow";
-        } else {
-          alert("Ocurrió un problema al guardar la reserva.");
-        }
-      } catch (err) {
-        console.error("Error en el fetch:", err);
-        alert("Error en la comunicación con el servidor.");
-      }
-    });
-  }
-
 
 // --- STEP4: Facturación / Pago ---
+
 const step3El = document.getElementById("step3");
 const step4El = document.getElementById("step4");
 const backToStep3Btn = document.getElementById("back_to_step3");
@@ -914,7 +952,13 @@ const paymentTotalAmount = document.getElementById("payment_total_amount");
 const cardForm = document.getElementById("card_form");
 const paymentMethodInputs = document.getElementsByName("payment_method");
 
-// Mostrar step4 cuando el usuario haga click en "Realizar pago" (en step3)
+
+
+// Volver a step3
+backToStep3Btn?.addEventListener("click", () => {
+  if (step4El) step4El.style.display = "none";
+  if (step3El) step3El.style.display = "block";
+});
 document.getElementById("payment_phase")?.addEventListener("click", (e) => {
   e.preventDefault();
   // valida que haya habitaciones seleccionadas
@@ -928,12 +972,6 @@ document.getElementById("payment_phase")?.addEventListener("click", (e) => {
     populatePaymentSummary();
     step4El.style.display = "block";
   }
-});
-
-// Volver a step3
-backToStep3Btn?.addEventListener("click", () => {
-  if (step4El) step4El.style.display = "none";
-  if (step3El) step3El.style.display = "block";
 });
 
 // Si el usuario cambia el método de pago, ocultar/mostrar formularios
@@ -975,90 +1013,288 @@ function populatePaymentSummary() {
   paymentTotalAmount.textContent = finalTotal.toFixed(2);
 }
 
-// Procesar pago (simulado) y enviar al backend para generar comprobante
-processPaymentBtn?.addEventListener("click", async () => {
-  const method = document.querySelector('input[name="payment_method"]:checked')?.value || 'card';
+// --- HANDLER ORDENADO: pago -> guardar reserva -> crear transaccion -> generar comprobante ---
+// Asume que existen variables globales: selectedRooms (array de ids), roomNames (id->name),
+// roomPrices (id->price), total (opcional, número)
 
-  // Validar método tarjeta si está seleccionado
-  if (method === 'card') {
-    const holder = document.getElementById("card_holder").value.trim();
-    const number = document.getElementById("card_number").value.replace(/\s+/g, '');
-    const exp = document.getElementById("card_exp").value.trim();
-    const cvv = document.getElementById("card_cvv").value.trim();
+document.addEventListener("DOMContentLoaded", () => {
 
-    if (!holder || !number || !exp || !cvv) {
-      alert("Complete todos los datos de la tarjeta.");
-      return;
+  // Referencias DOM
+  const processPaymentBtn = document.getElementById("process_payment");
+  const finalizarReservaBtn = document.getElementById("finalizar_reserva");
+  const step3El = document.getElementById("step3");
+  const step4El = document.getElementById("step4");
+  const step5El = document.getElementById("step5");
+  const paymentItemsDiv = document.getElementById("payment_items");
+  const paymentTotalAmount = document.getElementById("payment_total_amount");
+  const downloadLink = document.getElementById("download_comprobante_link") || document.createElement("a");
+  const openNewTabBtn = document.getElementById("open_comprobante_newtab");
+  const comprobanteStatus = document.getElementById("comprobante_status");
+  const volverHome = document.getElementById("volver_home");
+
+  // Helper: calcular total desde selectedRooms/roomPrices si `total` no existe
+  function computeFinalTotal() {
+    if (typeof total !== 'undefined' && !isNaN(total)) return parseFloat(total);
+    let sum = 0;
+    if (Array.isArray(selectedRooms)) {
+      selectedRooms.forEach(id => {
+        const p = (roomPrices && roomPrices[id]) ? parseFloat(roomPrices[id]) : 0;
+        sum += (isNaN(p) ? 0 : p);
+      });
     }
-    if (!/^\d{13,19}$/.test(number)) {
-      alert("Número de tarjeta inválido.");
-      return;
-    }
-    if (!/^\d{2}\/\d{2}$/.test(exp)) {
-      alert("Fecha de expiración inválida. Formato MM/AA.");
-      return;
-    }
-    if (!/^\d{3,4}$/.test(cvv)) {
-      alert("CVV inválido.");
-      return;
-    }
+    return sum;
   }
 
-  // Recolectar datos de reserva desde tu función existente
-  const reservaObj = (typeof recolectarDatosReserva === 'function') ? recolectarDatosReserva() : null;
-  if (!reservaObj) {
-    alert("No se pudieron obtener los datos de la reserva. Verifica la selección.");
-    return;
+  // Helper: descarga blob como archivo
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
-  // Armar payload con datos de pago mínimos (NO envíes datos de tarjeta sensibles a servidores no seguros)
-  const payload = {
-    reserva: reservaObj,
-    pago: {
-      metodo: method,
-      // solo para demo; en un entorno real usarías un gateway y tokenización
-      tarjeta: method === 'card' ? {
-        titular: document.getElementById("card_holder").value.trim(),
-        numero_mask: "**** **** **** " + (document.getElementById("card_number").value.slice(-4)),
-      } : null,
-      monto: parseFloat(paymentTotalAmount.textContent) || reservaObj.total || 0
+  // Mostrar resumen de pago (llenado sencillo)
+  function populatePaymentSummary() {
+    paymentItemsDiv.innerHTML = "";
+    let localTotal = 0;
+    if (!Array.isArray(selectedRooms) || selectedRooms.length === 0) {
+      paymentItemsDiv.innerHTML = "<p>No hay habitaciones seleccionadas.</p>";
+      paymentTotalAmount.textContent = "0.00";
+      return;
     }
-  };
-
-  try {
-    processPaymentBtn.disabled = true;
-    processPaymentBtn.textContent = "Procesando...";
-
-    const res = await fetch("/Rutas/TEMPLATES/procesar_pago", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+    selectedRooms.forEach(id => {
+      const name = (typeof roomNames !== 'undefined' && roomNames[id]) ? roomNames[id] : id;
+      const price = (typeof roomPrices !== 'undefined' && roomPrices[id]) ? parseFloat(roomPrices[id]) : 0;
+      localTotal += isNaN(price) ? 0 : price;
+      const item = document.createElement("div");
+      item.className = "payment_item";
+      item.innerHTML = `<span>Habitación ${name}</span> <span>S/. ${ (isNaN(price) ? 0 : price).toFixed(2) }</span>`;
+      paymentItemsDiv.appendChild(item);
     });
+    const final = computeFinalTotal();
+    paymentTotalAmount.textContent = Number(final || localTotal).toFixed(2);
+  }
 
-    const result = await res.json();
-    if (result && result.success) {
-      // Suponemos que el servidor devuelve { success: true, comprobante_id: 123 }
-      alert("Pago realizado correctamente. Comprobante ID: " + (result.comprobante_id || "N/A"));
-      // redirigir al comprobante (ajusta la ruta si tu backend la tiene distinta)
-      if (result.comprobante_id) {
-        window.location.href = `/Rutas/TEMPLATES/comprobante/${result.comprobante_id}`;
-      } else {
-        // si no hay redirección, puedes limpiar la UI o recargar
-        window.location.reload();
+  // UI: cambio de método de pago (muestra/oculta form tarjeta)
+  Array.from(document.getElementsByName("payment_method") || []).forEach(r => {
+    r.addEventListener("change", () => {
+      const method = document.querySelector('input[name="payment_method"]:checked')?.value;
+      const cardForm = document.getElementById("card_form");
+      if (cardForm) cardForm.style.display = (method === "card") ? "block" : "none";
+    });
+  });
+
+  // Al pulsar "Realizar pago" (desde step3) mostramos resumen y step4
+  document.getElementById("payment_phase")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (!selectedRooms || selectedRooms.length === 0) {
+      alert("Seleccione al menos una habitación antes de proceder al pago.");
+      return;
+    }
+    if (step3El) step3El.style.display = "none";
+    if (step4El) {
+      populatePaymentSummary();
+      step4El.style.display = "block";
+    }
+  });
+
+  // --- processPaymentBtn: valida tarjeta (si aplica), prepara dataReserva y habilita finalizar ---
+  processPaymentBtn?.addEventListener("click", async () => {
+    console.group("%c[PAGO] Iniciando validación y pre-procesamiento", "color: teal; font-weight: bold;");
+    const method = document.querySelector('input[name="payment_method"]:checked')?.value || 'card';
+
+    // Validaciones de tarjeta si método card
+    if (method === 'card') {
+      const holder = document.getElementById("card_holder")?.value.trim();
+      const number = (document.getElementById("card_number")?.value || "").replace(/\s+/g, '');
+      const exp = document.getElementById("card_exp")?.value.trim();
+      const cvv = document.getElementById("card_cvv")?.value.trim();
+
+      console.log("[PAGO] Método card seleccionado. Validando campos de tarjeta...");
+      if (!holder || !number || !exp || !cvv) {
+        alert("Complete todos los datos de la tarjeta.");
+        console.groupEnd();
+        return;
       }
-    } else {
-      const msg = (result && result.error) ? result.error : "Error procesando el pago.";
-      alert("Error: " + msg);
-      processPaymentBtn.disabled = false;
-      processPaymentBtn.textContent = "Realizar pago";
+      if (!/^\d{13,19}$/.test(number)) { alert("Número de tarjeta inválido."); console.groupEnd(); return; }
+      if (!/^\d{2}\/\d{2}$/.test(exp)) { alert("Fecha de expiración inválida. Formato MM/AA."); console.groupEnd(); return; }
+      if (!/^\d{3,4}$/.test(cvv)) { alert("CVV inválido."); console.groupEnd(); return; }
     }
 
-  } catch (err) {
-    console.error("Error al procesar pago:", err);
-    alert("Ocurrió un error al intentar procesar el pago.");
-    processPaymentBtn.disabled = false;
-    processPaymentBtn.textContent = "Realizar pago";
+    // Mostrar resumen actualizado
+    populatePaymentSummary();
+    alert("Pago validado (simulado). A continuación podrá finalizar la reserva.");
+    if (finalizarReservaBtn) {
+    console.log("[PAGO] Ejecutando automáticamente click en Finalizar Reserva...");
+    finalizarReservaBtn.click();
+  } else {
+    console.warn("[PAGO] No se encontró el botón finalizarReservaBtn en el DOM.");
   }
+
+  console.groupEnd();
+  });
+
+
+  // --- finalizarReservaBtn: flujo completo (guardar reserva -> guardar transaccion -> generar comprobante) ---
+  if (finalizarReservaBtn) {
+    finalizarReservaBtn.addEventListener("click", async () => {
+      finalizarReservaBtn.disabled = true;
+      finalizarReservaBtn.textContent = "Guardando reserva...";
+      console.group("%c[FINALIZAR] Inicio del flujo guardar_reserva -> transaccion -> comprobante", "color: blue; font-weight: bold;");
+
+      // RECOLECTAR datos de reserva (usa tu función existente)
+      let dataReserva;
+      try {
+        if (typeof recolectarDatosReserva !== 'function') throw new Error("recolectarDatosReserva() no encontrada");
+        dataReserva = recolectarDatosReserva();
+        console.log("[FINALIZAR] dataReserva:", dataReserva);
+      } catch (err) {
+        console.error("[FINALIZAR] Error construyendo dataReserva:", err);
+        alert("No se pudieron recolectar los datos de la reserva. Revisa la consola.");
+        finalizarReservaBtn.disabled = false;
+        finalizarReservaBtn.textContent = "Finalizar Reserva";
+        console.groupEnd();
+        return;
+      }
+
+      // 1) Guardar reserva
+      let reservaId = null;
+      try {
+        console.log("[FINALIZAR] Enviando request a /Rutas/TEMPLATES/guardar_reserva ...");
+        const resp = await fetch("/Rutas/TEMPLATES/guardar_reserva", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dataReserva)
+        });
+
+        const rawText = await resp.text();
+        console.log("[FINALIZAR] Response HTTP:", resp.status, resp.ok);
+        console.log("[FINALIZAR] Response RAW:", rawText);
+
+        let result;
+        try { result = JSON.parse(rawText); console.log("[FINALIZAR] JSON parseado:", result); }
+        catch (e) { console.error("[FINALIZAR] No se pudo parsear JSON:", e); alert("Respuesta inesperada del servidor. Revisa la consola."); throw e; }
+
+        if (resp.ok && result && result.success && result.reserva_id) {
+          reservaId = result.reserva_id;
+          console.log("[FINALIZAR] Reserva guardada OK. ID:", reservaId);
+        } else {
+          console.error("[FINALIZAR] El backend devolvió un formato inesperado:", result);
+          alert("Ocurrió un problema al guardar la reserva. Revisa la consola.");
+          throw new Error("Formato de respuesta inválido al guardar reserva");
+        }
+      } catch (errSave) {
+        console.error("[FINALIZAR] Error guardando reserva:", errSave);
+        finalizarReservaBtn.disabled = false;
+        finalizarReservaBtn.textContent = "Finalizar Reserva";
+        console.groupEnd();
+        return;
+      }
+
+       const selectedPaymentRadio = document.querySelector('input[name="payment_method"]:checked');
+      if (!selectedPaymentRadio) {
+        alert("Por favor, selecciona un método de pago antes de continuar.");
+        console.warn("⚠️ No se seleccionó ningún método de pago.");
+        return;
+      }
+
+      const selectedPaymentMethod = parseInt(selectedPaymentRadio.value); // 2 = Tarjeta, 3 = Billetera
+      const metodoPago = document.querySelector('input[name="payment_method"]:checked')?.value || 'card';
+      const metodoPagoId = (metodoPago === 'card') ? 1 : 2; // <-- adapta ids de METODO_PAGO en tu BD
+      const FinalTotal = computeFinalTotal();
+
+      console.group("📦 Datos enviados a /Rutas/guardar_transaccion");
+      console.log("reservaId:", reservaId);
+      console.log("metodo_pago_id:", selectedPaymentMethod);
+      console.log("FinalTotal:", FinalTotal);
+      console.log("estado:", 1);
+      console.groupEnd();
+      // 2) Guardar transacción (si la reserva se guardó)
+      try {
+        // toma valores: método de pago y monto final
+        // --- Obtener método de pago seleccionado del grupo de radios ---
+      
+
+
+        
+        console.log("[FINALIZAR] Enviando transacción:", { reservaId, metodoPago, metodoPagoId, FinalTotal });
+
+        const transResp = await fetch("/Rutas/guardar_transaccion", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reservaId: reservaId,
+            paymentMethodInputs: selectedPaymentMethod, // el controlador sabe mapear strings a ids
+            finalTotal: FinalTotal,
+            estado: 1
+          })
+        });
+
+        const transText = await transResp.text();
+        console.log("[FINALIZAR] transResp HTTP:", transResp.status, transResp.ok);
+        console.log("[FINALIZAR] transResp RAW:", transText);
+
+        let transResult;
+        try { transResult = JSON.parse(transText); console.log("[FINALIZAR] transResult:", transResult); }
+        catch (e) { console.error("[FINALIZAR] No se parseó transResult:", e); throw e; }
+
+        if (!(transResp.ok && transResult && (transResult.transaccion_id || transResult.success))) {
+          console.warn("[FINALIZAR] La creación de la transacción devolvió error o formato inesperado:", transResult);
+          // no abortamos el flujo — dependiendo de tu lógica puedes abortar aquí
+          alert("Advertencia: No se pudo guardar la transacción correctamente.");
+        } else {
+          console.log("[FINALIZAR] Transacción registrada OK:", transResult);
+        }
+
+      } catch (errTrans) {
+        console.error("[FINALIZAR] Error guardando transacción:", errTrans);
+        alert("Error al guardar la transacción. Revisa la consola.");
+        // Continuamos para al menos generar el comprobante de la reserva
+      }
+
+      // 3) Generar comprobante (PDF) y mostrar paso 5
+      try {
+        if (step4El) step4El.style.display = "none";
+        if (step5El) step5El.style.display = "block";
+        if (comprobanteStatus) comprobanteStatus.textContent = "Generando comprobante...";
+
+        console.log("[FINALIZAR] Solicitando PDF a /Rutas/crear_comprobante/" + encodeURIComponent(reservaId));
+        const pdfResp = await fetch(`/Rutas/crear_comprobante/${encodeURIComponent(reservaId)}`, {
+          method: "GET",
+          headers: { "Accept": "application/pdf" }
+        });
+
+        if (!pdfResp.ok) {
+          const txt = await pdfResp.text();
+          console.error("[FINALIZAR] Error al generar PDF. Status:", pdfResp.status, "Body:", txt);
+          throw new Error("No se pudo generar el comprobante PDF");
+        }
+
+        const pdfBlob = await pdfResp.blob();
+        const filename = `Comprobante_${reservaId}.pdf`;
+        downloadBlob(pdfBlob, filename);
+
+        if (comprobanteStatus) comprobanteStatus.textContent = "Comprobante generado correctamente.";
+        console.log("[FINALIZAR] Comprobante generado y descargado:", filename);
+
+      } catch (errPdf) {
+        console.error("[FINALIZAR] Error generando comprobante:", errPdf);
+        if (comprobanteStatus) comprobanteStatus.textContent = "Error generando comprobante. Intente descargar luego.";
+        alert("Se produjo un error al generar el comprobante. Revisa la consola.");
+      }
+
+      // Final: re-habilitar botón y mostrar mensaje
+      finalizarReservaBtn.disabled = false;
+      finalizarReservaBtn.textContent = "Finalizar Reserva";
+      alert("Proceso finalizado. Revisa el comprobante descargado o la consola para detalles.");
+      console.groupEnd();
+    });
+  }
+
 });
 
 </script>

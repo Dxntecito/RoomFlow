@@ -120,41 +120,185 @@ import App.Controladores.C_Cliente.controlador_cliente as controller_client
 #         if conn: conn.close()
 #         print("🔚 Conexión cerrada correctamente")
 
+# def guardar_reserva(data):
+#     """
+#     Guardar reserva completa:
+#      - valida payload
+#      - busca o crea cliente (natural/juridico)
+#      - inserta reserva, reserva_habitacion y huespedes
+#      - devuelve reserva_id o None
+#     """
+#     connection = None
+#     try:
+#         connection = get_connection()
+#         print("✅ Conexión obtenida correctamente")
+#         with connection.cursor() as cursor:
+#             # validar payload
+#             if not isinstance(data, dict):
+#                 raise ValueError("Payload inválido - se esperaba JSON/dict")
+
+#             cliente = data.get('cliente') or {}
+#             habitaciones = data.get('habitaciones') or []
+#             fecha_ingreso = data.get('fecha_ingreso')
+#             hora_ingreso = data.get('hora_ingreso')
+#             fecha_salida = data.get('fecha_salida')
+#             hora_salida = data.get('hora_salida')
+#             total = data.get('total', 0)
+
+#             print(f"📦 Datos del cliente recibidos: {cliente}")
+#             print(f"📦 Habitaciones recibidas: {len(habitaciones)}")
+
+#             # comprobar cliente mínimo
+#             num_doc = cliente.get('num_doc') or cliente.get('dni')
+#             if not num_doc:
+#                 raise ValueError("Falta num_doc/dni en cliente")
+
+#             # normalizar pais_id y tipo en el dict que se enviará a registrar
+#             pais_id_raw = cliente.get('pais_id') or cliente.get('id_pais') or cliente.get('pais') or None
+#             try:
+#                 pais_id = int(pais_id_raw) if pais_id_raw not in (None, '', []) else None
+#             except Exception:
+#                 pais_id = None
+
+#             tipo_raw = cliente.get('tipo') or cliente.get('id_tipo_cliente') or 'N'
+#             tipo = 'N' if str(tipo_raw).lower().startswith('n') else 'J'
+
+#             # buscar cliente existente
+#             cliente_id = controller_client.buscar_cliente_por_documento(num_doc)
+#             if cliente_id:
+#                 print(f"👤 Cliente existente id={cliente_id}")
+#             else:
+#                 # construir dict consistente para la función de registro
+#                 if tipo == 'N':
+#                     c = {
+#                         'num_doc': num_doc,
+#                         'nombres': cliente.get('nombres'),
+#                         'ape_paterno': cliente.get('ape_paterno'),
+#                         'ape_materno': cliente.get('ape_materno'),
+#                         'telefono': cliente.get('telefono'),
+#                         'pais_id': pais_id,
+#                         'tipo': 'N',
+#                         'tipo_doc_id':cliente.get('tipo_doc_id')
+#                     }
+#                     cliente_id = registrar_cliente_natural(cursor, c)
+#                     if not cliente_id:
+#                         raise ValueError("No se pudo insertar cliente natural (ver logs).")
+#                 else:
+#                     c = {
+#                         'num_doc': num_doc,
+#                         'ruc': num_doc,
+#                         'razon_social': cliente.get('razon_social') or cliente.get('nombres'),
+#                         'telefono': cliente.get('telefono'),
+#                         'pais_id': pais_id,
+#                         'tipo': 'J',
+#                         'direccion': cliente.get('direccion'),
+#                         'tipoemp_id': cliente.get('tipo_emp_id'),
+#                         'tipo_doc_id': 2
+#                     }
+#                     cliente_id = registrar_cliente_juridico(cursor, c)
+#                     if not cliente_id:
+#                         raise ValueError("No se pudo insertar cliente jurídico (ver logs).")
+
+#             # insertar reserva
+#             try:
+#                 total_val = float(total) if total not in (None, '') else 0.0
+#             except Exception:
+#                 total_val = 0.0
+
+#             cursor.execute("""
+#                 INSERT INTO RESERVA (fecha_registro, hora_registro, cliente_id, monto_total, estado,
+#                                      fecha_ingreso, hora_ingreso, fecha_salida, hora_salida,tipo_reserva)
+#                 VALUES (CURDATE(), CURTIME(), %s, %s, 1, %s, %s, %s, %s, 'H' )
+#             """, (cliente_id, total_val, fecha_ingreso, hora_ingreso, fecha_salida, hora_salida))
+
+#             reserva_id = cursor.lastrowid
+#             print(f"✅ RESERVA insertada correctamente con ID: {reserva_id}")
+
+#             # insertar reserva_habitacion y huespedes
+#             for habitacion in habitaciones:
+#                 if not isinstance(habitacion, dict):
+#                     raise ValueError("Cada habitacion debe ser un objeto/dict")
+
+#                 habitacion_id = habitacion.get('id_habitacion') or habitacion.get('id') or None
+#                 if not habitacion_id:
+#                     raise ValueError("Falta id_habitacion en una entrada de 'habitaciones'")
+
+#                 cursor.execute("INSERT INTO RESERVA_HABITACION (reserva_id, habitacion_id) VALUES (%s, %s)",
+#                                (reserva_id, habitacion_id))
+#                 reserva_hab_id = cursor.lastrowid
+#                 print(f"  -> RESERVA_HABITACION creada (id: {reserva_hab_id}) para habitacion {habitacion_id}")
+
+#                 for huesped in habitacion.get('huespedes', []):
+#                     if not isinstance(huesped, dict):
+#                         continue
+#                     doc = huesped.get('documento') or huesped.get('num_doc') or None
+#                     nombre = huesped.get('nombre') or huesped.get('nombres') or ''
+#                     apellido = huesped.get('apellido') or huesped.get('ape_paterno') or ''
+#                     ape_materno = huesped.get('ape_materno') or ''
+
+#                     cursor.execute("""
+#                         INSERT INTO HUESPED (num_doc, nombre, ape_paterno, ape_materno, id_cliente, reserva_habitacion_id)
+#                         VALUES (%s, %s, %s, %s, %s, %s)
+#                     """, (doc, nombre, apellido, ape_materno, cliente_id, reserva_hab_id))
+#                     print(f"    -> HUESPED insertado para habitación {habitacion_id}")
+
+#             # commit y cerrar
+#             connection.commit()
+#             print("💾 Cambios guardados correctamente en la base de datos")
+#             return reserva_id
+
+#     except Exception as e:
+#         print(f"❌ [ERROR en guardar_reserva]: {e}")
+#         traceback.print_exc()
+#         try:
+#             if connection:
+#                 connection.rollback()
+#         except Exception:
+#             pass
+#         return None
+#     finally:
+#         if connection:
+#             connection.close()
+#             print("🔚 Conexión cerrada correctamente")
+
+
 def guardar_reserva(data):
     """
-    Guardar reserva completa:
-     - valida payload
-     - busca o crea cliente (natural/juridico)
-     - inserta reserva, reserva_habitacion y huespedes
-     - devuelve reserva_id o None
+    Guarda una reserva completa:
+      - Valida el payload
+      - Busca o crea cliente (natural/jurídico)
+      - Inserta reserva, habitaciones y huéspedes
+      - Devuelve reserva_id si todo fue exitoso
     """
     connection = None
+    reserva_id = None  # 👈 inicializamos aquí
+
     try:
         connection = get_connection()
         print("✅ Conexión obtenida correctamente")
-        with connection.cursor() as cursor:
-            # validar payload
-            if not isinstance(data, dict):
-                raise ValueError("Payload inválido - se esperaba JSON/dict")
 
-            cliente = data.get('cliente') or {}
-            habitaciones = data.get('habitaciones') or []
+        with connection.cursor() as cursor:
+            # --- Validación del payload ---
+            if not isinstance(data, dict):
+                raise ValueError("Payload inválido: se esperaba un objeto JSON/dict")
+
+            cliente = data.get('cliente', {})
+            habitaciones = data.get('habitaciones', [])
             fecha_ingreso = data.get('fecha_ingreso')
             hora_ingreso = data.get('hora_ingreso')
             fecha_salida = data.get('fecha_salida')
             hora_salida = data.get('hora_salida')
             total = data.get('total', 0)
 
-            print(f"📦 Datos del cliente recibidos: {cliente}")
+            print(f"📦 Cliente recibido: {cliente}")
             print(f"📦 Habitaciones recibidas: {len(habitaciones)}")
 
-            # comprobar cliente mínimo
+            # --- Buscar o crear cliente ---
             num_doc = cliente.get('num_doc') or cliente.get('dni')
             if not num_doc:
-                raise ValueError("Falta num_doc/dni en cliente")
+                raise ValueError("Falta num_doc o dni del cliente")
 
-            # normalizar pais_id y tipo en el dict que se enviará a registrar
-            pais_id_raw = cliente.get('pais_id') or cliente.get('id_pais') or cliente.get('pais') or None
+            pais_id_raw = cliente.get('pais_id') or cliente.get('id_pais') or cliente.get('pais')
             try:
                 pais_id = int(pais_id_raw) if pais_id_raw not in (None, '', []) else None
             except Exception:
@@ -163,12 +307,10 @@ def guardar_reserva(data):
             tipo_raw = cliente.get('tipo') or cliente.get('id_tipo_cliente') or 'N'
             tipo = 'N' if str(tipo_raw).lower().startswith('n') else 'J'
 
-            # buscar cliente existente
             cliente_id = controller_client.buscar_cliente_por_documento(num_doc)
             if cliente_id:
                 print(f"👤 Cliente existente id={cliente_id}")
             else:
-                # construir dict consistente para la función de registro
                 if tipo == 'N':
                     c = {
                         'num_doc': num_doc,
@@ -178,11 +320,9 @@ def guardar_reserva(data):
                         'telefono': cliente.get('telefono'),
                         'pais_id': pais_id,
                         'tipo': 'N',
-                        'tipo_doc_id':cliente.get('tipo_doc_id')
+                        'tipo_doc_id': cliente.get('tipo_doc_id')
                     }
                     cliente_id = registrar_cliente_natural(cursor, c)
-                    if not cliente_id:
-                        raise ValueError("No se pudo insertar cliente natural (ver logs).")
                 else:
                     c = {
                         'num_doc': num_doc,
@@ -196,70 +336,64 @@ def guardar_reserva(data):
                         'tipo_doc_id': 2
                     }
                     cliente_id = registrar_cliente_juridico(cursor, c)
-                    if not cliente_id:
-                        raise ValueError("No se pudo insertar cliente jurídico (ver logs).")
 
-            # insertar reserva
-            try:
-                total_val = float(total) if total not in (None, '') else 0.0
-            except Exception:
-                total_val = 0.0
+                if not cliente_id:
+                    raise ValueError("❌ No se pudo registrar cliente")
 
+            # --- Insertar RESERVA ---
+            total_val = float(total) if total not in (None, '') else 0.0
             cursor.execute("""
-                INSERT INTO RESERVA (fecha_registro, hora_registro, cliente_id, monto_total, estado,
-                                     fecha_ingreso, hora_ingreso, fecha_salida, hora_salida,tipo_reserva)
-                VALUES (CURDATE(), CURTIME(), %s, %s, 1, %s, %s, %s, %s, 'H' )
+                INSERT INTO RESERVA (
+                    fecha_registro, hora_registro, cliente_id, monto_total, estado,
+                    fecha_ingreso, hora_ingreso, fecha_salida, hora_salida, tipo_reserva
+                ) VALUES (CURDATE(), CURTIME(), %s, %s, 1, %s, %s, %s, %s, 'H')
             """, (cliente_id, total_val, fecha_ingreso, hora_ingreso, fecha_salida, hora_salida))
 
-            reserva_id = cursor.lastrowid
-            print(f"✅ RESERVA insertada correctamente con ID: {reserva_id}")
+            reserva_id = cursor.lastrowid  # 👈 obtenemos el ID de la reserva
+            print(f"✅ RESERVA insertada con ID: {reserva_id}")
 
-            # insertar reserva_habitacion y huespedes
+            # --- Insertar habitaciones y huéspedes ---
             for habitacion in habitaciones:
-                if not isinstance(habitacion, dict):
-                    raise ValueError("Cada habitacion debe ser un objeto/dict")
-
-                habitacion_id = habitacion.get('id_habitacion') or habitacion.get('id') or None
+                habitacion_id = habitacion.get('id_habitacion') or habitacion.get('id')
                 if not habitacion_id:
-                    raise ValueError("Falta id_habitacion en una entrada de 'habitaciones'")
+                    raise ValueError("Falta id_habitacion en habitaciones")
 
-                cursor.execute("INSERT INTO RESERVA_HABITACION (reserva_id, habitacion_id) VALUES (%s, %s)",
-                               (reserva_id, habitacion_id))
+                cursor.execute(
+                    "INSERT INTO RESERVA_HABITACION (reserva_id, habitacion_id) VALUES (%s, %s)",
+                    (reserva_id, habitacion_id)
+                )
                 reserva_hab_id = cursor.lastrowid
-                print(f"  -> RESERVA_HABITACION creada (id: {reserva_hab_id}) para habitacion {habitacion_id}")
+                print(f"  -> RESERVA_HABITACION creada ID={reserva_hab_id}")
 
                 for huesped in habitacion.get('huespedes', []):
-                    if not isinstance(huesped, dict):
-                        continue
-                    doc = huesped.get('documento') or huesped.get('num_doc') or None
-                    nombre = huesped.get('nombre') or huesped.get('nombres') or ''
-                    apellido = huesped.get('apellido') or huesped.get('ape_paterno') or ''
-                    ape_materno = huesped.get('ape_materno') or ''
+                    doc = huesped.get('documento') or huesped.get('num_doc')
+                    nombre = huesped.get('nombre') or huesped.get('nombres', '')
+                    ape_pat = huesped.get('apellido') or huesped.get('ape_paterno', '')
+                    ape_mat = huesped.get('ape_materno', '')
 
                     cursor.execute("""
                         INSERT INTO HUESPED (num_doc, nombre, ape_paterno, ape_materno, id_cliente, reserva_habitacion_id)
                         VALUES (%s, %s, %s, %s, %s, %s)
-                    """, (doc, nombre, apellido, ape_materno, cliente_id, reserva_hab_id))
-                    print(f"    -> HUESPED insertado para habitación {habitacion_id}")
+                    """, (doc, nombre, ape_pat, ape_mat, cliente_id, reserva_hab_id))
+                    print(f"    -> HUESPED insertado para hab {habitacion_id}")
 
-            # commit y cerrar
+            # --- Guardar cambios ---
             connection.commit()
-            print("💾 Cambios guardados correctamente en la base de datos")
-            return reserva_id
+            print("💾 Cambios confirmados correctamente")
+            return reserva_id  # 👈 devolvemos el id sí o sí
 
     except Exception as e:
-        print(f"❌ [ERROR en guardar_reserva]: {e}")
+        print(f"❌ [ERROR guardar_reserva]: {e}")
         traceback.print_exc()
-        try:
-            if connection:
-                connection.rollback()
-        except Exception:
-            pass
+        if connection:
+            connection.rollback()
         return None
+
     finally:
         if connection:
             connection.close()
             print("🔚 Conexión cerrada correctamente")
+
 
 def registrar_cliente_natural(cursor, cliente):
     """
@@ -363,7 +497,7 @@ def registrar_cliente_juridico(cursor, cliente):
                 if hasattr(cliente, "_mapping"):
                     data = dict(cliente._mapping)
                 else:
-                    keys = ['ruc', 'razon_social', 'telefono', 'pais_id', 'correo', 'tipo']
+                    keys = ['ruc', 'razon_social', 'direecion','telefono', 'pais_id','tipo','tipoemp_id', 'tipo_doc_id,']
                     data = {k: (cliente[i] if i < len(cliente) else None) for i, k in enumerate(keys)}
             except Exception as e:
                 print(f"⚠️ [registrar_cliente_juridico] no pude normalizar entrada: {e}")
@@ -401,13 +535,13 @@ def registrar_cliente_juridico(cursor, cliente):
             return None
 
         params = (ruc, razon_social,direccion, telefono, pais_id, tipo_cliente,tipoemp_id,tipo_doc_id)
-        print("DEBUG [registrar_cliente_juridico] params a insertar (ruc,razon,telefono,pais_id,tipo):", params)
+        print("DEBUG [registrar_cliente_juridico] params a insertar (ruc, razon_social,direccion, telefono, pais_id, tipo_cliente,tipoemp_id,tipo_doc_id):", params)
 
         # Insertar: guardamos razon_social en campo 'nombres' para unificar tabla CLIENTE
         cursor.execute("""
             INSERT INTO CLIENTE (num_doc, razon_social, direccion, telefono, id_pais, id_tipo_cliente, tipoemp_id, tipo_doc_id, f_registro)
             VALUES (%s, %s, %s, %s, %s, %s , %s, %s ,CURDATE())
-        """, (ruc, razon_social, direccion, telefono, pais_id, tipo_cliente,))
+        """, (ruc, razon_social, direccion, telefono, pais_id, tipo_cliente,tipoemp_id,tipo_doc_id,))
 
         last_id = cursor.lastrowid
         print(f"✅ Cliente persona jurídica registrado correctamente. id={last_id}")
