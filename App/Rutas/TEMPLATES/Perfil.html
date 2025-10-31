@@ -161,6 +161,11 @@
         font-size: 15px;
         transition: all 0.3s ease;
         background: #f8f9fa;
+        box-sizing: border-box;
+    }
+
+    .form-group .form-control {
+    box-sizing: border-box; 
     }
 
     .form-group input:focus,
@@ -1068,6 +1073,12 @@
                         <span>Gestionar Empleados</span>
                     </button>
                 </li>
+                <li>
+                    <button class="menu-btn" data-section="promociones">
+                        <i class="fas fa-tags"></i>
+                        <span>Gestionar Promociones</span>
+                    </button>
+                </li>
                 {% endif %}
             </ul>
         </aside>
@@ -1332,12 +1343,9 @@
                             <div class="form-group">
                                 <label for="incidencia-tipo">Tipo de Incidencia *</label>
                                 <select id="incidencia-tipo" name="tipo_incidencia_id" class="form-control" required
-                                    style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                                    <option value="">Seleccione...</option>
-                                    <option value="1">Reserva</option>
-                                    <option value="2">RoomService</option>
-                                    <option value="3">Evento</option>
-                                </select>
+                                        style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                                        <option value="">Cargando tipos...</option>
+                                        </select>
                             </div>
 
                             <div class="form-group">
@@ -1486,6 +1494,75 @@
                     </table>
                 </div>
             </div>
+            {% if session.get('rol_id') == 1 %}
+            <div class="section-content" id="promociones">
+                <h2 class="section-title">Gestionar Promociones</h2>
+
+                                <div class="alert alert-success" id="alert-promo-success" style="display: none;"></div>
+                <div class="alert alert-error" id="alert-promo-error" style="display: none;"></div>
+
+                                <div class="form-promocion"
+                    style="background: #f9f9f9; padding: 25px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #328336;">
+                    <h3 style="color: #328336; grid-column: 1 / -1; margin-top: 0;">
+                        <i class="fas fa-plus-circle"></i> Crear Nueva Promoción
+                    </h3>
+                    <form id="form-promocion" class="form-grid" style="grid-column: 1 / -1; margin-bottom: 0;">
+                        <div class="form-group">
+                            <label for="promo-tipo">Tipo de Promoción *</label>
+                            <select id="promo-tipo" name="tipo_promocion_id" required>
+                                <option value="">Cargando tipos...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="promo-porcentaje">Porcentaje de Descuento (%) *</label>
+                            <input type="number" id="promo-porcentaje" name="porcentaje" placeholder="Ej: 15" min="1"
+                                max="100" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="promo-fecha-inicio">Fecha de Inicio *</label>
+                            <input type="date" id="promo-fecha-inicio" name="fecha_inicio" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="promo-fecha-fin">Fecha de Fin *</label>
+                            <input type="date" id="promo-fecha-fin" name="fecha_fin" required>
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="promo-descripcion">Descripción Breve *</label>
+                            <input type="text" id="promo-descripcion" name="descripcion"
+                                placeholder="Ej: Descuento de fin de semana" required>
+                        </div>
+
+                        <div class="form-actions" style="grid-column: 1 / -1; margin-top: 0; padding-top: 0; border-top: none;">
+                            <button type="submit" class="btn btn-primary" id="btn-guardar-promo">
+                                <i class="fas fa-save"></i> Guardar Promoción
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                                <h3 style="color: #333; border-bottom: 2px solid #ddd; padding-bottom: 10px;">Promociones Existentes</h3>
+                <div class="table-container">
+                    <table class="empleados-table">                         <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Descripción</th>
+                                <th>Descuento</th>
+                                <th>Vigencia</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-promociones-body">
+                            <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
             {% endif %}
         </main>
     </div>
@@ -1814,10 +1891,16 @@
 
                     // Inicializar empleados si es la sección de empleados
                     if (sectionId === 'empleados') {
-                        setTimeout(() => {
-                            inicializarEmpleados();
-                        }, 100);
-                    }
+                        setTimeout(() => {
+                            inicializarEmpleados();
+                        }, 100);
+                    }
+                    // ### INICIO DE CÓDIGO NUEVO ###
+                    else if (sectionId === 'promociones') {
+                        // Carga los datos cuando se hace clic en la pestaña
+                        cargarTiposPromocion();
+                        cargarPromociones();
+                    }
                 }
             });
 
@@ -3504,6 +3587,153 @@
             console.error('No se encontró el botón de nueva incidencia');
         }
     });
+
+    // ### INICIO DE CÓDIGO NUEVO: Lógica para Promociones ###
+
+    // Cargar los tipos de promoción para el combo del formulario
+    async function cargarTiposPromocion() {
+        const select = document.getElementById('promo-tipo');
+        if (!select) return; // Salir si no se encuentra el combo
+
+        try {
+            const response = await fetch('/promociones/tipos');
+            const data = await response.json();
+            if (data.success) {
+                select.innerHTML = '<option value="" disabled selected>Seleccione un tipo...</option>';
+                data.tipos.forEach(tipo => {
+                    const option = document.createElement('option');
+                    option.value = tipo.id_tipo_promocion;
+                    option.textContent = tipo.nombre;
+                    select.appendChild(option);
+                });
+            } else {
+                select.innerHTML = '<option value="">Error al cargar</option>';
+            }
+        } catch (e) {
+            console.error("Error cargando tipos de promo:", e);
+            select.innerHTML = '<option value="">Error de red</option>';
+        }
+    }
+
+    // Cargar la lista de promociones existentes
+    async function cargarPromociones() {
+        const tbody = document.getElementById('tabla-promociones-body');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>';
+
+        try {
+            const response = await fetch('/promociones/todas');
+            const data = await response.json();
+
+            if (data.success && data.promociones.length > 0) {
+                tbody.innerHTML = '';
+                data.promociones.forEach(promo => {
+                    const tr = document.createElement('tr');
+                    const estadoClass = promo.estado == 1 ? 'estado-Activa' : 'estado-Inactiva';
+                    tr.innerHTML = `
+                        <td>${promo.id_promocion}</td>
+                        <td>${promo.descripcion}</td>
+                        <td>${promo.porcentaje}%</td>
+                        <td>${promo.fecha_inicio} al ${promo.fecha_fin}</td>
+                        <td><span class="${estadoClass}">${promo.nombre_estado}</span></td>
+                        <td>
+                            <form id="form-estado-promo-${promo.id_promocion}" onsubmit="event.preventDefault(); cambiarEstadoPromocion(${promo.id_promocion});" style="display:inline-block;">
+                                <input type="hidden" name="estado" value="${promo.estado == 1 ? '0' : '1'}">
+                                <button type="submit" class="btn-modal ${promo.estado == 1 ? 'btn-modal-secondary' : 'btn-modal-primary'}" style="padding: 5px 10px; font-size: 12px;">
+                                    ${promo.estado == 1 ? 'Desactivar' : 'Activar'}
+                                </button>
+                            </form>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else if (data.success) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No hay promociones creadas.</td></tr>';
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: red;">${data.message}</td></tr>`;
+            }
+        } catch (e) {
+            console.error("Error cargando promociones:", e);
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: red;">Error de red al cargar promociones.</td></tr>';
+        }
+    }
+
+    // Guardar (crear) una nueva promoción
+    async function guardarPromocion(event) {
+        event.preventDefault(); // Evita que la página se recargue
+        const form = document.getElementById('form-promocion');
+        const btn = document.getElementById('btn-guardar-promo');
+        const formData = new FormData(form);
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+        try {
+            const response = await fetch('/promociones/crear', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                mostrarAlertaPromo(data.message, 'success');
+                form.reset();
+                cargarPromociones(); // Recargar la lista de promociones
+            } else {
+                mostrarAlertaPromo(data.message, 'error');
+            }
+        } catch (e) {
+            console.error("Error al crear promoción:", e);
+            mostrarAlertaPromo('Error de red al crear la promoción.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Guardar Promoción';
+        }
+    }
+    
+    // Cambiar el estado de una promoción (activar/desactivar)
+    async function cambiarEstadoPromocion(promocionId) {
+        const form = document.getElementById(`form-estado-promo-${promocionId}`);
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch(`/promociones/${promocionId}/cambiar_estado`, {
+                // ¡AQUÍ YA NO ESTÁ EL ERROR!
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (data.success) {
+                mostrarAlertaPromo(data.message, 'success');
+                cargarPromociones(); // Recargar la tabla
+            } else {
+                mostrarAlertaPromo(data.message, 'error');
+            }
+        } catch (e) {
+            console.error("Error al cambiar estado:", e);
+            mostrarAlertaPromo('Error de red al cambiar estado.', 'error');
+        }
+    }
+
+    // Asignar el evento de submit al formulario de promociones
+    document.getElementById('form-promocion').addEventListener('submit', guardarPromocion);
+
+    // Mostrar alertas de promociones
+    function mostrarAlertaPromo(mensaje, tipo) {
+        const alertSuccess = document.getElementById('alert-promo-success');
+        const alertError = document.getElementById('alert-promo-error');
+        
+        alertSuccess.style.display = 'none';
+        alertError.style.display = 'none';
+
+        if (tipo === 'success') {
+            alertSuccess.textContent = mensaje;
+            alertSuccess.style.display = 'block';
+        } else {
+            alertError.textContent = mensaje;
+            alertError.style.display = 'block';
+        }
+    }
 
 
 </script>

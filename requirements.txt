@@ -20,7 +20,7 @@ Flask
 Werkzeug
 Flask-Dance
 sqlalchemy
-WeasyPrint==65.1.0
+#WeasyPrint==65.1.0
 flask-socketio
 matplotlib
 

@@ -15,7 +15,7 @@ from App.Rutas.R_Reporte import reportes_bp
 from App.Rutas.R_RoomService import roomservice_bp
 from App.Rutas.crear_comprobante import crear_comprobante_bp
 from App.Rutas.R_transaccion import transaccion_bp
-
+from App.Rutas.R_Promocion import promocion_bp
 
 
 
@@ -33,6 +33,7 @@ app.register_blueprint(reportes_bp)
 app.register_blueprint(roomservice_bp)
 app.register_blueprint(crear_comprobante_bp)
 app.register_blueprint(transaccion_bp)
+app.register_blueprint(promocion_bp)
 
 @app.route("/")
 @app.route("/RoomFlow")
