@@ -93,8 +93,8 @@ def Registro():
             apellido_materno = request.form.get('apellido_materno', '').strip()
             tipo_documento_id = request.form.get('tipo_documento_id', 1)
             num_documento = request.form.get('num_documento', '').strip()
-            sexo = request.form.get('sexo', 'M')
             telefono = request.form.get('telefono', '').strip()
+            direccion = request.form.get('direccion', '').strip()
             
             # Validar campos requeridos de cuenta
             if not all([usuario, email, contrasena, confirmar_contrasena]):
@@ -126,14 +126,14 @@ def Registro():
                 usuario=usuario,
                 contrasena=contrasena,
                 email=email,
-                id_rol=2,  # Cliente por defecto
+                id_rol=3,  # Rol Cliente
                 nombres=nombres,
                 apellido_paterno=apellido_paterno,
                 apellido_materno=apellido_materno,
                 tipo_documento_id=tipo_documento_id,
                 num_documento=num_documento,
-                sexo=sexo,
-                telefono=telefono
+                telefono=telefono,
+                direccion=direccion
             )
             
             if resultado['success']:
@@ -185,8 +185,8 @@ def ActualizarPerfil():
         apellido_materno = request.form.get('apellido_materno')
         tipo_documento_id = request.form.get('tipo_documento_id')
         num_documento = request.form.get('num_documento')
-        sexo = request.form.get('sexo')
-        telefono = request.form.get('telefono')
+        telefono = request.form.get('telefono', '')
+        direccion = request.form.get('direccion', '')
         
         # Validar campos requeridos
         if not all([email, nombres, apellido_paterno, apellido_materno, num_documento]):
@@ -195,7 +195,7 @@ def ActualizarPerfil():
         # Actualizar perfil
         resultado = controller_usuario.update_perfil_usuario(
             usuario_id, email, nombres, apellido_paterno, apellido_materno,
-            tipo_documento_id, num_documento, sexo, telefono
+            tipo_documento_id, num_documento, telefono, direccion
         )
         
         if resultado['success']:
@@ -205,6 +205,27 @@ def ActualizarPerfil():
         return jsonify(resultado)
     except Exception as ex:
         return jsonify({'success': False, 'message': f'Error: {str(ex)}'})
+
+@usuarios_bp.route('/eliminar-cuenta', methods=['POST'])
+@login_required
+def EliminarCuenta():
+    """
+    Elimina la cuenta del usuario actual y todos sus datos asociados
+    """
+    try:
+        usuario_id = session.get('usuario_id')
+        
+        # Eliminar cuenta
+        resultado = controller_usuario.eliminar_usuario(usuario_id)
+        
+        if resultado['success']:
+            # Limpiar sesión
+            session.clear()
+            return jsonify(resultado)
+        else:
+            return jsonify(resultado)
+    except Exception as ex:
+        return jsonify({'success': False, 'message': f'Error al eliminar cuenta: {str(ex)}'})
 
 @usuarios_bp.route('/cambiar-contrasena', methods=['GET', 'POST'])
 @login_required
