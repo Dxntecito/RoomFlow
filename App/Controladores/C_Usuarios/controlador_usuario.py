@@ -377,56 +377,121 @@ def count_usuarios(search_term=''):
 
 def get_perfil_completo(usuario_id):
     """
-    Obtiene el perfil completo del usuario con datos personales del cliente
+    Obtiene el perfil completo del usuario con datos personales del cliente o empleado
     """
     conexion = None
     try:
         conexion = get_connection()
         with conexion.cursor() as cursor:
-            # Obtener datos del usuario y del cliente asociado mediante LEFT JOIN
-            sql = """
+            # Primero obtener datos básicos del usuario para determinar si es cliente o empleado
+            sql_usuario = """
                 SELECT u.usuario_id, u.usuario, u.email, u.estado, u.fecha_creacion,
-                       r.rol_id, r.nombre_rol,
-                       c.nombres, c.ape_paterno, c.ape_materno, c.tipo_doc_id, 
-                       c.num_doc, c.telefono, c.direccion, c.id_pais
+                       r.rol_id, r.nombre_rol, u.cliente_id, u.empleado_id
                 FROM USUARIO u
                 INNER JOIN ROL r ON u.id_rol = r.rol_id
-                LEFT JOIN CLIENTE c ON u.cliente_id = c.cliente_id
                 WHERE u.usuario_id = %s
             """
-            cursor.execute(sql, (usuario_id,))
-            resultado = cursor.fetchone()
+            cursor.execute(sql_usuario, (usuario_id,))
+            resultado_usuario = cursor.fetchone()
             
-            if not resultado:
+            if not resultado_usuario:
                 print(f"⚠ No se encontró usuario con ID: {usuario_id}")
                 return None
             
             perfil = {
-                'usuario_id': resultado[0],
-                'usuario': resultado[1],
-                'email': resultado[2],
-                'estado': resultado[3],
-                'fecha_creacion': resultado[4],
-                'rol_id': resultado[5],
-                'rol_nombre': resultado[6],
-                'nombres': resultado[7] or '',
-                'apellido_paterno': resultado[8] or '',
-                'apellido_materno': resultado[9] or '',
-                'tipo_documento_id': resultado[10] or 1,
-                'num_documento': resultado[11] or '',
-                'telefono': resultado[12] or '',
-                'direccion': resultado[13] or '',
-                'id_pais': resultado[14] or 1
+                'usuario_id': resultado_usuario[0],
+                'usuario': resultado_usuario[1],
+                'email': resultado_usuario[2],
+                'estado': resultado_usuario[3],
+                'fecha_creacion': resultado_usuario[4],
+                'rol_id': resultado_usuario[5],
+                'rol_nombre': resultado_usuario[6],
+                'tipo_perfil': None,  # 'cliente' o 'empleado'
+                'nombres': '',
+                'apellido_paterno': '',
+                'apellido_materno': '',
+                'tipo_documento_id': 1,
+                'num_documento': '',
+                'telefono': '',
+                'direccion': '',
+                'id_pais': 1,
+                # Campos específicos de empleado
+                'cod_empleado': '',
+                'sexo': '',
+                'tipo_empleado_id': None,
+                'tipo_empleado': '',
+                'estado_empleado': ''
             }
             
-            print(f"✓ Usuario encontrado: {resultado[1]} (ID: {resultado[0]})")
+            cliente_id = resultado_usuario[7]
+            empleado_id = resultado_usuario[8]
             
-            if resultado[7]:  # Si tiene nombres (datos de cliente)
-                print(f"✓ Cliente encontrado en CLIENTE")
-                print(f"  - Nombres: {perfil['nombres']} {perfil['apellido_paterno']}")
-                print(f"  - Documento: {perfil['num_documento']}")
+            print(f"✓ Usuario encontrado: {resultado_usuario[1]} (ID: {resultado_usuario[0]})")
+            print(f"  - cliente_id: {cliente_id}, empleado_id: {empleado_id}")
+            
+            # Determinar si es empleado o cliente y obtener sus datos
+            if empleado_id:
+                # Es un empleado
+                sql_empleado = """
+                    SELECT e.cod_empleado, e.dni, e.ape_paterno, e.ape_materno, e.nombres,
+                           e.sexo, e.movil, e.tipo_empleado_id, e.estado,
+                           te.nombre_tipo
+                    FROM EMPLEADO e
+                    INNER JOIN TIPO_EMPLEADO te ON e.tipo_empleado_id = te.tipo_id
+                    WHERE e.empleado_id = %s
+                """
+                cursor.execute(sql_empleado, (empleado_id,))
+                resultado_empleado = cursor.fetchone()
+                
+                if resultado_empleado:
+                    perfil['tipo_perfil'] = 'empleado'
+                    perfil['cod_empleado'] = resultado_empleado[0] or ''
+                    perfil['num_documento'] = resultado_empleado[1] or ''
+                    perfil['apellido_paterno'] = resultado_empleado[2] or ''
+                    perfil['apellido_materno'] = resultado_empleado[3] or ''
+                    perfil['nombres'] = resultado_empleado[4] or ''
+                    perfil['sexo'] = resultado_empleado[5] or ''
+                    perfil['telefono'] = resultado_empleado[6] or ''
+                    perfil['tipo_empleado_id'] = resultado_empleado[7]
+                    perfil['estado_empleado'] = resultado_empleado[8] or ''
+                    perfil['tipo_empleado'] = resultado_empleado[9] or ''
+                    
+                    print(f"✓ Empleado encontrado en EMPLEADO")
+                    print(f"  - Nombres: {perfil['nombres']} {perfil['apellido_paterno']}")
+                    print(f"  - Código: {perfil['cod_empleado']}")
+                    print(f"  - Tipo: {perfil['tipo_empleado']}")
+                else:
+                    print(f"⚠ No se encontraron datos del empleado para empleado_id: {empleado_id}")
+                    
+            elif cliente_id:
+                # Es un cliente
+                sql_cliente = """
+                    SELECT c.nombres, c.ape_paterno, c.ape_materno, c.tipo_doc_id, 
+                           c.num_doc, c.telefono, c.direccion, c.id_pais
+                    FROM CLIENTE c
+                    WHERE c.cliente_id = %s
+                """
+                cursor.execute(sql_cliente, (cliente_id,))
+                resultado_cliente = cursor.fetchone()
+                
+                if resultado_cliente:
+                    perfil['tipo_perfil'] = 'cliente'
+                    perfil['nombres'] = resultado_cliente[0] or ''
+                    perfil['apellido_paterno'] = resultado_cliente[1] or ''
+                    perfil['apellido_materno'] = resultado_cliente[2] or ''
+                    perfil['tipo_documento_id'] = resultado_cliente[3] or 1
+                    perfil['num_documento'] = resultado_cliente[4] or ''
+                    perfil['telefono'] = resultado_cliente[5] or ''
+                    perfil['direccion'] = resultado_cliente[6] or ''
+                    perfil['id_pais'] = resultado_cliente[7] or 1
+                    
+                    print(f"✓ Cliente encontrado en CLIENTE")
+                    print(f"  - Nombres: {perfil['nombres']} {perfil['apellido_paterno']}")
+                    print(f"  - Documento: {perfil['num_documento']}")
+                else:
+                    print(f"⚠ No se encontraron datos del cliente para cliente_id: {cliente_id}")
             else:
-                print(f"⚠ No hay cliente asociado para usuario_id: {usuario_id}")
+                print(f"⚠ Usuario sin cliente_id ni empleado_id asociado")
             
             return perfil
     except Exception as ex:
@@ -528,21 +593,62 @@ def get_tipos_documento():
 
 def eliminar_usuario(usuario_id):
     """
-    Elimina un usuario y todos sus datos asociados
+    Elimina un usuario y todos sus datos asociados (cliente o empleado)
     ADVERTENCIA: Esta acción es irreversible
     """
     conexion = None
     try:
         conexion = get_connection()
         with conexion.cursor() as cursor:
-            # Obtener el cliente_id asociado al usuario
-            sql_get_cliente = "SELECT cliente_id FROM USUARIO WHERE usuario_id = %s"
-            cursor.execute(sql_get_cliente, (usuario_id,))
+            # Obtener el cliente_id y empleado_id asociados al usuario
+            sql_get_usuario = "SELECT cliente_id, empleado_id FROM USUARIO WHERE usuario_id = %s"
+            cursor.execute(sql_get_usuario, (usuario_id,))
             resultado = cursor.fetchone()
             
-            cliente_id = resultado[0] if resultado and resultado[0] else None
+            if not resultado:
+                return {'success': False, 'message': 'Usuario no encontrado'}
             
-            if cliente_id:
+            cliente_id = resultado[0]
+            empleado_id = resultado[1]
+            
+            # Si es un empleado
+            if empleado_id:
+                print(f"🗑️ Iniciando eliminación de usuario {usuario_id} (empleado {empleado_id})")
+                
+                # 1. Eliminar turnos del empleado
+                try:
+                    sql_delete_turnos = "DELETE FROM DETALLE_TURNO WHERE empleado_id = %s"
+                    cursor.execute(sql_delete_turnos, (empleado_id,))
+                    print(f"  ✓ Turnos eliminados")
+                except Exception as e:
+                    print(f"  ⚠ Error al eliminar turnos: {e}")
+                
+                # 2. Eliminar incidencias del empleado
+                try:
+                    sql_delete_incidencias = "DELETE FROM INCIDENCIA WHERE empleado_id = %s"
+                    cursor.execute(sql_delete_incidencias, (empleado_id,))
+                    print(f"  ✓ Incidencias eliminadas")
+                except Exception as e:
+                    print(f"  ⚠ Error al eliminar incidencias: {e}")
+                
+                # 3. Actualizar reservas para quitar referencia al empleado
+                try:
+                    sql_update_reservas = "UPDATE RESERVA SET empleado_id = NULL WHERE empleado_id = %s"
+                    cursor.execute(sql_update_reservas, (empleado_id,))
+                    print(f"  ✓ Referencias en reservas actualizadas")
+                except Exception as e:
+                    print(f"  ⚠ Error al actualizar reservas: {e}")
+                
+                # 4. Eliminar el empleado
+                try:
+                    sql_delete_empleado = "DELETE FROM EMPLEADO WHERE empleado_id = %s"
+                    cursor.execute(sql_delete_empleado, (empleado_id,))
+                    print(f"  ✓ Empleado eliminado")
+                except Exception as e:
+                    print(f"  ⚠ Error al eliminar empleado: {e}")
+            
+            # Si es un cliente
+            elif cliente_id:
                 print(f"🗑️ Iniciando eliminación de usuario {usuario_id} y cliente {cliente_id}")
                 
                 # 1. Eliminar incidencias del cliente

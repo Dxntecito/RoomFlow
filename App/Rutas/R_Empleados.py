@@ -83,16 +83,19 @@ def CrearEmpleado():
             sexo = request.form.get('sexo')
             movil = request.form.get('telefono')  # Cambio de 'movil' a 'telefono'
             tipo_empleado_id = request.form.get('rol')  # Cambio de 'tipo_empleado_id' a 'rol'
+            email = request.form.get('email', None)  # Email opcional
             
             # Validar datos requeridos
             if not all([dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id]):
                 return jsonify({'success': False, 'message': 'Todos los campos son obligatorios'})
             
-            # Insertar empleado
-            success, message = controller_empleado.insert_empleado_auto(
-                dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id
+            # Insertar empleado (ahora también crea el usuario automáticamente)
+            success, message, cod_empleado = controller_empleado.insert_empleado_auto(
+                dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id, email
             )
-            return jsonify({'success': success, 'message': message})
+            
+            # Si fue exitoso, mostrar información de las credenciales
+            return jsonify({'success': success, 'message': message, 'codigo': cod_empleado})
             
         except Exception as e:
             return jsonify({'success': False, 'message': f'Error al crear empleado: {str(e)}'})

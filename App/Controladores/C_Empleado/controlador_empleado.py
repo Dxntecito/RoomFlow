@@ -1,4 +1,47 @@
 from bd import get_connection
+import hashlib
+from datetime import date
+
+def hash_password(password):
+    """
+    Hashea la contraseña usando SHA256
+    """
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def crear_usuario_para_empleado(cod_empleado, dni, email, empleado_id, connection):
+    """
+    Crea un usuario automáticamente para un empleado
+    Usuario: código del empleado
+    Contraseña: 3 primeros caracteres del código + 3 primeros caracteres del DNI
+    """
+    try:
+        with connection.cursor() as cursor:
+            # Generar credenciales
+            usuario = cod_empleado
+            # Contraseña: 3 primeros del código + 3 primeros del DNI
+            contrasena = cod_empleado[:3] + dni[:3]
+            contrasena_hash = hash_password(contrasena)
+            
+            # Verificar si ya existe un usuario con ese nombre
+            cursor.execute("SELECT COUNT(*) FROM USUARIO WHERE usuario = %s", (usuario,))
+            if cursor.fetchone()[0] > 0:
+                print(f"⚠ Usuario {usuario} ya existe")
+                return False, f"El usuario {usuario} ya existe"
+            
+            # Crear usuario con rol de Empleado (id_rol = 2)
+            sql = """
+                INSERT INTO USUARIO (usuario, contrasena, email, estado, fecha_creacion, id_rol, empleado_id)
+                VALUES (%s, %s, %s, 1, %s, 2, %s)
+            """
+            cursor.execute(sql, (usuario, contrasena_hash, email, date.today(), empleado_id))
+            
+            print(f"✅ Usuario creado: {usuario}")
+            print(f"   Contraseña generada: {contrasena}")
+            
+            return True, f"Usuario creado: {usuario} | Contraseña: {contrasena}"
+    except Exception as e:
+        print(f"❌ Error al crear usuario: {e}")
+        return False, f"Error al crear usuario: {str(e)}"
 
 def get_empleados(limit=10, offset=0, search_term='', rol_filter=''):
     connection = get_connection()
@@ -81,9 +124,10 @@ def generar_codigo_empleado(tipo_empleado_id, dni):
     
     return f"{prefijo}{dni}"
 
-def insert_empleado_auto(dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id):
+def insert_empleado_auto(dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id, email=None):
     """
     Insertar nuevo empleado con código generado automáticamente
+    También crea automáticamente un usuario para el empleado
     """
     connection = get_connection()
     try:
@@ -91,7 +135,7 @@ def insert_empleado_auto(dni, ape_paterno, ape_materno, nombres, sexo, movil, ti
             # Verificar que el DNI no exista
             cursor.execute("SELECT COUNT(*) FROM EMPLEADO WHERE dni = %s", (dni,))
             if cursor.fetchone()[0] > 0:
-                return False, "El DNI ya existe en la base de datos"
+                return False, "El DNI ya existe en la base de datos", None
             
             # Generar código automáticamente
             cod_empleado = generar_codigo_empleado(tipo_empleado_id, dni)
@@ -114,17 +158,37 @@ def insert_empleado_auto(dni, ape_paterno, ape_materno, nombres, sexo, movil, ti
             """
             cursor.execute(query, (cod_empleado, dni, ape_paterno, ape_materno, 
                                   nombres, sexo, movil, tipo_empleado_id))
+            empleado_id = cursor.lastrowid
+            
+            # Generar email si no se proporcionó
+            if not email:
+                email = f"{cod_empleado.lower()}@roomflow.com"
+            
+            # Crear usuario automáticamente
+            exito_usuario, mensaje_usuario = crear_usuario_para_empleado(
+                cod_empleado, dni, email, empleado_id, connection
+            )
+            
             connection.commit()
-            return True, f"Empleado creado exitosamente con código: {cod_empleado}"
+            
+            # Mensaje de retorno
+            mensaje = f"Empleado creado exitosamente con código: {cod_empleado}"
+            if exito_usuario:
+                mensaje += f"\n{mensaje_usuario}"
+            else:
+                mensaje += f"\nAdvertencia: {mensaje_usuario}"
+            
+            return True, mensaje, cod_empleado
     except Exception as e:
         connection.rollback()
-        return False, f"Error al crear empleado: {str(e)}"
+        return False, f"Error al crear empleado: {str(e)}", None
     finally:
         connection.close()
 
-def insert_empleado(cod_empleado, dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id):
+def insert_empleado(cod_empleado, dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id, email=None):
     """
     Insertar nuevo empleado en la base de datos
+    También crea automáticamente un usuario para el empleado
     """
     connection = get_connection()
     try:
@@ -147,8 +211,27 @@ def insert_empleado(cod_empleado, dni, ape_paterno, ape_materno, nombres, sexo, 
             """
             cursor.execute(query, (cod_empleado, dni, ape_paterno, ape_materno, 
                                   nombres, sexo, movil, tipo_empleado_id))
+            empleado_id = cursor.lastrowid
+            
+            # Generar email si no se proporcionó
+            if not email:
+                email = f"{cod_empleado.lower()}@roomflow.com"
+            
+            # Crear usuario automáticamente
+            exito_usuario, mensaje_usuario = crear_usuario_para_empleado(
+                cod_empleado, dni, email, empleado_id, connection
+            )
+            
             connection.commit()
-            return True, "Empleado creado exitosamente"
+            
+            # Mensaje de retorno
+            mensaje = "Empleado creado exitosamente"
+            if exito_usuario:
+                mensaje += f"\n{mensaje_usuario}"
+            else:
+                mensaje += f"\nAdvertencia: {mensaje_usuario}"
+            
+            return True, mensaje
     except Exception as e:
         connection.rollback()
         return False, f"Error al crear empleado: {str(e)}"
