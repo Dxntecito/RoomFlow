@@ -10,19 +10,20 @@ class ControladorPromocion:
         conexion = None
         try:
             conexion = get_connection()
-            # 2. USA EL CURSOR DE DICCIONARIO
             with conexion.cursor(pymysql.cursors.DictCursor) as cursor:
+                # --- SOLUCIÓN AQUÍ: Cambiado de %% a % ---
                 sql = """
                     SELECT 
                         P.id_promocion, P.porcentaje, P.descripcion, P.estado,
-                        DATE_FORMAT(P.fecha_inicio, '%%d/%%m/%%Y') AS fecha_inicio,
-                        DATE_FORMAT(P.fecha_fin, '%%d/%%m/%%Y') AS fecha_fin,
+                        DATE_FORMAT(P.fecha_inicio, '%d/%m/%Y') AS fecha_inicio,
+                        DATE_FORMAT(P.fecha_fin, '%d/%m/%Y') AS fecha_fin,
                         TP.nombre AS tipo_promocion,
                         IF(P.estado = 1, 'Activa', 'Inactiva') AS nombre_estado
                     FROM PROMOCION P
                     JOIN TIPO_PROMOCION TP ON P.tipo_promocion_id = TP.id_tipo_promocion
                     ORDER BY P.fecha_inicio DESC
                 """
+                # --- FIN DE LA SOLUCIÓN ---
                 cursor.execute(sql)
                 return cursor.fetchall()
         except Exception as e:
@@ -114,17 +115,22 @@ class ControladorPromocion:
         conexion = None
         try:
             conexion = get_connection()
-            # 2. USA EL CURSOR DE DICCIONARIO
             with conexion.cursor(pymysql.cursors.DictCursor) as cursor:
+                # --- SOLUCIÓN AQUÍ: Cambiado de %% a % ---
                 sql = """
                     SELECT 
                         P.id_promocion, P.porcentaje, P.descripcion, P.estado,
-                        P.fecha_inicio, P.fecha_fin, P.tipo_promocion_id,
+                        DATE_FORMAT(P.fecha_inicio, '%d/%m/%Y') AS fecha_inicio,
+                        DATE_FORMAT(P.fecha_fin, '%d/%m/%Y') AS fecha_fin,
+                        P.tipo_promocion_id,
                         TP.nombre AS tipo_promocion
                     FROM PROMOCION P
                     JOIN TIPO_PROMOCION TP ON P.tipo_promocion_id = TP.id_tipo_promocion
                     WHERE P.id_promocion = %s
                 """
+                # --- FIN DE LA SOLUCIÓN ---
+                
+                # ¡OJO! Aquí SÍ usamos %s para el ID, así que pasamos los parámetros
                 cursor.execute(sql, (promocion_id,))
                 promocion = cursor.fetchone()
                 
