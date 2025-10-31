@@ -1,6 +1,6 @@
 from bd import get_connection
 import traceback
-import pymysql.cursors # <--- 1. IMPORTA EL CURSOR DE DICCIONARIO
+import pymysql.cursors
 
 class ControladorPromocion:
     
@@ -11,7 +11,7 @@ class ControladorPromocion:
         try:
             conexion = get_connection()
             with conexion.cursor(pymysql.cursors.DictCursor) as cursor:
-                # --- SOLUCIÓN AQUÍ: Cambiado de %% a % ---
+                # --- SOLUCIÓN: Cambiado de %% a % porque no hay parámetros ---
                 sql = """
                     SELECT 
                         P.id_promocion, P.porcentaje, P.descripcion, P.estado,
@@ -23,7 +23,6 @@ class ControladorPromocion:
                     JOIN TIPO_PROMOCION TP ON P.tipo_promocion_id = TP.id_tipo_promocion
                     ORDER BY P.fecha_inicio DESC
                 """
-                # --- FIN DE LA SOLUCIÓN ---
                 cursor.execute(sql)
                 return cursor.fetchall()
         except Exception as e:
@@ -40,7 +39,6 @@ class ControladorPromocion:
         conexion = None
         try:
             conexion = get_connection()
-            # 2. USA EL CURSOR DE DICCIONARIO
             with conexion.cursor(pymysql.cursors.DictCursor) as cursor:
                 cursor.execute("SELECT id_tipo_promocion, nombre FROM TIPO_PROMOCION WHERE estado = 1")
                 return cursor.fetchall()
@@ -58,7 +56,7 @@ class ControladorPromocion:
         conexion = None
         try:
             conexion = get_connection()
-            with conexion.cursor() as cursor: # No necesita DictCursor
+            with conexion.cursor() as cursor:
                 sql = """
                     INSERT INTO PROMOCION
                     (porcentaje, descripcion, estado, fecha_inicio, fecha_fin, tipo_promocion_id)
@@ -91,13 +89,13 @@ class ControladorPromocion:
         conexion = None
         try:
             conexion = get_connection()
-            with conexion.cursor() as cursor: # No necesita DictCursor
+            with conexion.cursor() as cursor:
                 sql = "UPDATE PROMOCION SET estado = %s WHERE id_promocion = %s"
                 cursor.execute(sql, (nuevo_estado, promocion_id))
                 conexion.commit()
                 
                 if cursor.rowcount == 0:
-                     return {'success': False, 'message': 'No se encontró la promoción.'}
+                       return {'success': False, 'message': 'No se encontró la promoción.'}
                 return {'success': True, 'message': 'Estado actualizado.'}
         except Exception as e:
             if conexion:
@@ -116,21 +114,18 @@ class ControladorPromocion:
         try:
             conexion = get_connection()
             with conexion.cursor(pymysql.cursors.DictCursor) as cursor:
-                # --- SOLUCIÓN AQUÍ: Cambiado de %% a % ---
+                # --- SOLUCIÓN: '%%' está bien aquí porque SÍ hay un parámetro (%s) ---
                 sql = """
                     SELECT 
                         P.id_promocion, P.porcentaje, P.descripcion, P.estado,
-                        DATE_FORMAT(P.fecha_inicio, '%d/%m/%Y') AS fecha_inicio,
-                        DATE_FORMAT(P.fecha_fin, '%d/%m/%Y') AS fecha_fin,
+                        DATE_FORMAT(P.fecha_inicio, '%%d/%%m/%%Y') AS fecha_inicio,
+                        DATE_FORMAT(P.fecha_fin, '%%d/%%m/%%Y') AS fecha_fin,
                         P.tipo_promocion_id,
                         TP.nombre AS tipo_promocion
                     FROM PROMOCION P
                     JOIN TIPO_PROMOCION TP ON P.tipo_promocion_id = TP.id_tipo_promocion
                     WHERE P.id_promocion = %s
                 """
-                # --- FIN DE LA SOLUCIÓN ---
-                
-                # ¡OJO! Aquí SÍ usamos %s para el ID, así que pasamos los parámetros
                 cursor.execute(sql, (promocion_id,))
                 promocion = cursor.fetchone()
                 
@@ -151,7 +146,7 @@ class ControladorPromocion:
         conexion = None
         try:
             conexion = get_connection()
-            with conexion.cursor() as cursor: # No necesita DictCursor
+            with conexion.cursor() as cursor:
                 campos = []
                 valores = []
                 

@@ -2,7 +2,7 @@ from bd import get_connection
 from datetime import datetime
 import base64
 import traceback
-import pymysql.cursors # <--- 1. IMPORTA EL CURSOR DE DICCIONARIO
+import pymysql.cursors
 
 class ControladorIncidencia:
     """Controlador para gestionar las incidencias del sistema"""
@@ -13,7 +13,6 @@ class ControladorIncidencia:
         conexion = None
         try:
             conexion = get_connection()
-            # 2. USA EL CURSOR DE DICCIONARIO
             with conexion.cursor(pymysql.cursors.DictCursor) as cursor:
                 sql = """
                     SELECT id_tipo, nombre, estado 
@@ -37,22 +36,22 @@ class ControladorIncidencia:
         conexion = None
         try:
             conexion = get_connection()
-            # 2. USA EL CURSOR DE DICCIONARIO
             with conexion.cursor(pymysql.cursors.DictCursor) as cursor:
+                # --- CORRECCIÓN 1: Se quitó 'i.numero_comprobante' ---
+                # --- CORRECCIÓN 2: Se cambió '%%d/%%m/%%Y' a '%d/%m/%Y' (un solo %) ---
                 sql = """
                     SELECT 
                         i.incidencia_id,
                         i.nombre_incidencia,
                         i.mensaje,
-                        DATE_FORMAT(i.fecha_envio, '%%d/%%m/%%Y') AS fecha_envio,
-                        DATE_FORMAT(i.fecha_resolucion, '%%d/%%m/%%Y') AS fecha_resolucion,
+                        DATE_FORMAT(i.fecha_envio, '%d/%m/%Y') AS fecha_envio,
+                        DATE_FORMAT(i.fecha_resolucion, '%d/%m/%Y') AS fecha_resolucion,
                         i.estado,
                         CASE i.estado
                             WHEN 1 THEN 'Aprobado'
                             WHEN 2 THEN 'Rechazado'
                             ELSE 'En proceso'
                         END AS estado_texto,
-                        i.numero_comprobante,
                         i.respuesta,
                         t.nombre as tipo_incidencia,
                         CONCAT(c.nombres, ' ', c.ape_paterno) as cliente_nombre,
@@ -62,7 +61,7 @@ class ControladorIncidencia:
                     LEFT JOIN CLIENTE c ON i.cliente_id = c.cliente_id
                     ORDER BY i.fecha_envio DESC
                 """
-                cursor.execute(sql)
+                cursor.execute(sql) # Sin parámetros, por eso se usa un solo %
                 return cursor.fetchall()
         except Exception as e:
             print(f"Error al obtener todas las incidencias: {e}")
@@ -78,8 +77,8 @@ class ControladorIncidencia:
         conexion = None
         try:
             conexion = get_connection()
-            # 2. USA EL CURSOR DE DICCIONARIO
             with conexion.cursor(pymysql.cursors.DictCursor) as cursor:
+                # --- CORRECCIÓN: Se quitó 'i.numero_comprobante' ---
                 sql = """
                     SELECT 
                         i.incidencia_id,
@@ -93,7 +92,6 @@ class ControladorIncidencia:
                             WHEN 2 THEN 'Rechazado'
                             ELSE 'En proceso'
                         END AS estado_texto,
-                        i.numero_comprobante,
                         i.respuesta,
                         t.nombre as tipo_incidencia,
                         i.prueba
@@ -102,7 +100,7 @@ class ControladorIncidencia:
                     WHERE i.cliente_id = %s
                     ORDER BY i.fecha_envio DESC
                 """
-                cursor.execute(sql, (cliente_id,))
+                cursor.execute(sql, (cliente_id,)) # Con parámetros, por eso '%%' está bien
                 incidencias = cursor.fetchall()
                 
                 for inc in incidencias:
@@ -127,12 +125,13 @@ class ControladorIncidencia:
         conexion = None
         try:
             conexion = get_connection()
-            with conexion.cursor() as cursor: # No necesita DictCursor
+            with conexion.cursor() as cursor:
+                # --- CORRECCIÓN: Se quitó 'numero_comprobante' ---
                 sql = """
                     INSERT INTO INCIDENCIA 
                     (nombre_incidencia, mensaje, fecha_envio, estado, 
-                     tipo_incidencia_id, numero_comprobante, prueba, cliente_id, empleado_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                     tipo_incidencia_id, prueba, cliente_id, empleado_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """
                 valores = (
                     datos['titulo'],
@@ -140,10 +139,10 @@ class ControladorIncidencia:
                     datetime.now(),
                     3,  # Estado: En proceso
                     datos['tipo_incidencia_id'],
-                    datos.get('numero_comprobante', None),
                     datos.get('evidencia', None),
                     datos.get('cliente_id', None),
                     datos.get('empleado_id', None)
+                    # Se quitó 'datos.get('numero_comprobante', None)'
                 )
                 cursor.execute(sql, valores)
                 conexion.commit()
@@ -171,7 +170,7 @@ class ControladorIncidencia:
         conexion = None
         try:
             conexion = get_connection()
-            with conexion.cursor() as cursor: # No necesita DictCursor
+            with conexion.cursor() as cursor:
                 campos = []
                 valores = []
                 
@@ -184,9 +183,9 @@ class ControladorIncidencia:
                 if 'tipo_incidencia_id' in datos:
                     campos.append("tipo_incidencia_id = %s")
                     valores.append(datos['tipo_incidencia_id'])
-                if 'numero_comprobante' in datos:
-                    campos.append("numero_comprobante = %s")
-                    valores.append(datos['numero_comprobante'])
+                
+                # --- CORRECCIÓN: Se quitó el bloque de 'numero_comprobante' ---
+                
                 if 'evidencia' in datos:
                     campos.append("prueba = %s")
                     valores.append(datos['evidencia'])
@@ -230,8 +229,8 @@ class ControladorIncidencia:
         conexion = None
         try:
             conexion = get_connection()
-            # 2. USA EL CURSOR DE DICCIONARIO
             with conexion.cursor(pymysql.cursors.DictCursor) as cursor:
+                # --- CORRECCIÓN: Se quitó 'i.numero_comprobante' ---
                 sql = """
                     SELECT 
                         i.incidencia_id,
@@ -245,7 +244,6 @@ class ControladorIncidencia:
                             WHEN 2 THEN 'Rechazado'
                             ELSE 'En proceso'
                         END AS estado_texto,
-                        i.numero_comprobante,
                         i.respuesta,
                         i.tipo_incidencia_id,
                         t.nombre as tipo_incidencia,
@@ -255,7 +253,7 @@ class ControladorIncidencia:
                     INNER JOIN TIPO_INCIDENCIA t ON i.tipo_incidencia_id = t.id_tipo
                     WHERE i.incidencia_id = %s
                 """
-                cursor.execute(sql, (incidencia_id,))
+                cursor.execute(sql, (incidencia_id,)) # Con parámetros, '%%' está bien
                 inc = cursor.fetchone()
                 
                 if not inc:
@@ -282,7 +280,7 @@ class ControladorIncidencia:
         conexion = None
         try:
             conexion = get_connection()
-            with conexion.cursor() as cursor: # No necesita DictCursor
+            with conexion.cursor() as cursor:
                 sql = "DELETE FROM INCIDENCIA WHERE incidencia_id = %s"
                 cursor.execute(sql, (incidencia_id,))
                 conexion.commit()
