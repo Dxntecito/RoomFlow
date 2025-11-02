@@ -134,7 +134,7 @@
     <div id="natural_fields">
       <label for="num_doc_natural">Tipo Documento</label>
       <select id="tipo_doc_natural">
-        <option value="">-- Seleccione Tipo Documento --</option>
+        <option value="-1">-- Seleccione Tipo Documento --</option>
         {% for type_doc in types_doc %}
           {% if type_doc[1] != "RUC" %}
             <option value="{{ type_doc[0] }}" data-nombre="{{ type_doc[1] }}">{{ type_doc[1] }}</option>
@@ -531,5 +531,4 @@ if (nextToGuestsBtn) {
   });
 }
 </script>
-
 {% endblock %}

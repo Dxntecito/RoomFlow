@@ -41,20 +41,6 @@ def BookingRoom():
     return render_template("Booking.html", rooms=rooms, categories=categories, floors=floors ,start_dt =start_dt, end_dt=end_dt , countries=countries, types_doc=types_doc, types_emp=types_emp )
 
 
-# @bookingroom_bp.route('/guardar_reserva', methods=['POST'])
-# def ruta_guardar_reserva():
-#     current_app.logger.info("📩 [DEBUG] Petición recibida en /guardar_reserva")
-#     try:
-#         data = request.get_json()
-#         current_app.logger.info(f"📦 [DEBUG] Datos recibidos del front: {data}")
-#         reserva_id = controller_reserva.guardar_reserva(data)
-#         current_app.logger.info(f"✅ [DEBUG] Reserva guardada con ID: {reserva_id}")
-#         return jsonify({'success': True, 'reserva_id': reserva_id}), 200
-#     except Exception as e:
-#         current_app.logger.exception("❌ Error al guardar reserva")
-#         return jsonify({'success': False, 'error': str(e)}), 
-
-
 @bookingroom_bp.route('/guardar_reserva', methods=['POST'])
 def ruta_guardar_reserva():
     try:

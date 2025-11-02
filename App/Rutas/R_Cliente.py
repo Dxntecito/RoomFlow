@@ -1,6 +1,6 @@
 # routes/ruta_cliente.py
 from flask import Blueprint, request, jsonify, render_template
-from App.Controladores.C_Cliente.controlador_cliente import (guardar_cliente, buscar_cliente_natural, buscar_cliente_juridico)
+from App.Controladores.C_Cliente.controlador_cliente import (guardar_cliente, buscar_cliente_natural, buscar_cliente_juridico, registrar_cliente_natural,registrar_cliente_juridico)
 
 cliente_bp = Blueprint('cliente_bp',__name__,template_folder='TEMPLATES',url_prefix='/Rutas')
 

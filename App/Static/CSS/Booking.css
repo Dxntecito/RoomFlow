@@ -560,3 +560,96 @@ input:checked + .slider:before {
 .input-group button:hover {
   background-color: #0056b3;
 }
+
+/* ===== PASO 5: COMPROBANTE / DESCARGA ===== */
+#step5 {
+  background-color: #ffffff;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 600px;
+  margin: 40px auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  font-family: "Inter", "Segoe UI", sans-serif;
+  color: #333;
+  text-align: center;
+}
+
+/* Título */
+#step5 h2 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 10px;
+}
+
+/* Subtexto */
+#step5 p {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+/* Contenedor de botones principales */
+#step5 div[style*="display:flex"] {
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Botones principales */
+#step5 a.btn,
+#step5 button {
+  background-color: #2b7cff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* Hover elegante */
+#step5 a.btn:hover,
+#step5 button:hover {
+  background-color: #1e63d9;
+  box-shadow: 0 3px 8px rgba(43, 124, 255, 0.3);
+}
+
+/* Botón "Volver al inicio" estilo secundario */
+#step5 #volver_home {
+  background-color: #f4f4f4;
+  color: #333;
+  border: 1px solid #ddd;
+  margin-top: 24px;
+}
+
+#step5 #volver_home:hover {
+  background-color: #e8e8e8;
+  border-color: #ccc;
+}
+
+/* Estado del comprobante */
+#comprobante_status {
+  font-size: 0.9rem;
+  color: #444;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Animación de aparición suave */
+#step5 {
+  opacity: 0;
+  transform: translateY(15px);
+  animation: aparecer 0.4s ease forwards;
+}
+
+@keyframes aparecer {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -52,6 +52,7 @@ let clientData = {};
 // correo (opcional/global)
 const correoCliente = document.getElementById("correo_cliente");
 
+//CREACION DE DIV DE HABITACION AGREGADA
 function createSelectedRoomDiv(roomId) {
 const roomName = roomNames[roomId];
 const price = parseFloat(roomPrices[roomId]) || 0;
@@ -83,9 +84,11 @@ div.querySelector(".remove_room").addEventListener("click", () => {
     }
 });
 }
+//ACTUALIZAR TOTAL DEL PRECIO A PAGAR POR HABITACIONES ACUMULADAS EN DIV DE RESUMEN
 function updateTotalDisplay() {
 totalDisplay.textContent = "Total: S/. " + total.toFixed(2);
 }
+//SELECCION DE HABITACION Y ADDICCION AL DIV DE RESUMEN
 document.querySelectorAll('.checkbox_booking').forEach(cb => {
 cb.addEventListener('change', function() {
     const roomId = this.value;
@@ -118,36 +121,6 @@ cb.addEventListener('change', function() {
     totalDisplay.textContent = "Total: S/. " + total.toFixed(2);
 });
 });
-function generarFormulariosHuespedes() {
-habitacionesContainer.innerHTML = "";
-selectedRooms.forEach(roomId => {
-const capacidad = parseInt(roomCapacities[roomId]) || 1;
-const div = document.createElement("div");
-div.className = "habitacion_form";
-div.innerHTML = `
-    <h3>Habitación ${roomNames[roomId]}</h3>
-    <label>Cantidad de personas:</label>
-    <select class="numPersonas" id="numPersonas_${roomId}" data-room="${roomId}">
-    ${Array.from({length: capacidad}, (_, i) => `<option value="${i+1}">${i+1}</option>`).join('')}
-    </select>
-    <div class="yo_container">
-    <input type="checkbox" class="yoHospedare" data-room="${roomId}" id="yoHospedare_${roomId}">
-    <label for="yoHospedare_${roomId}">Yo me hospedaré aquí</label>
-    </div>
-    <div class="contenedorHuespedes" id="huespedes_${roomId}"></div>
-`;
-habitacionesContainer.appendChild(div);
-
-const select = div.querySelector(".numPersonas");
-select.addEventListener("change", () => generarCamposHuespedes(roomId));
-generarCamposHuespedes(roomId);
-});
-
-// bindear comportamiento de "yoHospedare"
-bindYoMeHospedareControls();
-}
-// --- Filtrado de filas según selects ---
-
 // Si tu tabla se actualiza dinámicamente (por ejemplo por AJAX) necesitas re-run bindCheckboxEvents()
 function bindCheckboxEvents() {
 document.querySelectorAll('.checkbox_booking').forEach(cb => {
@@ -204,15 +177,48 @@ paisjuridica.value="";
 tipoempresa.value = "";
 telefonojuridica.value="";
 }
+//VALIDACION DNI
 function esDniValido(dni) {
 return /^[0-9]{8}$/.test(dni);
 }
+//VALIDACION RUC
 function esRucValido(ruc) {
 return /^[0-9]{11}$/.test(ruc);
 }
+//VALIDACION PASAPORTE
 function esPasaporteValido(pasaporte) {
 return /^[A-Za-z0-9]{6,12}$/.test(pasaporte);
 }
+//GENERAR FORMULARIOS SEGUN CANTIDAD DE HUESPEDES POR HABITACION
+function generarFormulariosHuespedes() {
+habitacionesContainer.innerHTML = "";
+selectedRooms.forEach(roomId => {
+const capacidad = parseInt(roomCapacities[roomId]) || 1;
+const div = document.createElement("div");
+div.className = "habitacion_form";
+div.innerHTML = `
+    <h3>Habitación ${roomNames[roomId]}</h3>
+    <label>Cantidad de personas:</label>
+    <select class="numPersonas" id="numPersonas_${roomId}" data-room="${roomId}">
+    ${Array.from({length: capacidad}, (_, i) => `<option value="${i+1}">${i+1}</option>`).join('')}
+    </select>
+    <div class="yo_container">
+    <input type="checkbox" class="yoHospedare" data-room="${roomId}" id="yoHospedare_${roomId}">
+    <label for="yoHospedare_${roomId}">Yo me hospedaré aquí</label>
+    </div>
+    <div class="contenedorHuespedes" id="huespedes_${roomId}"></div>
+`;
+habitacionesContainer.appendChild(div);
+
+const select = div.querySelector(".numPersonas");
+select.addEventListener("change", () => generarCamposHuespedes(roomId));
+generarCamposHuespedes(roomId);
+});
+
+// bindear comportamiento de "yoHospedare"
+bindYoMeHospedareControls();
+}
+//MANEJO DE CHECKBOXS DE HOSPEDAJE
 function bindYoMeHospedareControls() {
   const checkboxes = document.querySelectorAll(".yoHospedare");
   const TIPO_CLIENTE_VAL = document.getElementById("tipo_cliente_switch");
@@ -284,8 +290,7 @@ function bindYoMeHospedareControls() {
     cb.addEventListener('change', handler);
   });
 }
-
-
+//GENERACION DE CAMPOS SGEGUN CANTIDAD DE HUESPEDES
 function generarCamposHuespedes(roomId, cantidadManual = null) {
 const contenedor = document.getElementById(`huespedes_${roomId}`);
 const cantidad = cantidadManual ?? parseInt(document.getElementById(`numPersonas_${roomId}`)?.value) ?? 1;
@@ -303,6 +308,7 @@ for (let i = 1; i <= cantidad; i++) {
     `;
 }
 }
+//RECOLECTAR TODOS LOS DATOS DE LA RESERVA PARA ENVIAR AL SERVIDOR
 function recolectarDatosReserva() {
 const fechaEntradaRaw = startDateInput?.value || null;
 const fechaSalidaRaw = endDateInput?.value || null;
@@ -429,151 +435,163 @@ selectedRooms.forEach(id => {
 const final = computeFinalTotal();
 paymentTotalAmount.textContent = Number(final || localTotal).toFixed(2);
 }
-
+//BOTON BUSCAR CLIENTE NATURAL
 document.addEventListener("DOMContentLoaded", () => {
-  // ======== CLIENTE NATURAL ========
-  const btnBuscarNatural = document.getElementById("buscar_natural_doc");
-  const numDocNatural = document.getElementById("num_doc_natural");
+  const tipoDoc = document.getElementById("tipo_doc_natural");
+  const numDoc = document.getElementById("num_doc_natural");
+  const buscarBtn = document.getElementById("buscar_natural_doc");
 
-  btnBuscarNatural.addEventListener("click", async () => {
-    if (btnBuscarNatural.dataset.mode !== "borrar") {
-      // --- MODO BUSCAR ---
-      const numDoc = numDocNatural.value.trim();
-      if (!numDoc) {
-        alert("Ingrese un número de documento.");
+  const campos = {
+    nombres: document.getElementById("nombres"),
+    apePaterno: document.getElementById("ape_paterno"),
+    apeMaterno: document.getElementById("ape_materno"),
+    telefono: document.getElementById("telefono_natural"),
+    pais: document.getElementById("pais_select"),
+  };
+
+  const bloquearCampos = (estado = true) => {
+    Object.values(campos).forEach(c => c.disabled = estado);
+  };
+  bloquearCampos(true);
+  numDoc.disabled = true;
+
+  tipoDoc.addEventListener("change", () => {
+    if (tipoDoc.value && tipoDoc.value !== "-1") {
+      numDoc.disabled = false;
+    } else {
+      numDoc.value = "";
+      numDoc.disabled = true;
+    }
+  });
+
+  buscarBtn.addEventListener("click", async () => {
+    const modo = buscarBtn.textContent.trim();
+
+    if (modo === "Buscar") {
+      const numDocVal = numDoc.value.trim();
+      const tipoVal = tipoDoc.value;
+
+      if (!tipoVal || tipoVal === "-1") {
+        alert("Seleccione un tipo de documento.");
+        return;
+      }
+      if (!numDocVal) {
+        alert("Ingrese el número de documento.");
         return;
       }
 
       try {
-        const response = await fetch(`/Rutas/buscar_cliente_natural?num_doc=${encodeURIComponent(numDoc)}`);
-        const data = await response.json();
-
-        if (!response.ok) {
-          alert(data.mensaje || data.error || "Cliente no encontrado.");
-          return;
+        const res = await fetch(`/Rutas/buscar_cliente_natural?num_doc=${encodeURIComponent(numDocVal)}`);
+        if (!res.ok) {
+          if (res.status === 404) {
+            alert("Cliente no encontrado. Complete los datos manualmente.");
+            bloquearCampos(false);
+            tipoDoc.disabled = true;
+            numDoc.disabled = true;
+            buscarBtn.textContent = "Borrar";
+            return;
+          }
+          throw new Error("Error en la búsqueda");
         }
 
-        // --- CLIENTE ENCONTRADO: rellenar campos ---
-        document.getElementById("nombres").value = data.nombres || "";
-        document.getElementById("ape_paterno").value = data.ape_paterno || "";
-        document.getElementById("ape_materno").value = data.ape_materno || "";
-        document.getElementById("telefono_natural").value = data.telefono || "";
-        document.getElementById("pais_select").value = data.id_pais || "";
+        const data = await res.json();
+        // ✅ Cliente encontrado
+        campos.nombres.value = data.nombres || "";
+        campos.apePaterno.value = data.ape_paterno || "";
+        campos.apeMaterno.value = data.ape_materno || "";
+        campos.telefono.value = data.telefono || "";
+        campos.pais.value = data.id_pais || "";
 
-        // Bloquear los campos
-        bloquearCampos(["nombres", "ape_paterno", "ape_materno", "telefono_natural", "pais_select", "num_doc_natural"]);
-
-        // Cambiar botón
-        btnBuscarNatural.textContent = "Borrar";
-        btnBuscarNatural.dataset.mode = "borrar";
-      } catch (error) {
-        console.error("Error al buscar cliente natural:", error);
-        alert("Ocurrió un error al buscar el cliente.");
+        bloquearCampos(true);
+        tipoDoc.disabled = true;
+        numDoc.disabled = true;
+        buscarBtn.textContent = "Borrar";
+      } catch (err) {
+        console.error("❌ Error en la búsqueda:", err);
+        alert("Hubo un problema al buscar el cliente.");
       }
-    } else {
-      // --- MODO BORRAR ---
-      limpiarCampos(["nombres", "ape_paterno", "ape_materno", "telefono_natural", "pais_select", "num_doc_natural"]);
-      desbloquearCampos(["nombres", "ape_paterno", "ape_materno", "telefono_natural", "pais_select", "num_doc_natural"]);
 
-      btnBuscarNatural.textContent = "Buscar";
-      delete btnBuscarNatural.dataset.mode;
+    } else if (modo === "Borrar") {
+      numDoc.value = "";
+      tipoDoc.value = "-1";
+      Object.values(campos).forEach(c => c.value = "");
+      bloquearCampos(true);
+      tipoDoc.disabled = false;
+      numDoc.disabled = true;
+      buscarBtn.textContent = "Buscar";
     }
   });
-
-  // ======== CLIENTE JURÍDICO ========
-  const btnBuscarJuridico = document.getElementById("buscar_juridica_doc");
-  const numDocJuridico = document.getElementById("num_doc_juridico");
-
-  btnBuscarJuridico.addEventListener("click", async () => {
-    if (btnBuscarJuridico.dataset.mode !== "borrar") {
-      // --- MODO BUSCAR ---
-      const numDoc = numDocJuridico.value.trim();
-      if (!numDoc) {
-        alert("Ingrese un RUC.");
-        return;
-      }
-
-      try {
-        const response = await fetch(`/Rutas/buscar_cliente_juridico?num_doc=${encodeURIComponent(numDoc)}`);
-        const data = await response.json();
-
-        if (!response.ok) {
-          alert(data.mensaje || data.error || "Cliente no encontrado.");
-          return;
-        }
-
-        // --- CLIENTE ENCONTRADO: rellenar campos ---
-        document.getElementById("razon_social").value = data.razon_social || "";
-        document.getElementById("telefono_juridico").value = data.telefono || "";
-        document.getElementById("pais_select_j").value = data.id_pais || "";
-        document.getElementById("direccion_juridica").value = data.direccion || "";
-        document.getElementById("tipo_empresa").value = data.tipoemp_id || "";
-
-        // Bloquear los campos
-        bloquearCampos([
-          "razon_social",
-          "telefono_juridico",
-          "pais_select_j",
-          "direccion_juridica",
-          "tipo_empresa",
-          "num_doc_juridico",
-        ]);
-
-        // Cambiar botón
-        btnBuscarJuridico.textContent = "Borrar";
-        btnBuscarJuridico.dataset.mode = "borrar";
-      } catch (error) {
-        console.error("Error al buscar cliente jurídico:", error);
-        alert("Ocurrió un error al buscar el cliente.");
-      }
-    } else {
-      // --- MODO BORRAR ---
-      limpiarCampos([
-        "razon_social",
-        "telefono_juridico",
-        "pais_select_j",
-        "direccion_juridica",
-        "tipo_empresa",
-        "num_doc_juridico",
-      ]);
-      desbloquearCampos([
-        "razon_social",
-        "telefono_juridico",
-        "pais_select_j",
-        "direccion_juridica",
-        "tipo_empresa",
-        "num_doc_juridico",
-      ]);
-
-      btnBuscarJuridico.textContent = "Buscar";
-      delete btnBuscarJuridico.dataset.mode;
-    }
-  });
-
-  // ======== Funciones auxiliares ========
-  function bloquearCampos(ids) {
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.disabled = true;
-    });
-  }
-
-  function desbloquearCampos(ids) {
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.disabled = false;
-    });
-  }
-
-  function limpiarCampos(ids) {
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (el && el.tagName === "SELECT") {
-        el.selectedIndex = 0;
-      } else if (el) {
-        el.value = "";
-      }
-    });
-  }
 });
+//BOTON BUSCAR CLIENTE JURIDICO
+document.addEventListener("DOMContentLoaded", () => {
+  const numDoc = document.getElementById("num_doc_juridico");
+  const razonSocial = document.getElementById("razon_social");
+  const tipoEmpresa = document.getElementById("tipo_empresa");
+  const direccion = document.getElementById("direccion_juridica");
+  const telefono = document.getElementById("telefono_juridico");
+  const pais = document.getElementById("pais_select_j");
+  const buscarBtn = document.getElementById("buscar_juridica_doc");
+
+  const campos = { razonSocial, tipoEmpresa, direccion, telefono, pais };
+
+  const bloquearCampos = (estado = true) => {
+    Object.values(campos).forEach(c => c.disabled = estado);
+  };
+
+  bloquearCampos(true);
+  numDoc.disabled = false;
+
+  buscarBtn.addEventListener("click", async () => {
+    const modo = buscarBtn.textContent.trim();
+    const numDocVal = numDoc.value.trim();
+
+    if (modo === "Buscar") {
+      if (!numDocVal) {
+        alert("Ingrese el número de RUC.");
+        return;
+      }
+      if (numDocVal.length !== 11) {
+        alert("El RUC debe tener exactamente 11 dígitos.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/Rutas/buscar_cliente_juridico?num_doc=${encodeURIComponent(numDocVal)}`);
+        if (!res.ok) {
+          if (res.status === 404) {
+            alert("Cliente no encontrado. Complete los datos manualmente.");
+            bloquearCampos(false);
+            numDoc.disabled = true;
+            buscarBtn.textContent = "Borrar";
+            return;
+          }
+          throw new Error("Error en la búsqueda");
+        }
+
+        const data = await res.json();
+        // 🟢 Cliente jurídico encontrado
+        razonSocial.value = data.razon_social || "";
+        direccion.value = data.direccion || "";
+        telefono.value = data.telefono || "";
+        pais.value = data.id_pais || "";
+        tipoEmpresa.value = data.tipoemp_id || "";
+
+        bloquearCampos(true);
+        numDoc.disabled = true;
+        buscarBtn.textContent = "Borrar";
+      } catch (err) {
+        console.error("❌ Error en la búsqueda:", err);
+        alert("Hubo un problema al buscar el cliente jurídico.");
+      }
+
+    } else if (modo === "Borrar") {
+      numDoc.value = "";
+      Object.values(campos).forEach(c => c.value = "");
+      bloquearCampos(true);
+      numDoc.disabled = false;
+      buscarBtn.textContent = "Buscar";
+    }
+  });
+});
+
 

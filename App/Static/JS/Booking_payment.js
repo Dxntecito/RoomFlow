@@ -225,15 +225,15 @@ finalizarReservaBtn.addEventListener("click", async () => {
         })
     });
 
-    const transText = await transResp.text();
-    console.log("[FINALIZAR] transResp HTTP:", transResp.status, transResp.ok);
+    const transText = await resp.text();
+    console.log("[FINALIZAR] transResp HTTP:", resp.status, resp.ok);
     console.log("[FINALIZAR] transResp RAW:", transText);
 
     let transResult;
     try { transResult = JSON.parse(transText); console.log("[FINALIZAR] transResult:", transResult); }
     catch (e) { console.error("[FINALIZAR] No se parseó transResult:", e); throw e; }
 
-    if (!(transResp.ok && transResult && (transResult.transaccion_id || transResult.success))) {
+    if (!(resp.ok && transResult && (transResult.transaccion_id || transResult.success))) {
         console.warn("[FINALIZAR] La creación de la transacción devolvió error o formato inesperado:", transResult);
         // no abortamos el flujo — dependiendo de tu lógica puedes abortar aquí
         alert("Advertencia: No se pudo guardar la transacción correctamente.");
@@ -248,40 +248,58 @@ finalizarReservaBtn.addEventListener("click", async () => {
     }
 
     // 3) Generar comprobante (PDF) y mostrar paso 5
-    try {
+  try {
     if (step4El) step4El.style.display = "none";
     if (step5El) step5El.style.display = "block";
     if (comprobanteStatus) comprobanteStatus.textContent = "Generando comprobante...";
 
     console.log("[FINALIZAR] Solicitando PDF a /Rutas/crear_comprobante/" + encodeURIComponent(reservaId));
+
     const pdfResp = await fetch(`/Rutas/crear_comprobante/${encodeURIComponent(reservaId)}`, {
-        method: "GET",
-        headers: { "Accept": "application/pdf" }
+      method: "GET",
+      headers: { "Accept": "application/pdf" }
     });
 
     if (!pdfResp.ok) {
-        const txt = await pdfResp.text();
-        console.error("[FINALIZAR] Error al generar PDF. Status:", pdfResp.status, "Body:", txt);
-        throw new Error("No se pudo generar el comprobante PDF");
+      const txt = await pdfResp.text();
+      console.error("[FINALIZAR] Error al generar PDF. Status:", pdfResp.status, "Body:", txt);
+      throw new Error("No se pudo generar el comprobante PDF");
     }
 
     const pdfBlob = await pdfResp.blob();
+    const pdfUrl = URL.createObjectURL(pdfBlob); // ✅ crear URL temporal del PDF
     const filename = `Comprobante_${reservaId}.pdf`;
-    downloadBlob(pdfBlob, filename);
 
-    if (comprobanteStatus) comprobanteStatus.textContent = "Comprobante generado correctamente.";
-    console.log("[FINALIZAR] Comprobante generado y descargado:", filename);
+    // Mostrar botones
+    const downloadLink = document.getElementById("download_comprobante_link");
+    const openTabBtn = document.getElementById("open_comprobante_newtab");
 
-    } catch (errPdf) {
-    console.error("[FINALIZAR] Error generando comprobante:", errPdf);
-    if (comprobanteStatus) comprobanteStatus.textContent = "Error generando comprobante. Intente descargar luego.";
-    alert("Se produjo un error al generar el comprobante. Revisa la consola.");
-    }
+      if (downloadLink) {
+        downloadLink.href = pdfUrl;
+        downloadLink.download = filename;
+        downloadLink.style.display = "inline-block";
+      }
 
-    // Final: re-habilitar botón y mostrar mensaje
-    finalizarReservaBtn.disabled = false;
-    finalizarReservaBtn.textContent = "Finalizar Reserva";
-    alert("Proceso finalizado. Revisa el comprobante descargado o la consola para detalles.");
-    console.groupEnd();
-});
-}
+      if (openTabBtn) {
+        openTabBtn.style.display = "inline-block";
+        openTabBtn.onclick = () => window.open(pdfUrl, "_blank");
+      }
+
+      if (comprobanteStatus) comprobanteStatus.textContent = "Comprobante generado correctamente.";
+
+      console.log("[FINALIZAR] Comprobante disponible:", filename);
+
+      } catch (errPdf) {
+      console.error("[FINALIZAR] Error generando comprobante:", errPdf);
+      if (comprobanteStatus) comprobanteStatus.textContent = "Error generando comprobante. Intente descargar luego.";
+      alert("Se produjo un error al generar el comprobante. Revisa la consola.");
+      }
+
+
+      // Final: re-habilitar botón y mostrar mensaje
+      finalizarReservaBtn.disabled = false;
+      finalizarReservaBtn.textContent = "Finalizar Reserva";
+      alert("Proceso finalizado. Revisa el comprobante descargado o la consola para detalles.");
+      console.groupEnd();
+  });
+  }
