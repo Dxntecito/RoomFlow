@@ -371,6 +371,7 @@
                     required
                     maxlength="50"
                 >
+                <div class="validation-message" id="nombres-message"></div>
             </div>
 
             <div class="form-group">
@@ -383,6 +384,7 @@
                     required
                     maxlength="50"
                 >
+                <div class="validation-message" id="apellido-paterno-message"></div>
             </div>
 
             <div class="form-group">
@@ -395,6 +397,7 @@
                     required
                     maxlength="50"
                 >
+                <div class="validation-message" id="apellido-materno-message"></div>
             </div>
 
             <div class="form-group">
@@ -417,6 +420,7 @@
                     required
                     maxlength="20"
                 >
+                <div class="validation-message" id="num-documento-message"></div>
             </div>
 
             <div class="form-group">
@@ -437,6 +441,7 @@
                     maxlength="9"
                     pattern="[0-9]{9}"
                 >
+                <div class="validation-message" id="telefono-message"></div>
             </div>
 
             <button type="submit" class="btn-registro" id="btnSubmit">
@@ -520,19 +525,9 @@
             setTimeout(() => alert.remove(), 500);
         });
     }, 5000);
-
-    // Validación del formulario antes de enviar
-    document.getElementById('registroForm').addEventListener('submit', function(e) {
-        const password = passwordInput.value;
-        const confirmPassword = confirmPasswordInput.value;
-
-        if (password !== confirmPassword) {
-            e.preventDefault();
-            confirmMessage.textContent = '✗ Las contraseñas no coinciden';
-            confirmMessage.className = 'validation-message error';
-            confirmPasswordInput.focus();
-        }
-    });
 </script>
+
+<!-- Script de validaciones completas -->
+<script src="{{ url_for('static', filename='JS/registro_validations.js') }}"></script>
 {% endblock %}
 

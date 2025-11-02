@@ -1,6 +1,7 @@
 from flask import render_template, Blueprint, request, jsonify, session, redirect, url_for, flash
 import App.Controladores.C_Usuarios.controlador_usuario as controller_usuario
 from functools import wraps
+import re
 
 usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/auth')
 
@@ -70,10 +71,72 @@ def Login():
     
     return render_template('Login.html')
 
+def validar_usuario_registro(usuario):
+    """Valida el nombre de usuario"""
+    if not usuario or len(usuario) < 3:
+        return False, 'El usuario debe tener al menos 3 caracteres'
+    if len(usuario) > 50:
+        return False, 'El usuario no debe exceder 50 caracteres'
+    if not re.match(r'^[a-zA-Z0-9_]{3,50}$', usuario):
+        return False, 'El usuario solo puede contener letras, números y guiones bajos'
+    return True, ''
+
+def validar_email_formato(email):
+    """Valida el formato del email"""
+    if not email:
+        return False, 'El email es obligatorio'
+    patron = r'^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(patron, email):
+        return False, 'Formato de email inválido'
+    return True, ''
+
+def validar_nombres_apellidos(texto, campo):
+    """Valida que nombres y apellidos solo contengan letras"""
+    if not texto or len(texto) < 2:
+        return False, f'{campo} debe tener al menos 2 caracteres'
+    if len(texto) > 50:
+        return False, f'{campo} no debe exceder 50 caracteres'
+    # Permitir letras con tildes, espacios y ñ
+    if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$', texto):
+        return False, f'{campo} solo debe contener letras y espacios'
+    if re.search(r'\d', texto):
+        return False, f'{campo} no debe contener números'
+    return True, ''
+
+def validar_numero_documento(num_doc, tipo_doc_id):
+    """Valida el número de documento según el tipo"""
+    if not num_doc:
+        return False, 'El número de documento es obligatorio'
+    
+    tipo_doc_id = str(tipo_doc_id)
+    
+    if tipo_doc_id == '1':  # DNI
+        if not re.match(r'^\d{8}$', num_doc):
+            return False, 'El DNI debe tener exactamente 8 dígitos'
+    elif tipo_doc_id == '2':  # Pasaporte
+        if not re.match(r'^[A-Z0-9]{6,20}$', num_doc.upper()):
+            return False, 'El Pasaporte debe tener entre 6 y 20 caracteres alfanuméricos'
+    elif tipo_doc_id == '3':  # Carnet de Extranjería
+        if not re.match(r'^[A-Z0-9]{9,12}$', num_doc.upper()):
+            return False, 'El Carnet de Extranjería debe tener entre 9 y 12 caracteres alfanuméricos'
+    elif tipo_doc_id == '4':  # RUC
+        if not re.match(r'^\d{11}$', num_doc):
+            return False, 'El RUC debe tener exactamente 11 dígitos'
+    
+    return True, ''
+
+def validar_telefono(telefono):
+    """Valida el formato del teléfono (opcional)"""
+    if not telefono:  # El teléfono es opcional
+        return True, ''
+    if not re.match(r'^9\d{8}$', telefono):
+        return False, 'El teléfono debe comenzar con 9 y tener exactamente 9 dígitos'
+    return True, ''
+
 @usuarios_bp.route('/registro', methods=['GET', 'POST'])
 def Registro():
     """
-    Página de registro de nuevos usuarios
+    Página de registro de nuevos usuarios con validaciones completas
     """
     # Si ya hay sesión activa, redirigir al inicio
     if 'usuario_id' in session:
@@ -82,44 +145,81 @@ def Registro():
     if request.method == 'POST':
         try:
             # Datos de cuenta
-            usuario = request.form.get('usuario')
-            email = request.form.get('email')
-            contrasena = request.form.get('contrasena')
-            confirmar_contrasena = request.form.get('confirmar_contrasena')
+            usuario = request.form.get('usuario', '').strip()
+            email = request.form.get('email', '').strip()
+            contrasena = request.form.get('contrasena', '')
+            confirmar_contrasena = request.form.get('confirmar_contrasena', '')
             
             # Datos personales
             nombres = request.form.get('nombres', '').strip()
             apellido_paterno = request.form.get('apellido_paterno', '').strip()
             apellido_materno = request.form.get('apellido_materno', '').strip()
-            tipo_documento_id = request.form.get('tipo_documento_id', 1)
-            num_documento = request.form.get('num_documento', '').strip()
+            tipo_documento_id = request.form.get('tipo_documento_id', '1')
+            num_documento = request.form.get('num_documento', '').strip().upper()
             telefono = request.form.get('telefono', '').strip()
+            sexo = request.form.get('sexo', 'M')
             direccion = request.form.get('direccion', '').strip()
             
-            # Validar campos requeridos de cuenta
+            # Validar campos requeridos
             if not all([usuario, email, contrasena, confirmar_contrasena]):
                 flash('Usuario, email y contraseña son obligatorios', 'error')
                 return render_template('Registro.html')
             
-            # Validar campos requeridos de datos personales
             if not all([nombres, apellido_paterno, apellido_materno, num_documento]):
                 flash('Todos los datos personales marcados con * son obligatorios', 'error')
                 return render_template('Registro.html')
             
-            # Validar que las contraseñas coincidan
+            # Validar usuario
+            valido, mensaje = validar_usuario_registro(usuario)
+            if not valido:
+                flash(mensaje, 'error')
+                return render_template('Registro.html')
+            
+            # Validar email
+            valido, mensaje = validar_email_formato(email)
+            if not valido:
+                flash(mensaje, 'error')
+                return render_template('Registro.html')
+            
+            # Validar contraseñas
             if contrasena != confirmar_contrasena:
                 flash('Las contraseñas no coinciden', 'error')
                 return render_template('Registro.html')
             
-            # Validar longitud de contraseña
             if len(contrasena) < 6:
                 flash('La contraseña debe tener al menos 6 caracteres', 'error')
                 return render_template('Registro.html')
             
-            # Validar formato de email (básico)
-            if '@' not in email or '.' not in email:
-                flash('Email inválido', 'error')
+            # Validar nombres
+            valido, mensaje = validar_nombres_apellidos(nombres, 'Nombres')
+            if not valido:
+                flash(mensaje, 'error')
                 return render_template('Registro.html')
+            
+            # Validar apellido paterno
+            valido, mensaje = validar_nombres_apellidos(apellido_paterno, 'Apellido paterno')
+            if not valido:
+                flash(mensaje, 'error')
+                return render_template('Registro.html')
+            
+            # Validar apellido materno
+            valido, mensaje = validar_nombres_apellidos(apellido_materno, 'Apellido materno')
+            if not valido:
+                flash(mensaje, 'error')
+                return render_template('Registro.html')
+            
+            # Validar número de documento
+            valido, mensaje = validar_numero_documento(num_documento, tipo_documento_id)
+            if not valido:
+                flash(mensaje, 'error')
+                return render_template('Registro.html')
+            
+            # Validar teléfono (si se proporciona)
+            if telefono:
+                valido, mensaje = validar_telefono(telefono)
+                if not valido:
+                    flash(mensaje, 'error')
+                    return render_template('Registro.html')
             
             # Registrar usuario con datos personales
             resultado = controller_usuario.insert_usuario(
@@ -132,8 +232,8 @@ def Registro():
                 apellido_materno=apellido_materno,
                 tipo_documento_id=tipo_documento_id,
                 num_documento=num_documento,
-                telefono=telefono,
-                direccion=direccion
+                telefono=telefono if telefono else None,
+                direccion=direccion if direccion else None
             )
             
             if resultado['success']:
