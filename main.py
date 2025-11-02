@@ -34,6 +34,7 @@ app.register_blueprint(roomservice_bp)
 app.register_blueprint(crear_comprobante_bp)
 app.register_blueprint(transaccion_bp)
 app.register_blueprint(promocion_bp)
+app.register_blueprint(cliente_bp)
 
 @app.route("/")
 @app.route("/RoomFlow")

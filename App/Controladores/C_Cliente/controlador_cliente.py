@@ -65,5 +65,72 @@ def buscar_cliente_por_documento(num_doc):
         if connection:
             connection.close()
 
+def buscar_cliente_natural(num_doc):
+    """
+    Devuelve una tupla con los datos del cliente natural si existe, o None.
+    """
+    if not num_doc:
+        return None
 
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        query = """
+            SELECT 
+                cliente_id,
+                num_doc,
+                telefono,
+                id_pais,
+                tipo_doc_id,
+                ape_paterno,
+                ape_materno,
+                nombres
+            FROM CLIENTE
+            WHERE num_doc = %s AND id_tipo_cliente = 'N'
+        """
+        cursor.execute(query, (num_doc,))
+        row = cursor.fetchone()
+        return row
+    except Exception as e:
+        print(f"❌ [ERROR en buscar_cliente_natural]: {e}")
+        traceback.print_exc()
+        return None
+    finally:
+        if conn:
+            conn.close()
 
+def buscar_cliente_juridico(num_doc):
+    """
+    Devuelve una tupla con los datos del cliente jurídico si existe, o None.
+    """
+    if not num_doc:
+        return None
+
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            query = """
+                SELECT 
+                    cliente_id,
+                    num_doc,
+                    telefono,
+                    id_pais,
+                    tipo_doc_id,
+                    tipoemp_id,
+                    razon_social,
+                    direccion
+                FROM CLIENTE
+                WHERE num_doc = %s AND id_tipo_cliente = 'J'
+            """
+            cursor.execute(query, (num_doc,))
+            row = cursor.fetchone()
+            return row
+    except Exception as e:
+        print(f"❌ [ERROR en buscar_cliente_juridico]: {e}")
+        traceback.print_exc()
+        return None
+    finally:
+        if connection:
+            connection.close()

@@ -191,7 +191,7 @@ INSERT INTO PROMOCION (porcentaje, descripcion, estado, fecha_inicio, fecha_fin,
 -- Tabla de Clientes
 CREATE TABLE CLIENTE (
   cliente_id      INT(10) NOT NULL AUTO_INCREMENT,
-  direccion       VARCHAR(255),
+  direccion       VARCHAR(255), 
   telefono        CHAR(9) UNIQUE,
   f_registro      DATE NOT NULL,
   num_doc         VARCHAR(20) UNIQUE,

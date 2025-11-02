@@ -491,3 +491,72 @@ input:checked + .slider:before {
   }
 }
 
+#natural_fields input{
+  margin-bottom: 0;
+  margin-top: 1px;
+}
+
+#natural_fields select{
+  margin-bottom: 0;
+}
+
+#natural_fields label{
+  margin-top: 3px;
+}
+
+#juridica_fields input{
+  margin-bottom: 0;
+  margin-top: 1px;
+}
+
+#juridica_fields select{
+  margin-bottom: 2px;
+}
+
+#juridica_fields label{
+  margin-top: 3px;
+}
+
+#num_doc_natural,#num_doc_juridico{
+  width: 60%;
+}
+
+#buscar_natural_doc , #buscar_juridica_doc{
+  width: 40%;
+}
+
+/* Contenedor de input y botón */
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Espacio entre ellos */
+  width: 100%;
+}
+
+/* Input del documento */
+.input-group input[type="text"] {
+  flex: 7; /* Equivale al 70% */
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+/* Botón de buscar */
+.input-group button {
+  flex: 3; /* Equivale al 30% */
+  height: 40px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.input-group button:hover {
+  background-color: #0056b3;
+}
