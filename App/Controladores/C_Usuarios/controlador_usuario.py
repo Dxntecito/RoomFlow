@@ -184,6 +184,10 @@ def insert_usuario(usuario, contrasena, email, id_rol=2, nombres='', apellido_pa
                     # Convertir tipo_documento_id a int
                     tipo_doc_id = int(tipo_documento_id) if tipo_documento_id else 1
                     
+                    # Convertir telefono a None si está vacío para evitar problemas con UNIQUE
+                    telefono_valor = telefono if telefono and telefono.strip() else None
+                    direccion_valor = direccion if direccion and direccion.strip() else None
+                    
                     sql_cliente = """
                         INSERT INTO CLIENTE 
                         (nombres, ape_paterno, ape_materno, num_doc, telefono, direccion,
@@ -191,15 +195,20 @@ def insert_usuario(usuario, contrasena, email, id_rol=2, nombres='', apellido_pa
                         VALUES (%s, %s, %s, %s, %s, %s, CURDATE(), 'N', 1, %s)
                     """
                     cursor.execute(sql_cliente, (nombres, apellido_paterno, apellido_materno, 
-                                               num_documento, telefono or None, direccion or None,
+                                               num_documento, telefono_valor, direccion_valor,
                                                tipo_doc_id))
                     cliente_id = cursor.lastrowid
                     print(f"✓ Cliente creado con ID: {cliente_id}")
                     print(f"  - Nombres: {nombres} {apellido_paterno} {apellido_materno}")
                     print(f"  - Documento: {num_documento}")
                 except Exception as e:
-                    print(f"⚠ Error al crear CLIENTE: {e}")
-                    # Continuar sin cliente
+                    print(f"❌ ERROR CRÍTICO al crear CLIENTE: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    # Si falla la creación del cliente, fallar todo el registro
+                    if conexion:
+                        conexion.rollback()
+                    return {'success': False, 'message': f'Error al registrar cliente: {str(e)}'}
             
             # Insertar usuario con referencia al cliente
             sql_usuario = """

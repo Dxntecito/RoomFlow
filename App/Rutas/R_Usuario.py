@@ -269,6 +269,10 @@ def Perfil():
         flash('Usuario no encontrado', 'error')
         return redirect(url_for('Index'))
     
+    # Verificar si el usuario cliente no tiene datos de perfil
+    if perfil['rol_nombre'] == 'Cliente' and not perfil['nombres']:
+        flash('Por favor, completa tu información de perfil para poder usar todas las funcionalidades del sistema.', 'warning')
+    
     return render_template('Perfil.html', perfil=perfil, tipos_documento=tipos_documento)
 
 @usuarios_bp.route('/perfil/actualizar', methods=['POST'])
