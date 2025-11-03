@@ -1,0 +1,467 @@
+{% extends "/MODULO_RESERVA/Crud_reserva.html" %}
+
+{% block floors_content %}
+
+{% if mode == 'list' %}
+<div class="content-crud-piso section-content" id="pisos">
+    <h2 class="section-title-f">Gestionar Pisos</h2>
+
+    <div class="alert alert-success" id="alert-piso-success" style="display: none;"></div>
+    <div class="alert alert-error" id="alert-piso-error" style="display: none;"></div>
+<!-- Barra de búsqueda y filtros -->
+                <div class="search-filters-section">
+                    <div class="search-section">
+                        <label for="search-input" class="search-label">Buscar</label>
+                        <div class="search-form">
+                            <input type="text" id="search-input" name="search" class="search-input"
+                                placeholder="Buscar">
+
+                            <button type="button" class="search-button" onclick="buscarPisos()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="actions-section">
+                        <button type="button" onclick="window.location.href='{{ url_for('modulos.NewPiso') }}'" 
+                            class="create-button"><i class="fas fa-plus"></i>
+                            Crear nuevo
+                        </button>
+                    </div>
+                </div>
+
+    <!-- Tabla Pisos Existentes -->
+<div class="table-container">
+    <table class="pisos-table tbl-list">
+    <thead>
+        <tr>
+            <th class="col-id text-center">ID</th>
+            <th class="col-numero text-center">Número</th>
+            <th class="col-estado text-center">Estado</th>
+            <th class="col-precio text-end">Precio</th>
+            <th class="col-accion text-center">Acción</th>
+        </tr>
+    </thead>
+    <tbody id="tabla-pisos-body">
+        {% if pisos|length > 0 %}
+            {% for piso in pisos %}
+            <tr>
+                <td class="col-id text-center">{{ piso['piso_id'] }}</td>
+                <td class="col-numero text-center">{{ piso['numero'] }}</td>
+                <td class="col-estado text-center">{{ 'Activo' if piso['estado']==1 else 'Inactivo' }}</td>
+                <td class="col-precio text-end">{{ piso['precio'] }}</td>
+                <td class="col-accion text-center">
+                    <div class="action-buttons2">
+                        <button type="button" class="action-btn edit-btn" onclick="window.location.href='{{ url_for('modulos.EditPiso', piso_id=piso['piso_id']) }}'">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button type="button" class="action-btn calendar-btn" onclick="window.location.href='{{ url_for('modulos.ViewPiso', piso_id=piso['piso_id']) }}'">
+                            <i class="fa-solid fa-eye"></i>
+                        <button 
+                            class="action-btn delete-btn" 
+                            data-id="{{ piso['piso_id'] }}" 
+                            title="Eliminar piso"
+                            onclick="eliminarPiso(event)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="5" class="text-center p-3">Cargando...</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+
+
+
+{% else %}
+<!-- Formulario Insert / Edit / View -->
+<div class="content-crud-piso section-content" id="form-piso-section">
+    <div class="form-promocion-f" style="background: #f9f9f9; padding: 25px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #328336;">
+        
+        <h3 style="color: #328336; margin-top: 0;">
+            {% if mode=='insert' %}
+                Crear Nuevo Piso
+            {% elif mode=='edit' %}
+                Editar Piso {{ piso['piso_id'] }}
+            {% else %}
+                Ver Piso {{ piso['piso_id'] }}
+            {% endif %}
+        </h3>
+
+        <form id="form-piso" style="margin-bottom: 0;" action="{{ url_for('modulos.SavePiso') if mode=='insert' else url_for('modulos.UpdatePiso') }}" method="POST">
+            <input type="hidden" name="piso_id" value="{{ piso['piso_id'] }}">
+            <div class="form-grid" style="margin-bottom: 25px;">
+                <div class="form-group">
+                    <label for="piso-numero">Número *</label>
+                    {% if mode=='view' %}
+                        <input type="text" id="piso-numero" class="form-control bg-light" value="{{ piso['numero'] }}" readonly>
+                    {% else %}
+                        <input type="text" id="piso-numero" name="numero" class="form-control" value="{{ piso['numero'] if piso else '' }}" required>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="piso-estado">Estado *</label>
+                    {% if mode=='view' %}
+                        <input type="text" id="piso-estado" class="form-control bg-light" value="{{ 'Activo' if piso['estado']==1 else 'Inactivo' }}" readonly>
+                    {% else %}
+                        <select id="piso-estado" name="estado" class="form-control">
+                            <option value="1" {% if piso and piso['estado']==1 %}selected{% endif %}>Activo</option>
+                            <option value="0" {% if piso and piso['estado']==0 %}selected{% endif %}>Inactivo</option>
+                        </select>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="piso-precio">Precio</label>
+                    {% if mode=='view' %}
+                        <input type="text" id="piso-precio" class="form-control bg-light" value="{{ piso['precio'] }}" readonly>
+                    {% else %}
+                        <input type="number" step="0.01" id="piso-precio" name="precio" class="form-control" value="{{ piso['precio'] if piso else '' }}">
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #f0f0f0;">
+                <a href="{{ url_for('modulos.pisos') }}" class="btn btn-light btn-volver">Volver</a>
+                {% if mode != 'view' %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+<input type="hidden" id="pisoIdToDelete">
+<!-- Modal de confirmación (oculto por defecto) -->
+<div id="modal-confirm" class="modal-confirm" style="display: none;">
+    <div class="modal-confirm-content">
+        <div class="modal-confirm-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3 class="modal-confirm-title">Confirmar Acción</h3>
+        <p class="modal-confirm-message">¿Estás seguro?</p>
+        <div class="modal-confirm-buttons">
+            <button class="btn-confirm btn-confirm-danger" onclick="confirmarAccion()">
+                <i class="fas fa-trash"></i>
+                Eliminar
+            </button>
+            <button class="btn-confirm btn-confirm-secondary" onclick="cancelarAccion()">
+                <i class="fas fa-times"></i>
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+<!-- Notificaciones toast (oculto por defecto) -->
+<div id="notification-toast" class="notification-toast" style="display: none;">
+    <button class="notification-toast-close" onclick="cerrarNotificacionToast()">
+        <i class="fas fa-times"></i>
+    </button>
+    <div class="notification-toast-header">
+        <div class="notification-toast-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        <div class="notification-toast-body">
+            <h4 class="notification-toast-title">Título</h4>
+            <p class="notification-toast-message">Mensaje</p>
+        </div>
+    </div>
+</div>
+</div>
+<!-- Campo oculto para almacenar el ID a eliminar -->
+
+
+<script>
+    function mostrarModalConfirmacion(titulo, mensaje, descripcion, callback) {
+        const modal = document.getElementById('modal-confirm');
+        const title = modal.querySelector('.modal-confirm-title');
+        const message = modal.querySelector('.modal-confirm-message');
+
+        title.textContent = titulo;
+        message.innerHTML = mensaje + '<br><small>' + descripcion + '</small>';
+
+        confirmCallback = callback;
+        modal.style.display = 'flex';
+        modal.classList.add('show');
+    }
+async function eliminarPiso(event) {
+    event.stopPropagation();
+
+    // Obtener el ID directamente del botón presionado
+    const button = event.currentTarget;
+    const id = button.dataset.id;
+
+    if (!id) {
+        console.error("No se encontró el ID del piso.");
+        return;
+    }
+
+    // Mostrar modal de confirmación bonito
+    mostrarModalConfirmacion(
+        "Eliminar Piso",
+        `¿Estás seguro de que quieres eliminar el piso con ID <strong>${id}</strong>?`,
+        "Esta acción eliminará permanentemente el piso de la base de datos.",
+        async () => {
+            try {
+                const response = await fetch(`/Cruds/DeletePiso`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams({ piso_id: id })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    mostrarNotificacionBonita(
+                        "success",
+                        "Piso eliminado",
+                        `El piso con ID ${id} ha sido eliminado correctamente.`
+                    );
+                                    // 🔁 Recargar toda la página después de 1 segundo (puedes ajustar el tiempo)
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    mostrarNotificacionBonita(
+                        "error",
+                        "Error",
+                        result.message || "No se pudo eliminar el piso."
+                    );
+                }
+            } catch (error) {
+                console.error("Error al eliminar piso:", error);
+                mostrarNotificacionBonita(
+                    "error",
+                    "Error",
+                    "Ocurrió un problema al eliminar el piso. Intente nuevamente."
+                );
+            }
+        }
+    );
+}
+
+function confirmarAccion() {
+        if (confirmCallback) {
+            confirmCallback();
+        }
+        cerrarModalConfirmacion();
+    }
+
+    function cancelarAccion() {
+        cerrarModalConfirmacion();
+    }
+
+    function cerrarModalConfirmacion() {
+        const modal = document.getElementById('modal-confirm');
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+        confirmCallback = null;
+    }
+
+    // Cerrar modales al hacer clic fuera de ellos
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('modal')) {
+            e.target.classList.remove('show');
+        }
+        if (e.target.classList.contains('modal-confirm')) {
+            cerrarModalConfirmacion();
+        }
+    });
+    function cerrarNotificacionToast() {
+        const toast = document.getElementById('notification-toast');
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 300);
+    }
+
+    function mostrarNotificacionBonita(tipo, titulo, mensaje) {
+        const toast = document.getElementById('notification-toast');
+        const icon = toast.querySelector('.notification-toast-icon i');
+        const title = toast.querySelector('.notification-toast-title');
+        const message = toast.querySelector('.notification-toast-message');
+
+        // Configurar contenido
+        title.textContent = titulo;
+        message.textContent = mensaje;
+
+        // Configurar tipo
+        toast.className = `notification-toast ${tipo}`;
+        if (tipo === 'success') {
+            icon.className = 'fas fa-check';
+        } else {
+            icon.className = 'fas fa-times';
+        }
+
+        // Mostrar notificación
+        toast.style.display = 'block';
+        toast.classList.add('show');
+
+        // Auto-cerrar después de 4 segundos
+        setTimeout(() => {
+            cerrarNotificacionToast();
+        }, 4000);
+    }
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("search-input");
+    const tbody = document.getElementById("tabla-pisos-body");
+
+    input.addEventListener("keyup", async () => {
+        const query = input.value.trim();
+
+        // Si el campo está vacío, mostrar todos los pisos
+        if (query.length === 0) {
+            cargarTodosLosPisos();
+            return;
+        }
+
+        try {
+            const response = await fetch(`/Cruds/SearchPisos?query=${encodeURIComponent(query)}`);
+            const data = await response.json();
+
+            if (data.length > 0) {
+                tbody.innerHTML = data.map(piso => `
+                    <tr>
+                        <td class="text-center">${piso.piso_id}</td>
+                        <td class="text-center">${piso.numero}</td>
+                        <td class="text-center">${piso.estado == 1 ? 'Activo' : 'Inactivo'}</td>
+                        <td class="text-end">${piso.precio}</td>
+                        <td class="text-center">
+                            <div class="action-buttons2">
+                                <button type="button" class="action-btn edit-btn" 
+                                    onclick="window.location.href='/Cruds/EditPiso/${piso.piso_id}'">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button type="button" class="action-btn calendar-btn" 
+                                    onclick="window.location.href='/Cruds/ViewPiso/${piso.piso_id}'">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <button type="button" class="action-btn delete-btn" 
+                                    data-bs-toggle="modal" data-id="${piso.piso_id}" onclick="eliminarPiso(event)">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join("");
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: #999;"> 
+                            <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                            No se encontraron pisos 
+                        </td>
+                    </tr>
+                `;
+            }
+        } catch (error) {
+            console.error("Error al buscar pisos:", error);
+        }
+    });
+});
+
+
+</script>
+
+<script>
+async function cargarTodosLosPisos() {
+    const tbody = document.getElementById("tabla-pisos-body");
+
+    try {
+        const response = await fetch("/Cruds/SearchPisos"); // sin query => devuelve todos
+        const data = await response.json();
+
+        if (!data.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: #999;">
+                        <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                        No se encontraron pisos
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = data.map(piso => `
+            <tr>
+                <td class="col-id text-center">${piso.piso_id}</td>
+                <td class="col-numero text-center">${piso.numero}</td>
+                <td class="col-estado text-center">${piso.estado == 1 ? 'Activo' : 'Inactivo'}</td>
+                <td class="col-precio text-end">${piso.precio}</td>
+                <td class="col-accion text-center">
+                    <div class="action-buttons2">
+                        <button 
+                            type="button" 
+                            class="action-btn edit-btn"
+                            onclick="window.location.href='/Cruds/EditPiso/${piso.piso_id}'">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button 
+                            type="button" 
+                            class="action-btn calendar-btn"
+                            onclick="window.location.href='/Cruds/ViewPiso/${piso.piso_id}'">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                        <button 
+                            type="button" 
+                            class="action-btn delete-btn" 
+                            data-id="${piso.piso_id}" 
+                            title="Eliminar piso"
+                            onclick="eliminarPiso(event)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join("");
+    } catch (error) {
+        console.error("Error al cargar los pisos:", error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; color: #999;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                    Error al cargar los pisos
+                </td>
+            </tr>
+        `;
+    }
+}
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // ✅ Define aquí el ID del enlace que quieres marcar como activo
+    const activeId = "nav-pisos";
+
+    // Obtiene el nav
+    const nav = document.getElementById("nav-principal");
+    if (!nav) return;
+
+    // Recorre todos los enlaces dentro del nav
+    const links = nav.querySelectorAll("a");
+    links.forEach(link => {
+        if (link.id === activeId) {
+            link.classList.add("active");
+        } else {
+            link.classList.remove("active");
+        }
+    });
+});
+</script>
+
+
+{% endblock %}
