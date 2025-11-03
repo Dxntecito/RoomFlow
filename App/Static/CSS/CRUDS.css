@@ -1,0 +1,165 @@
+
+  :root {
+    /* ===== COLORES HOSTAL BOLÍVAR APLICADOS ===== */
+    --usr-color-primario: #328336; /* verde principal */
+    --usr-color-primario-claro: #64CC4F; /* verde claro */
+    --usr-color-primario-oscuro: #B2E05A; /* verde pastel */
+    
+    --usr-color-fondo: #f8f9fa; /* fondo general */
+    --usr-color-sidebar: #ffffff; /* sidebar blanca */
+    --usr-color-texto: #2c3e50; /* texto oscuro principal */
+    --usr-color-texto-secundario: #666666;
+    --usr-color-hover: #f5f5dc; /* beige cálido */
+    --usr-sombra: 0 8px 16px rgba(0, 0, 0, 0.1);
+    --usr-radius: 16px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* ===== CONTENEDOR PRINCIPAL ===== */
+  .main-wrapper {
+    height: 100vh;
+    width: 100%;
+    background: var(--usr-color-fondo);
+    color: var(--usr-color-texto);
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 20px;
+    padding: 5rem;
+    box-sizing: border-box;
+  }
+
+  .main-container {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 20px;
+    width: 100%;
+    max-width: 1400px;
+    box-sizing: border-box;
+    flex-grow: 1;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    background: var(--usr-color-sidebar);
+    box-shadow: var(--usr-sombra);
+    border-radius: var(--usr-radius);
+    display: flex;
+    flex-direction: column;
+    width: 240px;
+    height: fit-content;
+    padding-top: 24px;
+    flex-shrink: 0;
+    position: relative;
+    top: 20px;
+    bottom: 20px;
+  }
+
+  .sidebar h2 {
+    text-align: center;
+    font-size: 1.3rem;
+    color: var(--usr-color-primario);
+    margin-bottom: 30px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .sidebar a {
+    display: block;
+    padding: 14px 24px;
+    text-decoration: none;
+    color: var(--usr-color-texto);
+    font-weight: 500;
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .sidebar a:hover {
+    background: var(--usr-color-hover);
+    border-left-color: var(--usr-color-primario);
+    color: var(--usr-color-primario);
+  }
+
+  .sidebar a.active {
+    background: var(--usr-color-hover);
+    border-left-color: var(--usr-color-primario);
+    color: var(--usr-color-primario);
+  }
+
+  /* ===== CONTENIDO PRINCIPAL ===== */
+  .content-crud-empleado {
+    background: var(--usr-color-sidebar);
+    border-radius: var(--usr-radius);
+    box-shadow: var(--usr-sombra);
+    padding: 40px;
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 1.1rem;
+  }
+
+  .content-crud-empleado h1 {
+    font-size: 1.8rem;
+    color: var(--usr-color-primario);
+    margin-bottom: 12px;
+  }
+
+  .content-crud-empleado p {
+    max-width: 700px;
+    color: var(--usr-color-texto-secundario);
+    line-height: 1.6;
+  }
+
+  .card {
+    background: var(--usr-color-fondo);
+    padding: 20px;
+    border-radius: var(--usr-radius);
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.05);
+    margin-top: 20px;
+    max-width: 700px;
+  }
+
+  /* ===== SCROLL ===== */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    .main-wrapper {
+      flex-direction: column;
+      padding: 2rem;
+    }
+    .main-container {
+      flex-direction: column;
+    }
+    .sidebar {
+      margin-top: 5rem;
+      width: fit-content;
+      flex-direction: row;
+      justify-content: space-around;
+      padding: 10px 0;
+      position: static;
+    }
+    .sidebar a {
+      border-left: none;
+      border-bottom: 3px solid transparent;
+    }
+    .sidebar a:hover,
+    .sidebar a.active {
+      border-bottom-color: var(--usr-color-primario);
+      background: var(--usr-color-hover);
+    }
+    .content-crud-empleado {
+      margin-top: 10px;
+    }
+  }

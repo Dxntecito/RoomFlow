@@ -26,6 +26,7 @@
                 <nav class="nav">
                     <a href="" class="nav-link">Nuestras habitaciones</a>
                     <a href="{{ url_for('eventos.Eventos') }}" class="nav-link">Eventos</a>
+                    
                     <div class="header-icons">
                         {% if session.get('usuario_id') %}
                         <div class="menu-wrapper">
@@ -44,6 +45,7 @@
                                 </a>
                                 {% if session.get('rol_id') == 1 %}
                                 <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
+                                <a href="{{ url_for ('modulos.modulos') }}"><i class="fa-solid fa-cubes"></i>Modulos</a>
                                 <a href="{{ url_for('reportes.reportes') }}">
                                     <i class="fas fa-chart-bar"></i> Generar Reportes
                                 </a>

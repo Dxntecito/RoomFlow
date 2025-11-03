@@ -1,0 +1,32 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/CRUDS.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/Crud_Empleados.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="main-wrapper">
+  <div class="main-container">
+    <!-- ===== SIDEBAR IZQUIERDA ===== -->
+    <nav class="sidebar">
+      <h2>Módulo Reserva</h2>
+      <a href="#" class="active">👤 Gestionar Reservas</a>
+      <a href="{{ url_for ('modulos.promociones') }}" class="">👤 Gestionar Promociones</a>
+      <a href="#">Secciones a agregar</a>
+    </nav>
+<main class="content-crud-empleado">
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    {% block booking_content %}
+
+    {% endblock %}
+
+    {% block promociones_content %}
+
+    {% endblock %}
+
+</main>
+  </div>
+</div>
+
+{% endblock %}

@@ -119,6 +119,7 @@
 
   <!-- PASO 2: Registro de cliente -->
   <div id="step2" style="display:none;">
+    
     <h2>Registro del Cliente</h2>
     <form id="client_form" autocomplete="off">
       <div class="switch_container" style="display:flex; align-items:center; gap:10px; margin:8px 0;">
@@ -280,7 +281,7 @@
   </div>
 
   <div style="margin-top:16px;">
-    <button id="volver_home">Volver al inicio</button>
+    <button id="volver_home"><a href="/RoomFlow">Volver al Inicio</a></button>
   </div>
   </div>
 </div>
@@ -531,4 +532,15 @@ if (nextToGuestsBtn) {
   });
 }
 </script>
+<script>
+  const usuarioId = {{ session.get('usuario_id') | tojson }};
+  
+  if (!usuarioId) {
+    console.log("No hay usuario logueado");
+    // Aquí puedes ocultar botones, redirigir, etc.
+  } else {
+    console.log("Usuario logueado:", usuarioId);
+  }
+</script>
+
 {% endblock %}

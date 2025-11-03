@@ -1,0 +1,163 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --muted: #6b7280;
+    --shadow: 0 6px 20px rgba(18, 24, 33, 0.08);
+    --radius: 14px;
+  }
+
+  body {
+    margin: 0;
+    margin-top: 5rem;
+    font-family: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg, var(--bg), #eef2ff 120%);
+    color: #111827;
+  }
+
+  .container-modules {
+    max-width: 1100px;
+    margin: 50px auto;
+    padding: 24px;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    margin-bottom: 10px;
+  }
+
+  p {
+    color: var(--muted);
+    margin-bottom: 36px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 26px;
+    justify-items: center;
+  }
+
+  @media (max-width: 850px) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 550px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    width: 100%;
+    max-width: 300px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 34px rgba(18, 24, 33, 0.12);
+  }
+
+  .card-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    min-height: 160px;
+  }
+
+  .card-visual img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+  }
+
+  .card-bar {
+    background: linear-gradient(180deg, #f9fafb, #ffffff);
+    border-top: 1px solid #f1f5f9;
+    padding: 16px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .module-icons{
+    max-width: 50%;
+    max-height: fit-content;
+  }
+</style>
+
+{% endblock %}
+
+{% block content %}
+  <div class="container-modules">
+    <h1>Modulos del Sistema</h1>
+    <p>Selecciona un módulo para gestionar las diferentes secciones del sistema hotelero.</p>
+
+    <div class="grid">
+
+      <!-- MÓDULO RESERVA -->
+      <a href="{{ url_for ('modulos.reserva') }}" class="card">
+        <div class="card-visual">
+          <img src="{{ url_for('static', filename='Img/availability.png') }}" alt="Módulo Reserva" class="module-icons">
+        </div>
+        <div class="card-bar">MÓDULO RESERVA</div>
+      </a>
+
+      <!-- MÓDULO COMPROBANTE -->
+      <a href="/comprobante" class="card">
+        <div class="card-visual">
+          <img src="{{ url_for('static', filename='Img/pay.png') }}" alt="Módulo Comprobante" class="module-icons">
+        </div>
+        <div class="card-bar">MÓDULO FACTURACIÓN</div>
+      </a>
+
+      <!-- MÓDULO INCIDENCIA -->
+      <a href="{{ url_for ('modulos.incidencia') }}" class="card">
+        <div class="card-visual">
+          <img src="{{ url_for('static', filename='Img/alarm.png') }}" alt="Módulo Incidencia" class="module-icons">
+        </div>
+        <div class="card-bar">MÓDULO INCIDENCIA</div>
+      </a>
+
+      <!-- MÓDULO EMPLEADO -->
+      <a href="{{ url_for ('modulos.empleado') }}" class="card">
+        <div class="card-visual">
+          <img src="{{ url_for('static', filename='Img/employee.png') }}" alt="Módulo Empleado" class="module-icons">
+        </div>
+        <div class="card-bar">MÓDULO EMPLEADO</div>
+      </a>
+
+      <!-- MÓDULO EVENTO -->
+      <a href="/evento" class="card">
+        <div class="card-visual">
+          <img src="{{ url_for('static', filename='Img/event.png') }}" alt="Módulo Evento" class="module-icons">
+        </div>
+        <div class="card-bar">MÓDULO EVENTO</div>
+      </a>
+
+      <!-- MÓDULO USUARIO -->
+      <a href="/usuario.html" class="card">
+        <div class="card-visual">
+          <img src="{{ url_for('static', filename='Img/programmer.png') }}" alt="Módulo Usuario" class="module-icons">
+        </div>
+        <div class="card-bar">MÓDULO USUARIO</div>
+      </a>
+
+    </div>
+  </div>
+{% endblock %}

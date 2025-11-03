@@ -1,0 +1,27 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/CRUDS.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/Crud_Empleados.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="main-wrapper">
+  <div class="main-container">
+    <!-- ===== SIDEBAR IZQUIERDA ===== -->
+    <nav class="sidebar">
+      <h2>Módulo Incidencias</h2>
+      <a href="#" class="active">👤 Gestionar Incidencias</a>
+      <a href="#">Secciones a agregar</a>
+    </nav>
+<main class="content-crud-empleado">
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    {% block incidences_content %}
+
+    {% endblock %}
+
+</main>
+  </div>
+</div>
+
+{% endblock %}
