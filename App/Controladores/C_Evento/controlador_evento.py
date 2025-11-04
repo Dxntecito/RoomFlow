@@ -17,7 +17,7 @@ def get_metodos_pago():
     with connection.cursor() as cursor:
         cursor.execute("""
             SELECT id_metodo_pago, nombre 
-            FROM METODO_PAGO
+            FROM METODO_PAGO where id_metodo_pago in (2,3)
         """)
         metodos_pago = cursor.fetchall()
     connection.close()

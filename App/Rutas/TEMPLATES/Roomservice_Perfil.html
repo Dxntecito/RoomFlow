@@ -730,7 +730,7 @@
             Total general: S/ <span id="total-general">0.00</span>
         </div>
 
-        <button class="create-button" style="background:#28a745;" onclick="mostrarPago()">
+        <button  id="btn-solicitar" class="create-button" style="background:#28a745;" onclick="mostrarPago()">
             Solicitar
         </button>
     </div>
@@ -1133,7 +1133,7 @@
 
 <script>
     function procesarPagoRoomService() {
-        // 1️⃣ Validaciones básicas
+        //  Validaciones básicas
         const reservaHabitacionId = document.getElementById('habitaciones').value;
         const metodo_pago_id = document.querySelector('input[name="metodo_pago_id"]:checked')?.value;
         const tipo_comprobante = document.querySelector('input[name="tipo_comprobante"]:checked')?.value;
@@ -1152,7 +1152,7 @@
             return;
         }
 
-        // 2️⃣ Capturar los datos del cliente desde los inputs
+        //  Capturar los datos del cliente desde los inputs
         const cliente_data = {
             tipo_doc_id: document.querySelector('select[name="tipo_doc_id"]').value,
             nro_doc: document.querySelector('input[name="nro_doc"]').value,
@@ -1163,7 +1163,7 @@
             ape_materno: document.querySelector('input[name="ape_materno"]').value
         };
 
-        // 3️⃣ Capturar los productos de la tabla
+        //  Capturar los productos de la tabla
         const productos = [];
         const filas = document.querySelectorAll("#productos-body tr");
         filas.forEach(fila => {
@@ -1184,7 +1184,7 @@
             }
         });
 
-        // 4️⃣ Construir el objeto completo que espera el backend
+        //  Construir el objeto completo que espera el backend
         const data = {
             tipo_cliente: 'N', // Natural por ahora
             cliente: cliente_data,
@@ -1197,7 +1197,7 @@
 
         console.log("📦 Enviando datos al backend:", data);
 
-        // 5️⃣ Enviar al backend vía fetch
+        //  Enviar al backend vía fetch
         fetch('/Roomservice/procesar_pago_roomservice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1240,4 +1240,60 @@
         // Limita a 19 caracteres (16 dígitos + 3 guiones)
         input.value = value.slice(0, 19);
     }
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const selectHabitaciones = document.getElementById("habitaciones");
+    const botonAgregar = document.querySelector(".calendar-btn");
+
+    // Deshabilitar el botón al cargar la página
+    botonAgregar.disabled = true;
+    botonAgregar.style.opacity = "0.6";
+    botonAgregar.style.cursor = "not-allowed";
+
+    // Escuchar cambios en la selección de habitación
+    selectHabitaciones.addEventListener("change", () => {
+        if (selectHabitaciones.value) {
+            // ✅ Si hay una habitación seleccionada → habilitar botón
+            botonAgregar.disabled = false;
+            botonAgregar.style.opacity = "1";
+            botonAgregar.style.cursor = "pointer";
+        } else {
+            // 🚫 Si no hay selección → deshabilitar
+            botonAgregar.disabled = true;
+            botonAgregar.style.opacity = "0.6";
+            botonAgregar.style.cursor = "not-allowed";
+        }
+    });
+
+     const btnSolicitar = document.getElementById("btn-solicitar");
+    const totalGeneralSpan = document.getElementById("total-general");
+
+    // Deshabilitar el botón al inicio
+    btnSolicitar.disabled = true;
+    btnSolicitar.style.opacity = "0.6";
+    btnSolicitar.style.cursor = "not-allowed";
+
+    // Función para habilitar o deshabilitar según el total
+    function verificarBotonSolicitar() {
+        const total = parseFloat(totalGeneralSpan.textContent);
+        if (total > 0) {
+            btnSolicitar.disabled = false;
+            btnSolicitar.style.opacity = "1";
+            btnSolicitar.style.cursor = "pointer";
+        } else {
+            btnSolicitar.disabled = true;
+            btnSolicitar.style.opacity = "0.6";
+            btnSolicitar.style.cursor = "not-allowed";
+        }
+    }
+
+    // 🔹 Escuchar cambios en el total general
+    const observer = new MutationObserver(verificarBotonSolicitar);
+    observer.observe(totalGeneralSpan, { childList: true });
+
+    // 🔹 También llamar manualmente al cargar o recalcular total
+    verificarBotonSolicitar();
+});
 </script>
