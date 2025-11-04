@@ -1,0 +1,28 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/CRUDS.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/Crud_Empleados.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="main-wrapper">
+  <div class="main-container">
+    <!-- ===== SIDEBAR IZQUIERDA ===== -->
+    <nav class="sidebar">
+      <h2>Módulo Usuario</h2>
+      <a href="#" class="active">👤 Gestionar Usuarios</a>
+      <a href="#">Secciones a agregar</a>
+    </nav>
+<main class="content-crud-empleado">
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    {% block user_content %}
+
+    {% endblock %}
+
+</main>
+  </div>
+</div>
+
+{% endblock %}
+
