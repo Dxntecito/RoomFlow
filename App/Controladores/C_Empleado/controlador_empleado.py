@@ -129,6 +129,12 @@ def insert_empleado_auto(dni, ape_paterno, ape_materno, nombres, sexo, movil, ti
             if cursor.fetchone()[0] > 0:
                 return False, "El DNI ya existe en la base de datos", None
             
+            # Verificar que el teléfono no exista
+            if movil:
+                cursor.execute("SELECT COUNT(*) FROM EMPLEADO WHERE movil = %s", (movil,))
+                if cursor.fetchone()[0] > 0:
+                    return False, "El teléfono ya existe en la base de datos", None
+            
             # Generar código automáticamente
             cod_empleado = generar_codigo_empleado(tipo_empleado_id, dni)
             
@@ -199,6 +205,12 @@ def insert_empleado(cod_empleado, dni, ape_paterno, ape_materno, nombres, sexo, 
             cursor.execute("SELECT COUNT(*) FROM EMPLEADO WHERE dni = %s", (dni,))
             if cursor.fetchone()[0] > 0:
                 return False, "El DNI ya existe en la base de datos"
+            
+            # Verificar que el teléfono no exista
+            if movil:
+                cursor.execute("SELECT COUNT(*) FROM EMPLEADO WHERE movil = %s", (movil,))
+                if cursor.fetchone()[0] > 0:
+                    return False, "El teléfono ya existe en la base de datos"
             
             # Verificar que el código de empleado no exista
             cursor.execute("SELECT COUNT(*) FROM EMPLEADO WHERE cod_empleado = %s", (cod_empleado,))
@@ -307,14 +319,19 @@ def get_empleado_by_dni(dni):
 def asignar_turno_empleado(empleado_id, turno_id):
     """
     Asignar o actualizar un turno a un empleado en DETALLE_TURNO
+    Solo permite asignar turnos a empleados activos
     """
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
-            # Verificar que el empleado existe
-            cursor.execute("SELECT COUNT(*) FROM EMPLEADO WHERE empleado_id = %s", (empleado_id,))
-            if cursor.fetchone()[0] == 0:
+            # Verificar que el empleado existe y está activo
+            cursor.execute("SELECT estado FROM EMPLEADO WHERE empleado_id = %s", (empleado_id,))
+            resultado = cursor.fetchone()
+            if not resultado:
                 return False, "El empleado no existe"
+            
+            if resultado[0] != 'Activo':
+                return False, "No se puede asignar turno a un empleado inactivo. Active primero al empleado."
             
             # Verificar que el turno existe
             cursor.execute("SELECT COUNT(*) FROM TURNO WHERE turno_id = %s", (turno_id,))
@@ -444,19 +461,31 @@ def update_empleado(empleado_id, dni, ape_paterno, ape_materno, nombres, sexo, m
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
-            # Verificar que el empleado existe
-            cursor.execute("SELECT COUNT(*) FROM EMPLEADO WHERE empleado_id = %s", (empleado_id,))
-            if cursor.fetchone()[0] == 0:
+            # Verificar que el empleado existe y obtener su estado actual
+            cursor.execute("SELECT cod_empleado, tipo_empleado_id, dni, estado FROM EMPLEADO WHERE empleado_id = %s", (empleado_id,))
+            empleado_actual = cursor.fetchone()
+            
+            if not empleado_actual:
                 return False, "El empleado no existe"
+            
+            estado_actual = empleado_actual[3]
             
             # Verificar que el DNI no exista en otro empleado
             cursor.execute("SELECT COUNT(*) FROM EMPLEADO WHERE dni = %s AND empleado_id != %s", (dni, empleado_id))
             if cursor.fetchone()[0] > 0:
                 return False, "El DNI ya existe en otro empleado"
             
+            # Verificar que el teléfono no exista en otro empleado
+            if movil:
+                cursor.execute("SELECT COUNT(*) FROM EMPLEADO WHERE movil = %s AND empleado_id != %s", (movil, empleado_id))
+                if cursor.fetchone()[0] > 0:
+                    return False, "El teléfono ya existe en otro empleado"
+            
+            # Si el estado cambia a "Inactivo", eliminar todos los turnos del empleado
+            if estado_actual == 'Activo' and estado == 'Inactivo':
+                cursor.execute("DELETE FROM DETALLE_TURNO WHERE empleado_id = %s", (empleado_id,))
+            
             # Generar nuevo código si cambió el rol o DNI
-            cursor.execute("SELECT cod_empleado, tipo_empleado_id, dni FROM EMPLEADO WHERE empleado_id = %s", (empleado_id,))
-            empleado_actual = cursor.fetchone()
             
             if empleado_actual:
                 codigo_actual = empleado_actual[0]

@@ -2,7 +2,7 @@ from flask import render_template, Blueprint, request, jsonify, session, redirec
 import App.Controladores.C_Empleado.controlador_empleado as controller_empleado
 from functools import wraps
 
-empleados_bp = Blueprint('empleados', __name__, template_folder='CRUDS/Empleados', url_prefix='/Cruds/Empleados')
+empleados_bp = Blueprint('empleados', __name__, url_prefix='/Cruds/Empleados')
 
 def login_required(f):
     """
@@ -56,7 +56,7 @@ def Empleados():
     total_pages = (total_empleados + limit - 1) // limit
     
     return render_template(
-        "Empleados.html",
+        "MODULO_EMPLEADO/gestionar_empleados.html",
         empleados=empleados,
         tipos_empleado=tipos_empleado,
         current_page=page,

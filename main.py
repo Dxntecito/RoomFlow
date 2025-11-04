@@ -4,6 +4,7 @@ from flask_socketio import SocketIO
 
 from App.Rutas.R_Reserva import bookingroom_bp
 from App.Rutas.R_Empleados import empleados_bp
+from App.Rutas.R_Turno import turno_bp
 from App.Rutas.R_Evento import eventos_bp
 from App.Rutas.R_Cliente import cliente_bp
 from App.Rutas.R_Reserva_Habitacion import reserva_habitacion_bp
@@ -26,6 +27,7 @@ socketio = SocketIO(app)
 
 app.register_blueprint(bookingroom_bp)
 app.register_blueprint(empleados_bp)
+app.register_blueprint(turno_bp)
 app.register_blueprint(eventos_bp)
 app.register_blueprint(usuarios_bp)
 app.register_blueprint(incidentes_bp)

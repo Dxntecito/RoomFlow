@@ -1,0 +1,474 @@
+{% extends "Crud_Turno.html" %}
+
+{% block turno_content %}
+<style>
+    /* Ajustar anchos de columnas para alineación */
+    #turnos .empleados-table th:nth-child(1),
+    #turnos .empleados-table td:nth-child(1) {
+        width: 80px;
+        text-align: center;
+    }
+    #turnos .empleados-table th:nth-child(2),
+    #turnos .empleados-table td:nth-child(2) {
+        width: auto;
+        text-align: left;
+    }
+    #turnos .empleados-table th:nth-child(3),
+    #turnos .empleados-table td:nth-child(3),
+    #turnos .empleados-table th:nth-child(4),
+    #turnos .empleados-table td:nth-child(4) {
+        width: 120px;
+        text-align: center;
+    }
+    #turnos .empleados-table th:nth-child(5),
+    #turnos .empleados-table td:nth-child(5) {
+        width: 150px;
+        text-align: center;
+    }
+</style>
+<div class="section-content" id="turnos">
+    <h2 class="section-title">Gestionar Turnos</h2>
+
+    <!-- Barra de acciones -->
+    <div class="search-filters-section">
+        <div class="actions-section" style="margin-left: auto;">
+            <button class="create-button" onclick="mostrarFormularioCrear()">
+                <i class="fas fa-plus"></i>
+                Crear Turno
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de turnos -->
+    <div class="table-container">
+        <table class="empleados-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre del Turno</th>
+                    <th>Hora Inicio</th>
+                    <th>Hora Fin</th>
+                    <th>ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-turnos">
+                {% for turno in turnos %}
+                <tr>
+                    <td>{{ turno[0] }}</td>
+                    <td>{{ turno[1] }}</td>
+                    <td>{% if turno[2] is not none and turno[2] != '' %}{{ turno[2] }}{% else %}00:00{% endif %}</td>
+                    <td>{% if turno[3] is not none and turno[3] != '' %}{{ turno[3] }}{% else %}00:00{% endif %}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn calendar-btn" onclick="verTurno({{ turno[0] }})" title="Ver">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-btn edit-btn" onclick="editarTurno({{ turno[0] }})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn delete-btn" onclick="eliminarTurno({{ turno[0] }}, '{{ turno[1] }}')" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de detalles del turno -->
+<div id="modalDetalles" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Detalles del Turno</h3>
+            <button class="modal-close" onclick="cerrarModal('modalDetalles')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="employee-details" id="detallesTurno">
+                <!-- Los detalles se cargarán dinámicamente -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalDetalles')">
+                <i class="fas fa-times"></i>
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de crear turno -->
+<div id="modalCrear" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Crear Nuevo Turno</h3>
+            <button class="modal-close" onclick="cerrarModal('modalCrear')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="formCrearTurno">
+                <div class="employee-details">
+                    <div class="detail-group">
+                        <label class="detail-label" for="crear_nombre_turno">Nombre del Turno *</label>
+                        <input type="text" id="crear_nombre_turno" name="nombre_turno" class="detail-value" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="crear_hora_inicio">Hora Inicio *</label>
+                        <input type="time" id="crear_hora_inicio" name="hora_inicio" class="detail-value" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="crear_hora_fin">Hora Fin *</label>
+                        <input type="time" id="crear_hora_fin" name="hora_fin" class="detail-value" required>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalCrear')">
+                <i class="fas fa-times"></i>
+                Cancelar
+            </button>
+            <button class="btn-modal btn-modal-primary" onclick="guardarTurno()">
+                <i class="fas fa-save"></i>
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de editar turno -->
+<div id="modalEditar" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Editar Turno</h3>
+            <button class="modal-close" onclick="cerrarModal('modalEditar')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="formEditarTurno">
+                <input type="hidden" id="editar_turno_id" name="turno_id">
+                <div class="employee-details">
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_nombre_turno">Nombre del Turno *</label>
+                        <input type="text" id="editar_nombre_turno" name="nombre_turno" class="detail-value" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_hora_inicio">Hora Inicio *</label>
+                        <input type="time" id="editar_hora_inicio" name="hora_inicio" class="detail-value" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_hora_fin">Hora Fin *</label>
+                        <input type="time" id="editar_hora_fin" name="hora_fin" class="detail-value" required>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalEditar')">
+                <i class="fas fa-times"></i>
+                Cancelar
+            </button>
+            <button class="btn-modal btn-modal-primary" onclick="actualizarTurno()">
+                <i class="fas fa-save"></i>
+                Guardar Cambios
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div id="modal-confirm" class="modal-confirm" style="display: none;">
+    <div class="modal-confirm-content">
+        <div class="modal-confirm-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3 class="modal-confirm-title">Confirmar Acción</h3>
+        <p class="modal-confirm-message">¿Estás seguro?</p>
+        <div class="modal-confirm-buttons">
+            <button class="btn-confirm btn-confirm-danger" onclick="confirmarAccion()">
+                <i class="fas fa-trash"></i>
+                Eliminar
+            </button>
+            <button class="btn-confirm btn-confirm-secondary" onclick="cancelarAccion()">
+                <i class="fas fa-times"></i>
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Notificaciones toast -->
+<div id="notification-toast" class="notification-toast" style="display: none;">
+    <button class="notification-toast-close" onclick="cerrarNotificacionToast()">
+        <i class="fas fa-times"></i>
+    </button>
+    <div class="notification-toast-header">
+        <div class="notification-toast-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        <div class="notification-toast-body">
+            <h4 class="notification-toast-title">Título</h4>
+            <p class="notification-toast-message">Mensaje</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let turnoEditando = null;
+    let confirmCallback = null;
+
+    // Función para formatear hora a HH:MM
+    function formatearHora(hora) {
+        if (!hora) return '';
+        // Si es string, convertir a formato HH:MM
+        if (typeof hora === 'string') {
+            // Si tiene formato HH:MM:SS o HH:MM:, tomar solo HH:MM
+            const partes = hora.split(':');
+            if (partes.length >= 2) {
+                const horas = partes[0].padStart(2, '0');
+                const minutos = partes[1].padStart(2, '0');
+                return `${horas}:${minutos}`;
+            }
+            return hora;
+        }
+        return hora;
+    }
+
+    async function verTurno(turno_id) {
+        try {
+            const response = await fetch(`/Cruds/Turno/api/turno/${turno_id}`);
+            const result = await response.json();
+            
+            if (result.success && result.turno) {
+                const turno = result.turno;
+                const detallesContainer = document.getElementById('detallesTurno');
+                
+                detallesContainer.innerHTML = `
+                    <div class="detail-group">
+                        <label class="detail-label">ID</label>
+                        <div class="detail-value">${turno.turno_id}</div>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label">Nombre del Turno</label>
+                        <div class="detail-value">${turno.nombre_turno}</div>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label">Hora Inicio</label>
+                        <div class="detail-value">${formatearHora(turno.hora_inicio)}</div>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label">Hora Fin</label>
+                        <div class="detail-value">${formatearHora(turno.hora_fin)}</div>
+                    </div>
+                `;
+                
+                document.getElementById('modalDetalles').classList.add('show');
+            } else {
+                mostrarNotificacionBonita('error', 'Error', result.message || 'No se pudo cargar el turno');
+            }
+        } catch (error) {
+            console.error('Error al obtener turno:', error);
+            mostrarNotificacionBonita('error', 'Error', 'Error al cargar el turno');
+        }
+    }
+
+    function mostrarFormularioCrear() {
+        document.getElementById('formCrearTurno').reset();
+        document.getElementById('modalCrear').classList.add('show');
+    }
+
+    function cerrarModal(modalId) {
+        document.getElementById(modalId).classList.remove('show');
+    }
+
+    async function guardarTurno() {
+        const form = document.getElementById('formCrearTurno');
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch('/Cruds/Turno/crear-turno', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                cerrarModal('modalCrear');
+                mostrarNotificacionBonita('success', 'Turno Creado', 'El turno ha sido creado exitosamente.');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                mostrarNotificacionBonita('error', 'Error', result.message);
+            }
+        } catch (error) {
+            console.error('Error al guardar turno:', error);
+            mostrarNotificacionBonita('error', 'Error', 'Error al guardar el turno. Intente nuevamente.');
+        }
+    }
+
+    async function editarTurno(turno_id) {
+        try {
+            const response = await fetch(`/Cruds/Turno/api/turno/${turno_id}`);
+            const result = await response.json();
+            
+            if (result.success && result.turno) {
+                const turno = result.turno;
+                turnoEditando = turno_id;
+                
+                document.getElementById('editar_turno_id').value = turno.turno_id;
+                document.getElementById('editar_nombre_turno').value = turno.nombre_turno;
+                document.getElementById('editar_hora_inicio').value = turno.hora_inicio.substring(0, 5);
+                document.getElementById('editar_hora_fin').value = turno.hora_fin.substring(0, 5);
+                
+                document.getElementById('modalEditar').classList.add('show');
+            } else {
+                mostrarNotificacionBonita('error', 'Error', result.message || 'No se pudo cargar el turno');
+            }
+        } catch (error) {
+            console.error('Error al obtener turno:', error);
+            mostrarNotificacionBonita('error', 'Error', 'Error al cargar el turno');
+        }
+    }
+
+    async function actualizarTurno() {
+        if (!turnoEditando) return;
+        
+        const form = document.getElementById('formEditarTurno');
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch(`/Cruds/Turno/actualizar-turno/${turnoEditando}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                cerrarModal('modalEditar');
+                mostrarNotificacionBonita('success', 'Turno Actualizado', 'El turno ha sido actualizado exitosamente.');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                mostrarNotificacionBonita('error', 'Error', result.message);
+            }
+        } catch (error) {
+            console.error('Error al actualizar turno:', error);
+            mostrarNotificacionBonita('error', 'Error', 'Error al actualizar el turno. Intente nuevamente.');
+        }
+    }
+
+    function eliminarTurno(turno_id, nombre_turno) {
+        mostrarModalConfirmacion(
+            'Eliminar Turno',
+            `¿Estás seguro de que quieres eliminar el turno <strong>${nombre_turno}</strong>?`,
+            'Esta acción eliminará permanentemente el turno de la base de datos.',
+            async () => {
+                try {
+                    const response = await fetch(`/Cruds/Turno/eliminar-turno/${turno_id}`, {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        mostrarNotificacionBonita('success', 'Turno Eliminado', `El turno ${nombre_turno} ha sido eliminado.`);
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        mostrarNotificacionBonita('error', 'Error', result.message);
+                    }
+                } catch (error) {
+                    console.error('Error al eliminar turno:', error);
+                    mostrarNotificacionBonita('error', 'Error', 'Error al eliminar el turno. Intente nuevamente.');
+                }
+            }
+        );
+    }
+
+    function mostrarModalConfirmacion(titulo, mensaje, descripcion, callback) {
+        const modal = document.getElementById('modal-confirm');
+        const title = modal.querySelector('.modal-confirm-title');
+        const message = modal.querySelector('.modal-confirm-message');
+        
+        title.textContent = titulo;
+        message.innerHTML = mensaje + '<br><small>' + descripcion + '</small>';
+        
+        confirmCallback = callback;
+        modal.style.display = 'flex';
+        modal.classList.add('show');
+    }
+
+    function confirmarAccion() {
+        if (confirmCallback) {
+            confirmCallback();
+        }
+        cerrarModalConfirmacion();
+    }
+
+    function cancelarAccion() {
+        cerrarModalConfirmacion();
+    }
+
+    function cerrarModalConfirmacion() {
+        const modal = document.getElementById('modal-confirm');
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+        confirmCallback = null;
+    }
+
+    function mostrarNotificacionBonita(tipo, titulo, mensaje) {
+        const toast = document.getElementById('notification-toast');
+        const icon = toast.querySelector('.notification-toast-icon i');
+        const title = toast.querySelector('.notification-toast-title');
+        const message = toast.querySelector('.notification-toast-message');
+        
+        title.textContent = titulo;
+        message.textContent = mensaje;
+        
+        toast.className = `notification-toast ${tipo}`;
+        if (tipo === 'success') {
+            icon.className = 'fas fa-check';
+        } else {
+            icon.className = 'fas fa-times';
+        }
+        
+        toast.style.display = 'block';
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            cerrarNotificacionToast();
+        }, 4000);
+    }
+
+    function cerrarNotificacionToast() {
+        const toast = document.getElementById('notification-toast');
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 300);
+    }
+
+    // Cerrar modales al hacer clic fuera de ellos
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal')) {
+            e.target.classList.remove('show');
+        }
+        if (e.target.classList.contains('modal-confirm')) {
+            cerrarModalConfirmacion();
+        }
+    });
+</script>
+
+{% endblock %}

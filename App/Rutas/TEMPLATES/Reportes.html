@@ -257,6 +257,16 @@
                 <h3>Tipos de Clientes</h3>
                 <canvas id="chartTiposClientes" class="chart-canvas"></canvas>
             </div>
+
+            <div class="chart-wrapper">
+                <h3>Habitaciones por Categoría</h3>
+                <canvas id="chartHabitacionesCategoria" class="chart-canvas"></canvas>
+            </div>
+
+            <div class="chart-wrapper">
+                <h3>Reservas por Mes</h3>
+                <canvas id="chartReservasMes" class="chart-canvas"></canvas>
+            </div>
         </div>
     </div>
 
@@ -292,44 +302,48 @@
 
     async function cargarReportes() {
         try {
-            // Cargar datos de empleados
-            const empleadosResponse = await fetch('/Cruds/Empleados/api/empleados');
-            const empleadosData = await empleadosResponse.json();
+            // Iniciar ambas peticiones en paralelo sin esperar
+            const empleadosPromise = fetch('/Cruds/Empleados/api/empleados')
+                .then(response => response.json())
+                .then(data => {
+                    // Procesar datos de empleados tan pronto como lleguen
+                    if (data.empleados) {
+                        const total = data.empleados.length;
+                        const activos = data.empleados.filter(e => e.estado === 'Activo').length;
 
-            if (empleadosData.empleados) {
-                const total = empleadosData.empleados.length;
-                const activos = empleadosData.empleados.filter(e => e.estado === 'Activo').length;
+                        document.getElementById('total-empleados').textContent = total;
+                        document.getElementById('empleados-activos').textContent = activos;
 
-                document.getElementById('total-empleados').textContent = total;
-                document.getElementById('empleados-activos').textContent = activos;
+                        // Datos para gráficos
+                        const empleadosPorRol = {};
+                        data.empleados.forEach(e => {
+                            empleadosPorRol[e.rol] = (empleadosPorRol[e.rol] || 0) + 1;
+                        });
 
-                // Datos para gráficos
-                const empleadosPorRol = {};
-                empleadosData.empleados.forEach(e => {
-                    empleadosPorRol[e.rol] = (empleadosPorRol[e.rol] || 0) + 1;
+                        // Contar por estado
+                        const inactivos = data.empleados.filter(e => e.estado === 'Inactivo').length;
+
+                        // Crear gráficos
+                        crearGraficoEmpleadosRol(empleadosPorRol);
+                        crearGraficoEstadoEmpleados(activos, inactivos);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar empleados:', error);
                 });
 
-                // Contar por estado
-                const inactivos = empleadosData.empleados.filter(e => e.estado === 'Inactivo').length;
+            const estadisticasPromise = fetch('/Cruds/Reportes/api/estadisticas')
+                .then(response => response.json())
+                .then(result => {
+                    // Procesar estadísticas tan pronto como lleguen
+                    procesarEstadisticas(result);
+                })
+                .catch(error => {
+                    console.error('Error al cargar estadísticas:', error);
+                });
 
-                // Crear gráficos
-                crearGraficoEmpleadosRol(empleadosPorRol);
-                crearGraficoEstadoEmpleados(activos, inactivos);
-
-                console.log('Datos de empleados cargados:', empleadosData.empleados);
-            }
-
-            // Placeholder para otros datos
-            document.getElementById('total-clientes').textContent = 'Por implementar';
-            document.getElementById('total-habitaciones').textContent = 'Por implementar';
-            document.getElementById('total-reservas').textContent = 'Por implementar';
-            document.getElementById('total-tablas').textContent = 'Por implementar';
-            document.getElementById('total-registros').textContent = 'Por implementar';
-            document.getElementById('empleados-turnos').textContent = 'Por implementar';
-
-            // Mostrar mensaje en gráficos no implementados
-            mostrarMensajeGraficoVacio('chartReservas', 'Datos no disponibles');
-            mostrarMensajeGraficoVacio('chartTiposClientes', 'Datos no disponibles');
+            // Esperar a que ambas terminen (pero ya se mostraron los datos progresivamente)
+            await Promise.all([empleadosPromise, estadisticasPromise]);
 
         } catch (error) {
             console.error('Error al cargar reportes:', error);
@@ -400,6 +414,249 @@
                     borderColor: [
                         'rgba(40, 167, 69, 1)',
                         'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Función para procesar estadísticas adicionales
+    function procesarEstadisticas(result) {
+        try {
+            if (result.success && result.estadisticas) {
+                const stats = result.estadisticas;
+                
+                // Actualizar tarjetas de estadísticas
+                document.getElementById('total-clientes').textContent = stats.total_clientes || 0;
+                document.getElementById('total-habitaciones').textContent = stats.total_habitaciones || 0;
+                document.getElementById('total-reservas').textContent = stats.total_reservas || 0;
+                document.getElementById('total-tablas').textContent = stats.total_tablas || 0;
+                document.getElementById('total-registros').textContent = stats.total_registros || 0;
+                
+                // Actualizar empleados por turno
+                if (stats.empleados_por_turno) {
+                    const turnos = Object.entries(stats.empleados_por_turno)
+                        .map(([turno, cantidad]) => `${turno}: ${cantidad}`)
+                        .join(', ');
+                    document.getElementById('empleados-turnos').textContent = turnos || '0';
+                }
+                
+                // Crear gráficos
+                if (stats.reservas_por_estado && Object.keys(stats.reservas_por_estado).length > 0) {
+                    crearGraficoReservasPorEstado(stats.reservas_por_estado);
+                } else {
+                    mostrarMensajeGraficoVacio('chartReservas', 'No hay datos de reservas');
+                }
+                
+                if (stats.clientes_por_tipo && Object.keys(stats.clientes_por_tipo).length > 0) {
+                    crearGraficoTiposClientes(stats.clientes_por_tipo);
+                } else {
+                    mostrarMensajeGraficoVacio('chartTiposClientes', 'No hay datos de clientes');
+                }
+                
+                if (stats.habitaciones_por_categoria && Object.keys(stats.habitaciones_por_categoria).length > 0) {
+                    crearGraficoHabitacionesCategoria(stats.habitaciones_por_categoria);
+                } else {
+                    mostrarMensajeGraficoVacio('chartHabitacionesCategoria', 'No hay datos de habitaciones');
+                }
+                
+                if (stats.reservas_por_mes && Object.keys(stats.reservas_por_mes).length > 0) {
+                    crearGraficoReservasMes(stats.reservas_por_mes);
+                } else {
+                    mostrarMensajeGraficoVacio('chartReservasMes', 'No hay datos de reservas por mes');
+                }
+            } else {
+                console.error('Error al cargar estadísticas:', result.message);
+                // Mostrar valores por defecto
+                document.getElementById('total-clientes').textContent = '0';
+                document.getElementById('total-habitaciones').textContent = '0';
+                document.getElementById('total-reservas').textContent = '0';
+                mostrarMensajeGraficoVacio('chartReservas', 'Error al cargar datos');
+                mostrarMensajeGraficoVacio('chartTiposClientes', 'Error al cargar datos');
+                mostrarMensajeGraficoVacio('chartHabitacionesCategoria', 'Error al cargar datos');
+                mostrarMensajeGraficoVacio('chartReservasMes', 'Error al cargar datos');
+            }
+        } catch (error) {
+            console.error('Error al procesar estadísticas:', error);
+            document.getElementById('total-clientes').textContent = '0';
+            document.getElementById('total-habitaciones').textContent = '0';
+            document.getElementById('total-reservas').textContent = '0';
+            mostrarMensajeGraficoVacio('chartReservas', 'Error al cargar datos');
+            mostrarMensajeGraficoVacio('chartTiposClientes', 'Error al cargar datos');
+            mostrarMensajeGraficoVacio('chartHabitacionesCategoria', 'Error al cargar datos');
+            mostrarMensajeGraficoVacio('chartReservasMes', 'Error al cargar datos');
+        }
+    }
+
+    // Función para crear gráfico de habitaciones por categoría
+    function crearGraficoHabitacionesCategoria(datos) {
+        const ctx = document.getElementById('chartHabitacionesCategoria').getContext('2d');
+        const labels = Object.keys(datos);
+        const values = Object.values(datos);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Cantidad de Habitaciones',
+                    data: values,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Función para crear gráfico de reservas por mes
+    function crearGraficoReservasMes(datos) {
+        const ctx = document.getElementById('chartReservasMes').getContext('2d');
+        const labels = Object.keys(datos);
+        const values = Object.values(datos);
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Cantidad de Reservas',
+                    data: values,
+                    backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(40, 167, 69, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Función para crear gráfico de reservas por estado
+    function crearGraficoReservasPorEstado(datos) {
+        const ctx = document.getElementById('chartReservas').getContext('2d');
+        const labels = Object.keys(datos);
+        const values = Object.values(datos);
+
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Reservas por Estado',
+                    data: values,
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(220, 53, 69, 0.8)',
+                        'rgba(255, 193, 7, 0.8)',
+                        'rgba(0, 123, 255, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(220, 53, 69, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(0, 123, 255, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Función para crear gráfico de tipos de clientes
+    function crearGraficoTiposClientes(datos) {
+        const ctx = document.getElementById('chartTiposClientes').getContext('2d');
+        const labels = Object.keys(datos);
+        const values = Object.values(datos);
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Tipos de Clientes',
+                    data: values,
+                    backgroundColor: [
+                        'rgba(123, 31, 162, 0.8)',
+                        'rgba(25, 118, 210, 0.8)',
+                        'rgba(230, 81, 0, 0.8)',
+                        'rgba(40, 167, 69, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(123, 31, 162, 1)',
+                        'rgba(25, 118, 210, 1)',
+                        'rgba(230, 81, 0, 1)',
+                        'rgba(40, 167, 69, 1)'
                     ],
                     borderWidth: 2
                 }]

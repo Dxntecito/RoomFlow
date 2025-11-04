@@ -1,4 +1,4 @@
-{% extends "/MODULO_EMPLEADO/Crud_Empleado.html" %}
+{% extends "MODULO_EMPLEADO/Crud_Empleado.html" %}
 
 {% block employee_content %}
 
@@ -351,10 +351,6 @@
 
     // Valores originales del formulario
     let valoresOriginales = {};
-    
-    // Detectar si el usuario es empleado o cliente
-    const esEmpleado = '{{ perfil.tipo_perfil }}' === 'empleado';
-
     
     // Datos de empleados (se cargarán desde la base de datos)
     let empleadosData = [];

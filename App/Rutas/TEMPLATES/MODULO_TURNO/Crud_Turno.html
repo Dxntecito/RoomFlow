@@ -15,18 +15,17 @@
       <a href="{{ url_for('turno.GestionarTurno') }}" class="sidebar-link" id="link-gestionar-turno">Gestionar Turno</a>
       <a href="{{ url_for('turno.GestionarDetalleTurno') }}" class="sidebar-link" id="link-gestionar-detalle-turno">Gestionar Detalle Turno</a>
     </nav>
-<main class="content-crud-empleado">
-    <!-- ===== CONTENIDO PRINCIPAL ===== -->
-    {% block employee_content %}
+    <main class="content-crud-empleado">
+      <!-- ===== CONTENIDO PRINCIPAL ===== -->
+      {% block turno_content %}
 
-    {% endblock %}
-
-</main>
+      {% endblock %}
+    </main>
   </div>
 </div>
 
 <script>
-  // Script para manejar el estado activo del sidebar en el módulo de empleados
+  // Script para manejar el estado activo del sidebar del módulo de turno
   document.addEventListener('DOMContentLoaded', function() {
     // Obtener la ruta actual
     const currentPath = window.location.pathname;
