@@ -2,6 +2,7 @@ from flask import render_template, Blueprint, session, redirect, url_for, flash,
 from functools import wraps
 import App.Controladores.C_Usuarios.controlador_usuario as controller_usuario
 import App.Controladores.C_Reserva.controlador_piso as controller_piso
+import App.Controladores.C_Evento.controlador_evento as controlador_evento
 modulos_bp = Blueprint('modulos', __name__, url_prefix='/Cruds')
 
 def login_required(f):
@@ -402,3 +403,152 @@ def eliminar_usuario(usuario_id):
         return jsonify({'success': False, 'message': f'Error: {str(e)}'})
 
 ###########    FIN MODULO USUARIO    ###########
+
+
+###########    INCIO MODULO EVENTO    ###########
+@modulos_bp.route('/modulos/Evento', methods=['GET'])
+@login_required
+def evento():
+    usuario_id = session.get('usuario_id')
+    perfil = controller_usuario.get_perfil_completo(usuario_id)
+    tipos_documento = controller_usuario.get_tipos_documento()
+    
+    if not perfil:
+        flash('Usuario no encontrado', 'error')
+        return redirect(url_for('Index'))
+    
+    return render_template("/MODULO_EVENTO/gestionar_evento.html", perfil=perfil, tipos_documento=tipos_documento)
+
+# LISTADO CON FILTRO Y PAGINACIÓN
+@modulos_bp.route('/TiposEventos')
+def tipos_eventos():
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    offset = (page - 1) * per_page
+
+    tipos = controlador_evento.get_tipos_eventos(limit=per_page, offset=offset)
+    total_tipos = controlador_evento.count_tipos_eventos()
+    total_pages = (total_tipos + per_page - 1) // per_page
+
+    return render_template(
+        '/MODULO_EVENTO/gestionar_tipo_evento.html',
+        tipos=tipos,
+        mode="list",
+        filter='tipo_evento_id',
+        page=page,
+        total_pages=total_pages
+    )
+
+
+# ORDENAR / FILTRAR
+@modulos_bp.route('/FilterTiposEventos/<string:filter>')
+def FilterTiposEventos(filter):
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    order = request.args.get('order', 'asc')
+
+    tipos_all_tuples = controlador_evento.order_tipo_evento(filter, order)
+    tipos_all = [
+        dict(tipo_evento_id=t[0], nombre_tipo_evento=t[1], estado=t[2])
+        for t in tipos_all_tuples
+    ]
+
+    total_tipos = len(tipos_all)
+    total_pages = (total_tipos + per_page - 1) // per_page
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    tipos = tipos_all[start:end]
+
+    return render_template(
+        '/MODULO_EVENTO/gestionar_tipo_evento.html',
+        tipos=tipos,
+        mode='list',
+        filter=filter,
+        order=order,
+        page=page,
+        total_pages=total_pages
+    )
+
+
+# VER DETALLE
+@modulos_bp.route('/ViewTipoEvento/<int:tipo_evento_id>')
+def ViewTipoEvento(tipo_evento_id):
+    tipo = controlador_evento.get_one_tipo_evento(tipo_evento_id)
+    return render_template('/MODULO_EVENTO/gestionar_tipo_evento.html', tipo_evento=tipo, mode='view')
+
+
+# EDITAR
+@modulos_bp.route('/EditTipoEvento/<int:tipo_evento_id>')
+def EditTipoEvento(tipo_evento_id):
+    tipo = controlador_evento.get_one_tipo_evento(tipo_evento_id)
+    return render_template('/MODULO_EVENTO/gestionar_tipo_evento.html', tipo_evento=tipo, mode='edit')
+
+
+# ACTUALIZAR
+@modulos_bp.route('/UpdateTipoEvento', methods=['POST'])
+def UpdateTipoEvento():
+    try:
+        tipo_evento_id = request.form['tipo_evento_id']
+        nombre_tipo_evento = request.form['nombre_tipo_evento']
+        estado = request.form['estado']
+
+        controlador_evento.update_tipo_evento(nombre_tipo_evento, estado, tipo_evento_id)
+        flash("Tipo de evento actualizado correctamente", "success")
+    except Exception as e:
+        flash(f"Error al actualizar el tipo de evento: {str(e)}", "error")
+
+    return redirect(url_for('modulos.FilterTiposEventos', filter='tipo_evento_id'))
+
+@modulos_bp.route('/NewTipoEvento')
+def NewTipoEvento():
+    return render_template(
+        '/MODULO_EVENTO/gestionar_tipo_evento.html',
+        tipo_evento=None,  # ✅ debe llamarse igual
+        mode='insert'
+    )
+
+
+# GUARDAR NUEVO
+@modulos_bp.route('/SaveTipoEvento', methods=['POST'])
+def SaveTipoEvento():
+    try:
+        nombre_tipo_evento = request.form['nombre_tipo_evento']
+        estado = request.form['estado']
+
+        controlador_evento.insert_tipo_evento(nombre_tipo_evento, estado)
+        flash("Tipo de evento creado correctamente", "success")
+    except Exception as e:
+        flash(f"Error al crear el tipo de evento: {str(e)}", "error")
+
+    return redirect(url_for('modulos.FilterTiposEventos', filter='tipo_evento_id'))
+
+
+# ELIMINAR
+@modulos_bp.route('/DeleteTipoEvento', methods=['POST'])
+def DeleteTipoEvento():
+    tipo_evento_id = request.form.get('tipo_evento_id')
+    try:
+        controlador_evento.delete_tipo_evento(tipo_evento_id)
+        return jsonify(success=True)
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
+
+
+# BUSQUEDA AJAX
+@modulos_bp.route('/SearchTiposEventos')
+def SearchTiposEventos():
+    query = request.args.get('query', '').strip()
+    if query:
+        resultados = controlador_evento.search_tipo_evento(query)
+    else:
+        resultados = controlador_evento.get_tipos_eventos()
+
+    tipos_json = [
+        {"tipo_evento_id": t[0], "nombre_tipo_evento": t[1], "estado": t[2]}
+        for t in resultados
+    ]
+    return jsonify(tipos_json)
+
+
+###########    INCIO MODULO EVENTO    ###########

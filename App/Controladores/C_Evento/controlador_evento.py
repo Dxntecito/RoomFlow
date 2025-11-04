@@ -81,18 +81,13 @@ def procesar_pago():
         razon_social = request.form.get("razon_social")
         numero_horas = request.form.get("numero_horas")
         precio_final = request.form.get("precio_final")
-
-
         tipo_evento_id = request.form.get("tipo_evento_id")
         nombre_evento = request.form.get("nombre_evento")
         fecha_evento = request.form.get("fecha_evento")
         hora_inicio = request.form.get("hora_inicio")
         hora_fin = request.form.get("hora_fin")
-        numero_horas = request.form.get("numero_horas")
-        precio_final = request.form.get("precio_final")
-
         metodo_pago_id = request.form.get("metodo_pago_id")
-        tipo_comprobante = request.form.get("tipo_comprobante")  # 'B' o 'F'
+        tipo_comprobante = request.form.get("tipo_comprobante")
         numero_comprobante = generar_numero_comprobante(tipo_comprobante)
 
         print("📦 Datos recibidos:")
@@ -119,35 +114,26 @@ def procesar_pago():
         })
 
         # ========= 2️⃣ INICIAR TRANSACCIÓN ==========
-        print("🚀 Iniciando transacción...")
         conexion.begin()
 
-        # ========= 3️⃣ VERIFICAR CLIENTE EXISTENTE ==========
-        print(f"🔍 Verificando si el cliente con doc {nro_doc} existe...")
+        # ========= 3️⃣ CLIENTE ==========
         cursor.execute("SELECT cliente_id FROM CLIENTE WHERE num_doc = %s", (nro_doc,))
         cliente = cursor.fetchone()
-        print("Resultado SELECT cliente:", cliente)
-
         if cliente:
             cliente_id = cliente[0]
             print(f"✅ Cliente existente: ID {cliente_id}")
         else:
-            print("➕ Insertando nuevo cliente...")
             cursor.execute("""
                 INSERT INTO CLIENTE (
                     direccion, telefono, f_registro, num_doc, id_tipo_cliente, id_pais, tipo_doc_id, 
                     ape_paterno, ape_materno, nombres, razon_social
-                )
-                VALUES (%s, %s, CURDATE(), %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                direccion, telefono, nro_doc, tipo_cliente, pais_id, tipo_doc_id,
-                ape_pat, ape_mat, nombres, razon_social
-            ))
+                ) VALUES (%s, %s, CURDATE(), %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (direccion, telefono, nro_doc, tipo_cliente, pais_id, tipo_doc_id,
+                  ape_pat, ape_mat, nombres, razon_social))
             cliente_id = cursor.lastrowid
             print(f"✅ Cliente insertado con ID {cliente_id}")
 
-        # ========= 4️⃣ INSERTAR RESERVA ==========
-        print("💾 Insertando reserva...")
+        # ========= 4️⃣ RESERVA ==========
         cursor.execute("""
             INSERT INTO RESERVA (fecha_registro, hora_registro, monto_total, cliente_id, tipo_reserva, estado)
             VALUES (CURDATE(), CURTIME(), %s, %s, 'E', 1)
@@ -155,20 +141,16 @@ def procesar_pago():
         reserva_id = cursor.lastrowid
         print(f"✅ Reserva creada con ID {reserva_id}")
 
-        # ========= 5️⃣ INSERTAR EVENTO ==========
-        print("🎉 Insertando evento...")
+        # ========= 5️⃣ EVENTO ==========
         cursor.execute("""
             INSERT INTO EVENTO (nombre_evento, fecha, hora_inicio, hora_fin, numero_horas, precio_final, tipo_evento_id, reserva_id)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            nombre_evento, fecha_evento, hora_inicio, hora_fin, numero_horas,
-            precio_final, tipo_evento_id, reserva_id
-        ))
+        """, (nombre_evento, fecha_evento, hora_inicio, hora_fin, numero_horas,
+              precio_final, tipo_evento_id, reserva_id))
         evento_id = cursor.lastrowid
         print(f"✅ Evento creado con ID {evento_id}")
 
-        # ========= 6️⃣ INSERTAR TRANSACCIÓN ==========
-        print("💳 Insertando transacción...")
+        # ========= 6️⃣ TRANSACCIÓN ==========
         cursor.execute("""
             INSERT INTO TRANSACCION (metodo_pago_id, fecha_pago, monto, estado, reserva_id)
             VALUES (%s, CURDATE(), %s, 1, %s)
@@ -176,8 +158,7 @@ def procesar_pago():
         transaccion_id = cursor.lastrowid
         print(f"✅ Transacción creada con ID {transaccion_id}")
 
-        # ========= 7️⃣ INSERTAR COMPROBANTE ==========
-        print(f"🧾 Insertando comprobante: {numero_comprobante}")
+        # ========= 7️⃣ COMPROBANTE ==========
         cursor.execute("""
             INSERT INTO COMPROBANTE (tipo_comprobante, numero_comprobante, fecha_comprobante, hora_comprobante, monto_total, transaccion_id)
             VALUES (%s, %s, CURDATE(), CURTIME(), %s, %s)
@@ -185,15 +166,14 @@ def procesar_pago():
         comprobante_id = cursor.lastrowid
         print(f"✅ Comprobante creado con ID {comprobante_id}")
 
-        # ========= 8️⃣ INSERTAR DETALLE COMPROBANTE ==========
-        print("📄 Insertando detalle del comprobante...")
+        # ========= 8️⃣ DETALLE ==========
         cursor.execute("""
             INSERT INTO DETALLE_COMPROBANTE (comprobante_id, evento_id, cantidad, precio_unitario, subtotal)
             VALUES (%s, %s, 1, %s, %s)
         """, (comprobante_id, evento_id, precio_final, precio_final))
         print("✅ Detalle comprobante insertado correctamente.")
 
-        # ========= 9️⃣ CONFIRMAR TRANSACCIÓN ==========
+        # ========= 9️⃣ CONFIRMAR ==========
         conexion.commit()
         print("✅ Transacción completada y confirmada.")
 
@@ -205,11 +185,128 @@ def procesar_pago():
         })
 
     except Exception as e:
-        print("❌ Error en procesar_pago:", e)
+        print("Errorcito en procesar_pago:", e)
         conexion.rollback()
         return jsonify({"success": False, "error": str(e)})
 
     finally:
-        print("🔚 Cerrando conexión y cursor.")
         cursor.close()
         conexion.close()
+        print("🔚 Cerrando conexión y cursor.")
+
+
+def get_tipos_eventos(limit=20, offset=0):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT tipo_evento_id, nombre_tipo_evento, estado 
+            FROM TIPO_EVENTO
+            LIMIT %s OFFSET %s
+        """, (limit, offset))
+        rows = cursor.fetchall()
+        tipos = []
+        for r in rows:
+            tipos.append({
+                'tipo_evento_id': r[0],
+                'nombre_tipo_evento': r[1],
+                'estado': r[2]
+            })
+    connection.close()
+    return tipos
+
+
+# CONTAR TOTAL DE TIPOS DE EVENTO
+def count_tipos_eventos():
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT COUNT(*) FROM TIPO_EVENTO")
+        total = cursor.fetchone()[0]
+    connection.close()
+    return total
+
+
+# ✅ OBTENER UN TIPO DE EVENTO POR ID
+def get_one_tipo_evento(tipo_evento_id):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT tipo_evento_id, nombre_tipo_evento, estado
+            FROM TIPO_EVENTO WHERE tipo_evento_id = %s
+        """, (tipo_evento_id,))
+        row = cursor.fetchone()
+        if row:
+            return {
+                "tipo_evento_id": row[0],
+                "nombre_tipo_evento": row[1],
+                "estado": row[2]
+            }
+    connection.close()
+    return None
+
+
+# ✅ INSERTAR NUEVO TIPO DE EVENTO
+def insert_tipo_evento(nombre_tipo_evento, estado):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            INSERT INTO TIPO_EVENTO (nombre_tipo_evento, estado)
+            VALUES (%s, %s)
+        """, (nombre_tipo_evento, estado))
+    connection.commit()
+    connection.close()
+
+
+# ✅ ACTUALIZAR TIPO DE EVENTO EXISTENTE
+def update_tipo_evento(nombre_tipo_evento, estado, tipo_evento_id):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            UPDATE TIPO_EVENTO
+            SET nombre_tipo_evento = %s, estado = %s
+            WHERE tipo_evento_id = %s
+        """, (nombre_tipo_evento, estado, tipo_evento_id))
+    connection.commit()
+    connection.close()
+
+
+# ✅ ELIMINAR TIPO DE EVENTO
+def delete_tipo_evento(tipo_evento_id):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("DELETE FROM TIPO_EVENTO WHERE tipo_evento_id = %s", (tipo_evento_id,))
+    connection.commit()
+    connection.close()
+
+
+# ✅ ORDENAR TIPOS DE EVENTO
+def order_tipo_evento(filter_field, order):
+    allowed_fields = ['tipo_evento_id', 'nombre_tipo_evento', 'estado']
+    if filter_field not in allowed_fields:
+        filter_field = 'tipo_evento_id'
+    if order.lower() not in ['asc', 'desc']:
+        order = 'asc'
+
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute(f"""
+            SELECT tipo_evento_id, nombre_tipo_evento, estado 
+            FROM TIPO_EVENTO
+            ORDER BY {filter_field} {order.upper()}
+        """)
+        tipos = cursor.fetchall()
+    connection.close()
+    return tipos
+
+
+# ✅ BUSCAR TIPO DE EVENTO POR NOMBRE
+def search_tipo_evento(query):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT tipo_evento_id, nombre_tipo_evento, estado
+            FROM TIPO_EVENTO
+            WHERE LOWER(nombre_tipo_evento) LIKE %s
+        """, ('%' + query.lower() + '%',))
+        tipos = cursor.fetchall()
+    connection.close()
+    return tipos

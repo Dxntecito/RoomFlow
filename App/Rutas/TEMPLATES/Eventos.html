@@ -41,8 +41,8 @@
     </div>
 
     <div class="main-content">
-        <form action="{{ url_for('eventos.procesar_pago_route') }}" method="POST" id="form-pago" >
-            <div class="form-card" >
+        <form action="{{ url_for('eventos.procesar_pago_route') }}" method="POST" id="form-pago">
+            <div class="form-card">
                 <h3 class="section-title-events">DATOS DEL EVENTO</h3>
 
                 <div class="form-row">
@@ -77,6 +77,7 @@
                     <div class="form-group">
                         <label>Nombre de evento</label>
                         <input type="text" name="nombre_evento" class="form-control">
+
                     </div>
                 </div>
 
@@ -102,18 +103,21 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Apellido paterno</label>
-                            <input type="text" name="ape_paterno">
+                            <input type="text" name="ape_paterno" pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{3,50}">
+                            <small class="error-message"></small>
                         </div>
                         <div class="form-group">
                             <label>Apellido materno</label>
-                            <input type="text" name="ape_materno">
+                            <input type="text" name="ape_materno" pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$">
+                            <small class="error-message"></small>
                         </div>
 
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Nombres</label>
-                            <input type="text" name="nombres">
+                            <input type="text" name="nombres" pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$">
+                            <small class="error-message"></small>
                         </div>
 
                         <div class="form-group">
@@ -132,7 +136,8 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Teléfono</label>
-                            <input type="tel" name="telefono">
+                            <input type="tel" name="telefono" pattern="^9[0-9]{8}$" maxlength="9">
+                            <small class="error-message"></small>
                         </div>
                         <div class="form-group">
                             <label>Tipo de documento</label>
@@ -146,7 +151,8 @@
                         </div>
                         <div class="form-group">
                             <label>Nro. de documento</label>
-                            <input type="text" name="nro_doc">
+                            <input type="text" name="nro_doc" pattern="^[0-9]+$" maxlength="15">
+                            <small class="error-message"></small>
                         </div>
                     </div>
 
@@ -158,11 +164,13 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>RUC</label>
-                            <input type="text" name="ruc">
+                            <input type="text" name="ruc" pattern="^[0-9]{11}$" maxlength="11">
+                            <small class="error-message"></small>
                         </div>
                         <div class="form-group">
                             <label>Razón Social</label>
-                            <input type="text" name="razon_social">
+                            <input type="text" name="razon_social" pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9&.,'° ]+$">
+                            <small class="error-message"></small>
                         </div>
                     </div>
 
@@ -170,7 +178,8 @@
 
                         <div class="form-group">
                             <label>Teléfono</label>
-                            <input type="tel" name="telefono">
+                            <input type="tel" name="telefono" pattern="^9[0-9]{8}$" maxlength="9">
+                            <small class="error-message"></small>
                         </div>
                         <div class="form-group">
                             <label>País</label>
@@ -186,7 +195,8 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Dirección</label>
-                            <input type="text" name="direccion">
+                            <input type="text" name="direccion" pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9#.,°\- ]+$">
+                            <small class="error-message"></small>
                         </div>
                     </div>
 
@@ -210,19 +220,21 @@
                 <div id="tarjeta-fields" class="form-row hidden" style="flex-direction: column; gap: 10px;">
                     <div class="form-group">
                         <label>Nro. de tarjeta</label>
-                        <input type="text" name="num_tarjeta" maxlength="16" placeholder="1234 5678 9012 3456"
-                            class="form-control">
+                        <input type="text" name="num_tarjeta" maxlength="19" placeholder="1234 5678 9012 3456"
+                            class="form-control" oninput="formatCardNumber(this)">
                     </div>
                     <div class="form-group">
                         <label>Código de seguridad</label>
-                        <input type="text" name="codigo_seguridad" maxlength="3" placeholder="123" class="form-control">
+                        <input type="password" name="codigo_seguridad" pattern="^[0-9]{3,4}$" maxlength="3"
+                            placeholder="123" class="form-control">
                     </div>
                 </div>
 
                 <div id="efectivo-fields" class="form-row hidden" style="flex-direction: column; gap: 10px;">
                     <div class="form-group">
                         <label>Monto entregado</label>
-                        <input type="number" name="monto_efectivo" placeholder="0.00" step="0.01" class="form-control">
+                        <input type="number" name="monto_efectivo" pattern="^\d+(\.\d{1,2})?$" placeholder="0.00"
+                            step="0.01" class="form-control">
                     </div>
                 </div>
 
@@ -230,12 +242,12 @@
                     <div class="form-group">
                         <label>Número de teléfono</label>
                         <input type="text" name="telefono_monedero" maxlength="9" placeholder="987654321"
-                            class="form-control">
+                            pattern="^9[0-9]{8}$" class="form-control">
                     </div>
                     <div class="form-group">
                         <label>Clave del monedero</label>
                         <input type="password" name="clave_monedero" maxlength="3" placeholder="***"
-                            class="form-control">
+                            pattern="^[0-9]{3}$" class="form-control">
                     </div>
                 </div>
 
@@ -248,7 +260,7 @@
 
             </div>
 
-            <div class="summary-card" >
+            <div class="summary-card">
                 <h2 class="section-title-events">Resumen de pago</h2>
 
                 <div class="summary-row">
@@ -277,6 +289,14 @@
                 </label>
 
                 <button class="pay-button" id="btn-pagar" type="submit">Pagar</button>
+                <div id="flash-message"></div>
+                <!-- Modal de procesamiento -->
+                <div id="modal-pago" class="modal-pago">
+                    <div class="modal-contenido">
+                        <div id="animacion-pago" class="animacion-pago"></div>
+                        <p id="texto-pago">Procesando pago...</p>
+                    </div>
+                </div>
 
 
 
@@ -422,8 +442,8 @@
 
 <script>
     const PRECIO_POR_HORA = 50;
-    let horas = 0;      // 👈 declaramos global
-    let total = 0;      // 👈 declaramos global
+    let horas = 0;
+    let total = 0;
 
     // Función para calcular diferencia de horas
     function calcularHoras(entrada, salida) {
@@ -458,30 +478,167 @@
         document.getElementById(id).addEventListener("change", actualizarResumen);
     });
 
+    //ERROR
+
+    function showFieldError(input, message) {
+        const errorMsg = input.parentElement.querySelector(".error-message");
+        if (errorMsg) {
+            errorMsg.textContent = message;
+            errorMsg.style.display = "block";
+        }
+        input.classList.add("error");
+    }
+
+    function clearFieldErrors(form) {
+        form.querySelectorAll(".error-message").forEach(msg => {
+            msg.textContent = "";
+            msg.style.display = "none";
+        });
+        form.querySelectorAll(".error").forEach(input => {
+            input.classList.remove("error");
+        });
+    }
+
+
+    function showFlash(msg) {
+        const flash = document.getElementById("flash-message");
+        flash.textContent = msg;
+        flash.style.display = "block";
+        setTimeout(() => flash.style.display = "none", 3500);
+    }
+
+
     // Al enviar el formulario
     document.getElementById("btn-pagar").addEventListener("click", async (e) => {
         e.preventDefault();
 
         const form = document.getElementById("form-pago");
-        const formData = new FormData(form);
+        const tipoCliente = document.getElementById("tipo_cliente").value; // N o J
+        const metodo = document.querySelector('input[name="metodo_pago_id"]:checked');
 
+        // --- Validación general ---
+        const camposRequeridos = ["evento-fecha", "evento-hora-entrada", "evento-hora-salida"];
+        for (const id of camposRequeridos) {
+            if (!document.getElementById(id).value) {
+                showFlash("Completa todos los datos del evento antes de pagar.");
+                return;
+            }
+        }
+        clearFieldErrors(form);
+
+        // --- Validar tipo de evento y nombre ---
+        const tipoEvento = form.querySelector('select[name="tipo_evento_id"]').value;
+        const nombreEvento = form.querySelector('input[name="nombre_evento"]').value.trim();
+        if (!tipoEvento || !nombreEvento) {
+            showFlash("Completa el tipo y nombre del evento.");
+            return;
+        }
+
+        // --- Validar datos del cliente ---
+        if (tipoCliente === "N") {
+            const naturalCampos = ["ape_paterno", "ape_materno", "nombres", "pais_id", "telefono", "tipo_doc_id", "nro_doc"];
+            for (const name of naturalCampos) {
+                const input = form.querySelector(`[name="${name}"]`);
+                if (input && !input.value.trim()) {
+                    showFieldError(input, "Campo obligatorio");
+                    return;
+                }
+
+                const pattern = input.getAttribute("pattern");
+                if (pattern && !new RegExp(pattern).test(input.value.trim())) {
+                    showFieldError(input, "Formato inválido");
+                    return;
+                }
+            }
+        } else {
+            const juridicoCampos = ["ruc", "razon_social", "telefono", "pais_id", "direccion"];
+            for (const name of juridicoCampos) {
+                const input = form.querySelector(`[name="${name}"]`);
+                if (input && !input.value.trim()) {
+                    showFieldError(input, "Campo obligatorio");
+                    return;
+                }
+
+                const pattern = input.getAttribute("pattern");
+                if (pattern && !new RegExp(pattern).test(input.value.trim())) {
+                    showFieldError(input, "Formato inválido");
+                    return;
+                }
+            }
+        }
+
+        // --- Validar método de pago ---
+        if (!metodo) {
+            showFlash("Selecciona un método de pago.");
+            return;
+        }
+
+        const metodoNombre = metodo.dataset.nombre;
+        if (metodoNombre.includes("tarjeta")) {
+            const num = form.querySelector('[name="num_tarjeta"]').value.trim();
+            const cvv = form.querySelector('[name="codigo_seguridad"]').value.trim();
+            if (!num || !cvv) {
+                showFlash("Completa los datos de la tarjeta.");
+                return;
+            }
+        } else if (metodoNombre.includes("efectivo")) {
+            const monto = form.querySelector('[name="monto_efectivo"]').value.trim();
+            if (!monto) {
+                showFlash("Ingresa el monto entregado.");
+                return;
+            }
+        } else if (metodoNombre.includes("monedero")) {
+            const tel = form.querySelector('[name="telefono_monedero"]').value.trim();
+            const clave = form.querySelector('[name="clave_monedero"]').value.trim();
+            if (!tel || !clave) {
+                showFlash("Completa los datos del monedero virtual.");
+                return;
+            }
+        }
+
+        // --- Si todo OK, mostrar modal y enviar al backend ---
+        const modal = document.getElementById("modal-pago");
+        const anim = document.getElementById("animacion-pago");
+        const texto = document.getElementById("texto-pago");
+
+        modal.style.display = "flex";
+        anim.className = "animacion-pago";
+        texto.textContent = "Procesando pago...";
+
+        const formData = new FormData(form);
         formData.append("numero_horas", horas);
         formData.append("precio_final", total);
 
-        const response = await fetch("/Eventos/procesar_pago", {
-            method: "POST",
-            body: formData
-        });
+        try {
+            const response = await fetch("/Eventos/procesar_pago", {
+                method: "POST",
+                body: formData
+            });
 
-        const data = await response.json();
-        alert(data.message || data.error || "Error procesando pago");
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.href = data.redirect_url; // ✅ redirige al index
+            } else {
+                showFlash(data.message || "Error desconocido al procesar el pago.");
+            }
+        } catch (err) {
+            console.error("Error:", err);
+            anim.className = "check-error";
+            texto.textContent = "Error al procesar el pago.";
+            setTimeout(() => modal.style.display = "none", 1500);
+        }
+
     });
+
 </script>
 <script>
     const toggle = document.getElementById('toggleCliente');
     const formNatural = document.getElementById('formNatural');
     const formJuridico = document.getElementById('formJuridico');
     const tipoTexto = document.getElementById('tipoTexto');
+    const tipoClienteInput = document.getElementById('tipo_cliente');
+
 
     toggle.addEventListener('change', function () {
         if (this.checked) {
@@ -498,5 +655,31 @@
             tipoClienteInput.value = 'N';
         }
     });
+</script>
+<script>
+    document.querySelectorAll("input[pattern]").forEach(input => {
+        const pattern = input.getAttribute("pattern");
+
+        input.addEventListener("input", () => {
+            if (pattern.includes("A-Za-z")) {
+                // Solo letras
+                input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ ]/g, "");
+            } else if (pattern.includes("0-9")) {
+                // Solo números
+                input.value = input.value.replace(/[^0-9]/g, "");
+            }
+        });
+    });
+    function formatCardNumber(input) {
+        // Elimina todo lo que no sea dígito
+        let value = input.value.replace(/\D/g, '');
+
+        // Agrupa en bloques de 4 dígitos y une con guiones
+        value = value.match(/.{1,4}/g)?.join('-') || '';
+
+        // Limita a 19 caracteres (16 dígitos + 3 guiones)
+        input.value = value.slice(0, 19);
+    }
+
 </script>
 {% endblock %}

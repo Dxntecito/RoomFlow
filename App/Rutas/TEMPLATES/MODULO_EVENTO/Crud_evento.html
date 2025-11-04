@@ -1,0 +1,76 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/CRUDS.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/Crud_Empleados.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/Crud_reserva.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/Crud_evento.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="main-wrapper">
+  <div class="main-container">
+    <!-- ===== SIDEBAR IZQUIERDA ===== -->
+    <nav class="sidebar" id="nav-principal">
+      <h2>Módulo Eventos</h2>
+      <a href="{{ url_for ('modulos.evento') }}" id="nav-evento">👤 Gestionar Eventos</a>
+      <a href="{{ url_for ('modulos.tipos_eventos') }}" id="nav-tipo_evento">👤 Gestionar Tipos de evento</a>
+      <a href="#">Secciones a agregar</a>
+    </nav>
+<main class="content-crud-reserva" id="main-reserva">
+    <!-- ===== CONTENIDO RESERVA ===== -->
+    {% block booking_content %}
+
+    {% endblock %}
+    <!-- ===== CONTENIDO PROMOCIONES ===== -->
+    {% block tipo_evento_content %}
+
+    {% endblock %}
+</main>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Obtiene el div dentro del main
+    const main = document.querySelector(".content-crud-reserva");
+    if (!main) return;
+
+    const innerDiv = main.querySelector("div[id]");
+    if (!innerDiv) return;
+
+    const divId = innerDiv.id; // Ejemplo: "content-crud-reserva"
+    console.log("Div detectado:", divId);
+
+    // Determina qué enlace activar según el div dentro del main
+    let activeId = null;
+
+    switch (divId) {
+        case "tipo_evento":
+            activeId = "nav-tipo_evento";
+            break;
+        case "evento":
+            activeId = "nav-evento";
+            break;
+        default:
+            console.warn("No se encontró coincidencia para el div:", divId);
+            break;
+    }
+
+    // Activa el enlace correspondiente
+    if (activeId) {
+        const nav = document.getElementById("nav-principal");
+        if (!nav) return;
+
+        nav.querySelectorAll("a").forEach(link => {
+            if (link.id === activeId) {
+                link.classList.add("active");
+            } else {
+                link.classList.remove("active");
+            }
+        });
+    }
+});
+</script>
+
+{% endblock %}

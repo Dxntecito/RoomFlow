@@ -1,0 +1,159 @@
+/* ======== ESTILO GENERAL DE TABLAS ======== */
+.table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* ======== ENCABEZADO ======== */
+table thead {
+    background: #2c3e50;
+    color: #fff;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+table thead th {
+    padding: 15px 20px;
+    text-align: left;
+}
+
+/* ======== CUERPO ======== */
+table tbody tr {
+    border-bottom: 1px solid #eaeaea;
+    transition: background-color 0.2s ease;
+}
+
+table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+table td {
+    padding: 14px 20px;
+    vertical-align: middle;
+    color: #333;
+}
+
+/* ======== BOTONES DE ACCIÓN ======== */
+.action-buttons2 {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.action-btn i {
+    font-size: 14px;
+}
+
+/* Colores específicos */
+.edit-btn {
+    background: #ffc107;
+    color: #212529;
+}
+.edit-btn:hover {
+    background: #e0a800;
+    transform: scale(1.1);
+}
+
+.view-btn {
+    background: #adb5bd;
+}
+.view-btn:hover {
+    background: #868e96;
+    transform: scale(1.1);
+}
+
+.delete-btn {
+    background: #dc3545;
+}
+.delete-btn:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+.key-btn {
+    background: #28a745;
+}
+.key-btn:hover {
+    background: #218838;
+    transform: scale(1.1);
+}
+
+/* ======== BADGES / ESTADO ======== */
+.badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* ======== RESPONSIVE ======== */
+@media (max-width: 768px) {
+    table thead {
+        display: none;
+    }
+    table, table tbody, table tr, table td {
+        display: block;
+        width: 100%;
+    }
+    table tr {
+        margin-bottom: 15px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        padding: 10px;
+    }
+    table td {
+        text-align: right;
+        position: relative;
+        padding-left: 50%;
+    }
+    table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 15px;
+        width: 45%;
+        font-weight: 600;
+        text-align: left;
+        color: #555;
+    }
+}

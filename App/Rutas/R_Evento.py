@@ -17,4 +17,6 @@ def Eventos():
 @eventos_bp.route("/procesar_pago", methods=["POST"])
 def procesar_pago_route():
     controlador_evento.procesar_pago()
-    return redirect(url_for('Index'))
+    return jsonify({"success": True, "redirect_url": url_for("Index")})
+
+
