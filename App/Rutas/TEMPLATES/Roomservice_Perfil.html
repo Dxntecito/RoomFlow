@@ -745,18 +745,18 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Apellido paterno</label>
-                <input type="text" name="ape_paterno">
+                <input type="text" name="ape_paterno" pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{3,50}">
             </div>
             <div class="form-group">
                 <label>Apellido materno</label>
-                <input type="text" name="ape_materno">
+                <input type="text" name="ape_materno" pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{3,50}">
             </div>
 
         </div>
         <div class="form-row">
             <div class="form-group">
                 <label>Nombres</label>
-                <input type="text" name="nombres">
+                <input type="text" name="nombres" pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{3,50}">
             </div>
 
             <div class="form-group">
@@ -775,7 +775,7 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Teléfono</label>
-                <input type="tel" name="telefono">
+                <input type="tel" name="telefono" maxlength="9" pattern="^9[0-9]{8}$">
             </div>
             <div class="form-group">
                 <label>Tipo de documento</label>
@@ -813,7 +813,7 @@
     <div id="tarjeta-fields" class="form-row hidden" style="flex-direction: column; gap: 10px;">
         <div class="form-group">
             <label>Nro. de tarjeta</label>
-            <input type="text" name="num_tarjeta" maxlength="16" placeholder="1234 5678 9012 3456" class="form-control">
+            <input type="text" name="num_tarjeta" maxlength="19" oninput="formatCardNumber(this)" placeholder="1234 5678 9012 3456" class="form-control">
         </div>
         <div class="form-group">
             <label>Código de seguridad</label>
@@ -1199,24 +1199,45 @@
 
         // 5️⃣ Enviar al backend vía fetch
         fetch('/Roomservice/procesar_pago_roomservice', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-            .then(res => res.json())
-            .then(resp => {
-                if (resp.success) {
-                    alert(`✅ Pago procesado correctamente.\nComprobante: ${resp.comprobante}`);
-                    // Puedes limpiar el formulario o recargar
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(resp => {
+        if (resp.success) {
+            // ✅ Mostrar mensaje bonito
+            alert(`✅ ${resp.message}\nComprobante: ${resp.comprobante}`);
+
+            // 🕒 Esperar un poco y luego redirigir
+            setTimeout(() => {
+                if (resp.redirect_url) {
+                    window.top.location.href = resp.redirect_url;
                 } else {
-                    alert("❌ Error: " + resp.error);
+                    // Si no hay redirect_url, recarga la página
+                    location.reload();
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("⚠️ Error al enviar los datos al servidor.");
-            });
+            }, 1200);
+        } else {
+            alert("❌ Error: " + resp.error);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("⚠️ Error al enviar los datos al servidor.");
+    });
+    }
+</script>
+
+<script>
+    function formatCardNumber(input) {
+        // Elimina todo lo que no sea dígito
+        let value = input.value.replace(/\D/g, '');
+
+        // Agrupa en bloques de 4 dígitos y une con guiones
+        value = value.match(/.{1,4}/g)?.join('-') || '';
+
+        // Limita a 19 caracteres (16 dígitos + 3 guiones)
+        input.value = value.slice(0, 19);
     }
 </script>

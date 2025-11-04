@@ -7,7 +7,7 @@ eventos_bp = Blueprint('eventos', __name__, template_folder='TEMPLATES', url_pre
 @eventos_bp.route('/', methods=['GET'])
 @eventos_bp.route('/Eventos', methods=['GET'])
 def Eventos():
-    tipos_evento = controlador_evento.get_tipos_eventos()
+    tipos_evento = controlador_evento.get_tipos_eventos1()
     metodos_pago = controlador_evento.get_metodos_pago()
     countries=controlador_pais.get_countries()
     tipo_doc=controlador_evento.get_tipo_documento()

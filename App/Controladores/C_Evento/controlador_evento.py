@@ -2,9 +2,7 @@ from bd import get_connection
 from datetime import datetime
 from flask import request, jsonify
 
-
-
-def get_tipos_eventos():
+def get_tipos_eventos1():
     connection = get_connection()
     with connection.cursor() as cursor:
         cursor.execute("""

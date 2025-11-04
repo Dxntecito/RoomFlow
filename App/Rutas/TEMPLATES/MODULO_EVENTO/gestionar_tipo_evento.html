@@ -61,6 +61,7 @@
                                 title="Eliminar tipo de evento" onclick="eliminarTipoEvento(event)">
                                 <i class="fas fa-trash"></i>
                             </button>
+
                         </div>
                     </td>
                 </tr>
@@ -177,9 +178,9 @@
 </div>
 
 <!-- Campo oculto para almacenar el ID a eliminar -->
-
-
 <script>
+    let confirmCallback = null;
+
     function mostrarModalConfirmacion(titulo, mensaje, descripcion, callback) {
         const modal = document.getElementById('modal-confirm');
         const title = modal.querySelector('.modal-confirm-title');
@@ -192,29 +193,29 @@
         modal.style.display = 'flex';
         modal.classList.add('show');
     }
-    async function eliminarPiso(event) {
+
+    async function eliminarTipoEvento(event) {
         event.stopPropagation();
 
-        // Obtener el ID directamente del botón presionado
         const button = event.currentTarget;
         const id = button.dataset.id;
 
         if (!id) {
-            console.error("No se encontró el ID del piso.");
+            console.error("No se encontró el ID del tipo de evento.");
             return;
         }
 
-        // Mostrar modal de confirmación bonito
+        // Mostrar el modal de confirmación
         mostrarModalConfirmacion(
-            "Eliminar Piso",
-            `¿Estás seguro de que quieres eliminar el piso con ID <strong>${id}</strong>?`,
-            "Esta acción eliminará permanentemente el piso de la base de datos.",
+            "Eliminar Tipo de Evento",
+            `¿Estás seguro de que deseas eliminar el tipo de evento con ID <strong>${id}</strong>?`,
+            "Esta acción eliminará permanentemente el tipo de evento de la base de datos.",
             async () => {
                 try {
-                    const response = await fetch(`/Cruds/DeletePiso`, {
+                    const response = await fetch(`/Cruds/DeleteTipoEvento`, {
                         method: "POST",
                         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                        body: new URLSearchParams({ piso_id: id })
+                        body: new URLSearchParams({ tipo_evento_id: id })
                     });
 
                     const result = await response.json();
@@ -222,26 +223,25 @@
                     if (result.success) {
                         mostrarNotificacionBonita(
                             "success",
-                            "Piso eliminado",
-                            `El piso con ID ${id} ha sido eliminado correctamente.`
+                            "Tipo de evento eliminado",
+                            `El tipo de evento con ID ${id} ha sido eliminado correctamente.`
                         );
-                        // 🔁 Recargar toda la página después de 1 segundo (puedes ajustar el tiempo)
                         setTimeout(() => {
                             window.location.reload();
                         }, 1000);
                     } else {
                         mostrarNotificacionBonita(
                             "error",
-                            "Error",
-                            result.message || "No se pudo eliminar el piso."
+                            "Error al eliminar",
+                            result.message || "No se pudo eliminar el tipo de evento."
                         );
                     }
                 } catch (error) {
-                    console.error("Error al eliminar piso:", error);
+                    console.error("Error al eliminar tipo de evento:", error);
                     mostrarNotificacionBonita(
                         "error",
                         "Error",
-                        "Ocurrió un problema al eliminar el piso. Intente nuevamente."
+                        "Ocurrió un problema al eliminar el tipo de evento. Intente nuevamente."
                     );
                 }
             }
@@ -249,9 +249,7 @@
     }
 
     function confirmarAccion() {
-        if (confirmCallback) {
-            confirmCallback();
-        }
+        if (confirmCallback) confirmCallback();
         cerrarModalConfirmacion();
     }
 
@@ -268,15 +266,12 @@
         confirmCallback = null;
     }
 
-    // Cerrar modales al hacer clic fuera de ellos
     document.addEventListener('click', function (e) {
-        if (e.target.classList.contains('modal')) {
-            e.target.classList.remove('show');
-        }
         if (e.target.classList.contains('modal-confirm')) {
             cerrarModalConfirmacion();
         }
     });
+
     function cerrarNotificacionToast() {
         const toast = document.getElementById('notification-toast');
         toast.classList.remove('show');
@@ -291,23 +286,15 @@
         const title = toast.querySelector('.notification-toast-title');
         const message = toast.querySelector('.notification-toast-message');
 
-        // Configurar contenido
         title.textContent = titulo;
         message.textContent = mensaje;
 
-        // Configurar tipo
         toast.className = `notification-toast ${tipo}`;
-        if (tipo === 'success') {
-            icon.className = 'fas fa-check';
-        } else {
-            icon.className = 'fas fa-times';
-        }
+        icon.className = (tipo === 'success') ? 'fas fa-check' : 'fas fa-times';
 
-        // Mostrar notificación
         toast.style.display = 'block';
         toast.classList.add('show');
 
-        // Auto-cerrar después de 4 segundos
         setTimeout(() => {
             cerrarNotificacionToast();
         }, 4000);
@@ -318,25 +305,17 @@
         const input = document.getElementById("search-input");
         const tbody = document.getElementById("tabla-tipos-evento-body");
 
-        input.addEventListener("keyup", async () => {
-            const query = input.value.trim();
-
-            // Si el campo está vacío, mostrar todos los tipos de evento
-            if (query.length === 0) {
-                cargarTodosLosTiposEvento();
-                return;
-            }
-
+        // ✅ Función para cargar todos los tipos de evento (usa tu endpoint general)
+        async function cargarTodosLosTiposEvento() {
             try {
-                const response = await fetch(`/Cruds/SearchTiposEvento?query=${encodeURIComponent(query)}`);
+                const response = await fetch('/Cruds/SearchTiposEventos'); // sin query
                 const data = await response.json();
 
-                if (data.length > 0) {
-                    tbody.innerHTML = data.map(evento => `
+                tbody.innerHTML = data.map(evento => `
                     <tr>
                         <td class="col-id text-center">${evento.tipo_evento_id}</td>
                         <td class="col-numero text-center">${evento.nombre_tipo_evento}</td>
-                        <td class=" col-estadotext-center">${evento.estado == 1 ? 'Activo' : 'Inactivo'}</td>
+                        <td class="col-estado text-center">${evento.estado == 1 ? 'Activo' : 'Inactivo'}</td>
                         <td class="col-accion text-center">
                             <div class="action-buttons2">
                                 <button type="button" class="action-btn edit-btn" 
@@ -348,27 +327,83 @@
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                                 <button type="button" class="action-btn delete-btn" 
-                                    data-bs-toggle="modal" data-id="${evento.tipo_evento_id}" onclick="eliminarTipoEvento(event)">
+                                    data-id="${evento.tipo_evento_id}" onclick="eliminarTipoEvento(event)">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
                         </td>
                     </tr>
                 `).join("");
+            } catch (error) {
+                console.error("Error al cargar los tipos de evento:", error);
+            }
+        }
+
+        // 🔍 Buscar tipos de evento (solo cuando se presiona el botón)
+        async function buscarTiposEvento() {
+            const query = input.value.trim();
+
+            // Si el campo está vacío, mostrar todos los tipos de evento
+            if (query.length === 0) {
+                cargarTodosLosTiposEvento();
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Cruds/SearchTiposEventos?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                if (data.length > 0) {
+                    tbody.innerHTML = data.map(evento => `
+                        <tr>
+                            <td class="col-id text-center">${evento.tipo_evento_id}</td>
+                            <td class="col-numero text-center">${evento.nombre_tipo_evento}</td>
+                            <td class="col-estado text-center">${evento.estado == 1 ? 'Activo' : 'Inactivo'}</td>
+                            <td class="col-accion text-center">
+                                <div class="action-buttons2">
+                                    <button type="button" class="action-btn edit-btn" 
+                                        onclick="window.location.href='/Cruds/EditTipoEvento/${evento.tipo_evento_id}'">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button type="button" class="action-btn view-btn" 
+                                        onclick="window.location.href='/Cruds/ViewTipoEvento/${evento.tipo_evento_id}'">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button type="button" class="action-btn delete-btn" 
+                                        data-id="${evento.tipo_evento_id}" onclick="eliminarTipoEvento(event)">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join("");
                 } else {
                     tbody.innerHTML = `
-                    <tr>
-                        <td colspan="4" style="text-align: center; padding: 40px; color: #999;"> 
-                            <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-                            No se encontraron tipos de evento 
-                        </td>
-                    </tr>
-                `;
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 40px; color: #999;"> 
+                                <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                                No se encontraron tipos de evento 
+                            </td>
+                        </tr>
+                    `;
                 }
             } catch (error) {
                 console.error("Error al buscar tipos de evento:", error);
             }
+        }
+
+        // ✅ Si el usuario borra el texto y deja el campo vacío, recargar la tabla
+        input.addEventListener("input", () => {
+            if (input.value.trim().length === 0) {
+                cargarTodosLosTiposEvento();
+            }
         });
+
+        // ✅ Cargar todos los eventos al abrir la página
+        cargarTodosLosTiposEvento();
+
+        // ✅ Hacer accesible la función al botón
+        window.buscarTiposEvento = buscarTiposEvento;
     });
 </script>
 

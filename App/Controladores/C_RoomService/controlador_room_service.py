@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from bd import get_connection
-from flask import jsonify, request
+from flask import jsonify, request,url_for
 import pymysql
 def get_reserva_por_comprobante(numero_comprobante):
     connection = get_connection()
@@ -93,9 +93,9 @@ def procesar_pago_roomservice(data):
             cliente_id = cliente[0]
         else:
             cursor.execute("""
-                INSERT INTO cliente (tipo_cliente, tipo_doc_id, num_doc, pais_id, telefono,
-                                     direccion, nombres, ape_pat, ape_mat)
-                VALUES (%s, %s, %s, %s, %s, '', %s, %s, %s)
+                INSERT INTO CLIENTE (f_registro,id_tipo_cliente, tipo_doc_id, num_doc, id_pais, telefono,
+                                     direccion, nombres, ape_paterno, ape_materno)
+                VALUES (CURDATE(),%s, %s, %s, %s, %s, '', %s, %s, %s)
             """, (
                 tipo_cliente,
                 cliente_data['tipo_doc_id'],
@@ -203,7 +203,8 @@ def procesar_pago_roomservice(data):
         return jsonify({
             "success": True,
             "message": "Pago procesado correctamente",
-            "comprobante": numero_comprobante
+            "comprobante": numero_comprobante,
+            "redirect_url": url_for("Index")
         })
 
     except Exception as e:
