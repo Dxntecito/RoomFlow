@@ -45,7 +45,13 @@ def BookingRoom():
 def ruta_guardar_reserva():
     try:
         data = request.get_json()
-        reserva_id = controller_reserva.guardar_reserva(data)
+        bandera = data.get("bandera",None)
+        if bandera == "TRUE":
+            reserva_id = controller_reserva.guardar_reserva_c_usuario(data)
+        elif bandera == "FALSE":
+            reserva_id = controller_reserva.guardar_reserva_s_usuario(data)
+        else:
+            return jsonify({'success': False, 'error': f'Bandera desconocida: {bandera}'}), 400
         if reserva_id:
             return jsonify({'success': True, 'reserva_id': reserva_id}), 200
         else:

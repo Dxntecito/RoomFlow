@@ -229,3 +229,176 @@ def empleado():
 
 ###########    FIN MODULO EMPLEADO    ###########
 
+
+###########    INICIO MODULO USUARIO    ###########
+@modulos_bp.route('/modulos/Usuario', methods=['GET'])
+@login_required
+def usuario():
+    print("=" * 60)
+    print("ACCEDIENDO A MÓDULO DE USUARIO")
+    print("=" * 60)
+    
+    usuario_id = session.get('usuario_id')
+    print(f"Usuario ID: {usuario_id}")
+    print(f"Rol ID: {session.get('rol_id')}")
+    
+    perfil = controller_usuario.get_perfil_completo(usuario_id)
+    tipos_documento = controller_usuario.get_tipos_documento()
+    
+    if not perfil:
+        print("ERROR: Perfil no encontrado")
+        flash('Usuario no encontrado', 'error')
+        return redirect(url_for('Index'))
+    
+    # Solo administradores pueden acceder
+    if session.get('rol_id') != 1:
+        print("ERROR: Usuario no es administrador")
+        flash('No tienes permisos para acceder a este módulo', 'danger')
+        return redirect(url_for('modulos.modulos'))
+    
+    print("Renderizando template: /MODULO_USUARIO/gestionar_usuarios.html")
+    print("=" * 60)
+    
+    try:
+        return render_template("/MODULO_USUARIO/gestionar_usuarios.html", perfil=perfil, tipos_documento=tipos_documento)
+    except Exception as e:
+        print(f"ERROR AL RENDERIZAR TEMPLATE: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
+
+# API para obtener usuarios
+@modulos_bp.route('/modulos/usuarios/api', methods=['GET'])
+@login_required
+def api_usuarios():
+    # Solo administradores
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    
+    try:
+        search_term = request.args.get('search', '')
+        rol_filter = request.args.get('rol', '')
+        estado_filter = request.args.get('estado', '')
+        
+        usuarios = controller_usuario.get_usuarios_admin(
+            limit=100, 
+            offset=0, 
+            search_term=search_term,
+            rol_filter=rol_filter,
+            estado_filter=estado_filter
+        )
+        
+        return jsonify({
+            'success': True,
+            'usuarios': usuarios
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+# Crear usuario
+@modulos_bp.route('/modulos/usuarios/crear', methods=['POST'])
+@login_required
+def crear_usuario():
+    # Solo administradores
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    
+    try:
+        usuario = request.form.get('usuario')
+        contrasena = request.form.get('contrasena')
+        email = request.form.get('email')
+        rol = request.form.get('rol')
+        estado = request.form.get('estado', '1')
+        
+        if not all([usuario, contrasena, email, rol]):
+            return jsonify({'success': False, 'message': 'Todos los campos son obligatorios'})
+        
+        resultado = controller_usuario.insert_usuario_admin(
+            usuario=usuario,
+            contrasena=contrasena,
+            email=email,
+            id_rol=int(rol),
+            estado=int(estado)
+        )
+        
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'})
+
+# Actualizar usuario
+@modulos_bp.route('/modulos/usuarios/actualizar/<int:usuario_id>', methods=['POST'])
+@login_required
+def actualizar_usuario(usuario_id):
+    # Solo administradores
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    
+    try:
+        usuario = request.form.get('usuario')
+        email = request.form.get('email')
+        rol = request.form.get('rol')
+        estado = request.form.get('estado')
+        
+        if not all([usuario, email, rol, estado]):
+            return jsonify({'success': False, 'message': 'Todos los campos son obligatorios'})
+        
+        resultado = controller_usuario.update_usuario_admin(
+            usuario_id=usuario_id,
+            usuario=usuario,
+            email=email,
+            id_rol=int(rol),
+            estado=int(estado)
+        )
+        
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'})
+
+# Resetear contraseña
+@modulos_bp.route('/modulos/usuarios/resetear/<int:usuario_id>', methods=['POST'])
+@login_required
+def resetear_contrasena_usuario(usuario_id):
+    # Solo administradores
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    
+    try:
+        nueva_contrasena = request.form.get('nueva_contrasena')
+        
+        if not nueva_contrasena:
+            return jsonify({'success': False, 'message': 'La contraseña es obligatoria'})
+        
+        if len(nueva_contrasena) < 6:
+            return jsonify({'success': False, 'message': 'La contraseña debe tener al menos 6 caracteres'})
+        
+        resultado = controller_usuario.resetear_contrasena_admin(
+            usuario_id=usuario_id,
+            nueva_contrasena=nueva_contrasena
+        )
+        
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'})
+
+# Eliminar usuario
+@modulos_bp.route('/modulos/usuarios/eliminar/<int:usuario_id>', methods=['POST'])
+@login_required
+def eliminar_usuario(usuario_id):
+    # Solo administradores
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    
+    # No permitir auto-eliminación
+    if usuario_id == session.get('usuario_id'):
+        return jsonify({'success': False, 'message': 'No puedes eliminar tu propia cuenta desde aquí'})
+    
+    try:
+        resultado = controller_usuario.eliminar_usuario_admin(usuario_id)
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'})
+
+###########    FIN MODULO USUARIO    ###########

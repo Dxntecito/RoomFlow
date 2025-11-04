@@ -1,6 +1,18 @@
 from bd import get_connection
 
 # OBTENER TODOS LOS PISOS CON LIMIT Y OFFSET
+def get_floors(limit=20, offset=0):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT piso_id, numero, estado, precio FROM PISO
+            LIMIT %s OFFSET %s
+        """, (limit, offset))
+        floors = cursor.fetchall()
+    connection.close()
+    return floors
+
+# OBTENER TODOS LOS PISOS CON LIMIT Y OFFSET
 def get_pisos(limit=20, offset=0):
     connection = get_connection()
     with connection.cursor() as cursor:

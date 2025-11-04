@@ -1,0 +1,737 @@
+{% extends "/MODULO_USUARIO/Crud_Usuario.html" %}
+
+{% block user_content %}
+
+<div class="section-content" id="usuarios">
+    <h2 class="section-title">Gestionar Usuarios del Sistema</h2>
+
+    <!-- Barra de búsqueda y filtros -->
+    <div class="search-filters-section">
+        <div class="search-section">
+            <label for="search-input" class="search-label">Buscar</label>
+            <div class="search-form">
+                <input type="text" id="search-input" name="search" class="search-input"
+                    placeholder="Buscar por usuario, email o nombre...">
+
+                <button type="button" class="search-button" onclick="filtrarUsuarios()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <label for="rol-filter" class="filter-label">Rol</label>
+            <div class="filter-form">
+                <select id="rol-filter" name="rol" class="rol-select">
+                    <option value="">Todos los roles</option>
+                    <option value="1">Administrador</option>
+                    <option value="2">Empleado</option>
+                    <option value="3">Cliente</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <label for="estado-filter" class="filter-label">Estado</label>
+            <div class="filter-form">
+                <select id="estado-filter" name="estado" class="rol-select">
+                    <option value="">Todos</option>
+                    <option value="1">Activos</option>
+                    <option value="0">Inactivos</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="actions-section">
+            <button class="create-button" onclick="mostrarFormularioCrear()">
+                <i class="fas fa-plus"></i>
+                Crear Usuario
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de usuarios -->
+    <div class="table-container">
+        <table class="empleados-table">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Fecha Creación</th>
+                    <th>ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Los usuarios se cargarán dinámicamente desde la API -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de detalles del usuario -->
+<div id="modalDetalles" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Detalles del Usuario</h3>
+            <button class="modal-close" onclick="cerrarModal('modalDetalles')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="employee-details" id="detallesUsuario">
+                <!-- Los detalles se cargarán dinámicamente -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalDetalles')">
+                <i class="fas fa-times"></i>
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de crear usuario -->
+<div id="modalCrear" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Crear Nuevo Usuario</h3>
+            <button class="modal-close" onclick="cerrarModal('modalCrear')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="formCrearUsuario">
+                <div class="employee-details">
+                    <div class="detail-group">
+                        <label class="detail-label" for="crear_usuario">Usuario *</label>
+                        <input type="text" id="crear_usuario" name="usuario" class="detail-value"
+                            pattern="[A-Za-z0-9_]{3,50}" title="Solo letras, números y guiones bajos (3-50 caracteres)" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="crear_email">Email *</label>
+                        <input type="email" id="crear_email" name="email" class="detail-value" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="crear_contrasena">Contraseña *</label>
+                        <input type="password" id="crear_contrasena" name="contrasena" class="detail-value"
+                            minlength="6" title="Mínimo 6 caracteres" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="crear_confirmar_contrasena">Confirmar Contraseña *</label>
+                        <input type="password" id="crear_confirmar_contrasena" name="confirmar_contrasena" class="detail-value"
+                            minlength="6" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="crear_rol">Rol *</label>
+                        <select id="crear_rol" name="rol" class="detail-value" required>
+                            <option value="">Seleccione rol</option>
+                            <option value="1">Administrador</option>
+                            <option value="2">Empleado</option>
+                            <option value="3">Cliente</option>
+                        </select>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="crear_estado">Estado *</label>
+                        <select id="crear_estado" name="estado" class="detail-value" required>
+                            <option value="1" selected>Activo</option>
+                            <option value="0">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalCrear')">
+                <i class="fas fa-times"></i>
+                Cancelar
+            </button>
+            <button class="btn-modal btn-modal-primary" onclick="guardarUsuario()">
+                <i class="fas fa-save"></i>
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de editar usuario -->
+<div id="modalEditar" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Editar Usuario</h3>
+            <button class="modal-close" onclick="cerrarModal('modalEditar')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="formEditarUsuario">
+                <input type="hidden" id="editar_usuario_id" name="usuario_id">
+                <div class="employee-details">
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_usuario">Usuario *</label>
+                        <input type="text" id="editar_usuario" name="usuario" class="detail-value"
+                            pattern="[A-Za-z0-9_]{3,50}" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_email">Email *</label>
+                        <input type="email" id="editar_email" name="email" class="detail-value" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_rol">Rol *</label>
+                        <select id="editar_rol" name="rol" class="detail-value" required>
+                            <option value="">Seleccione rol</option>
+                            <option value="1">Administrador</option>
+                            <option value="2">Empleado</option>
+                            <option value="3">Cliente</option>
+                        </select>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="editar_estado">Estado *</label>
+                        <select id="editar_estado" name="estado" class="detail-value" required>
+                            <option value="1">Activo</option>
+                            <option value="0">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalEditar')">
+                <i class="fas fa-times"></i>
+                Cancelar
+            </button>
+            <button class="btn-modal btn-modal-primary" onclick="actualizarUsuario()">
+                <i class="fas fa-save"></i>
+                Guardar Cambios
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de resetear contraseña -->
+<div id="modalResetear" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Resetear Contraseña</h3>
+            <button class="modal-close" onclick="cerrarModal('modalResetear')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="formResetearContrasena">
+                <input type="hidden" id="resetear_usuario_id" name="usuario_id">
+                <div class="employee-details">
+                    <div class="detail-group">
+                        <label class="detail-label" for="resetear_usuario_nombre">Usuario</label>
+                        <input type="text" id="resetear_usuario_nombre" class="detail-value" readonly
+                            style="background-color: #f8f9fa;">
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="resetear_nueva_contrasena">Nueva Contraseña *</label>
+                        <input type="password" id="resetear_nueva_contrasena" name="nueva_contrasena" class="detail-value"
+                            minlength="6" required>
+                    </div>
+                    <div class="detail-group">
+                        <label class="detail-label" for="resetear_confirmar_contrasena">Confirmar Contraseña *</label>
+                        <input type="password" id="resetear_confirmar_contrasena" name="confirmar_contrasena" class="detail-value"
+                            minlength="6" required>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="cerrarModal('modalResetear')">
+                <i class="fas fa-times"></i>
+                Cancelar
+            </button>
+            <button class="btn-modal btn-modal-primary" onclick="confirmarResetearContrasena()">
+                <i class="fas fa-key"></i>
+                Resetear
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div id="modal-confirm" class="modal-confirm" style="display: none;">
+    <div class="modal-confirm-content">
+        <div class="modal-confirm-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3 class="modal-confirm-title">Confirmar Acción</h3>
+        <p class="modal-confirm-message">¿Estás seguro?</p>
+        <div class="modal-confirm-buttons">
+            <button class="btn-confirm btn-confirm-danger" onclick="confirmarAccion()">
+                <i class="fas fa-trash"></i>
+                Eliminar
+            </button>
+            <button class="btn-confirm btn-confirm-secondary" onclick="cancelarAccion()">
+                <i class="fas fa-times"></i>
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Notificaciones toast -->
+<div id="notification-toast" class="notification-toast" style="display: none;">
+    <button class="notification-toast-close" onclick="cerrarNotificacionToast()">
+        <i class="fas fa-times"></i>
+    </button>
+    <div class="notification-toast-header">
+        <div class="notification-toast-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        <div class="notification-toast-body">
+            <h4 class="notification-toast-title">Título</h4>
+            <p class="notification-toast-message">Mensaje</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Datos de usuarios
+let usuariosData = [];
+let usuarioEditando = null;
+let confirmCallback = null;
+
+// Función para filtrar usuarios
+function filtrarUsuarios() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+    const rolFilter = document.getElementById('rol-filter').value;
+    const estadoFilter = document.getElementById('estado-filter').value;
+
+    let usuariosFiltrados = usuariosData.filter(usuario => {
+        // Búsqueda por texto
+        let cumpleBusqueda = false;
+        if (searchTerm === '') {
+            cumpleBusqueda = true;
+        } else {
+            cumpleBusqueda = usuario.usuario.toLowerCase().includes(searchTerm) ||
+                           usuario.email.toLowerCase().includes(searchTerm) ||
+                           (usuario.nombre_completo && usuario.nombre_completo.toLowerCase().includes(searchTerm));
+        }
+
+        // Filtro por rol
+        const cumpleRol = !rolFilter || usuario.rol_id == rolFilter;
+
+        // Filtro por estado
+        const cumpleEstado = estadoFilter === '' || usuario.estado == estadoFilter;
+
+        return cumpleBusqueda && cumpleRol && cumpleEstado;
+    });
+
+    mostrarUsuarios(usuariosFiltrados);
+}
+
+// Función para mostrar usuarios en la tabla
+function mostrarUsuarios(usuarios) {
+    const tbody = document.querySelector('#usuarios .empleados-table tbody');
+
+    if (usuarios.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                    <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                    No se encontraron usuarios
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = usuarios.map(usuario => {
+        const estadoBadge = usuario.estado == 1 ? 
+            '<span class="estado-badge estado-activo">Activo</span>' :
+            '<span class="estado-badge estado-inactivo">Inactivo</span>';
+        
+        const rolBadge = usuario.rol_id == 1 ? 'badge-admin' : 
+                        usuario.rol_id == 2 ? 'badge-empleado' : 'badge-cliente';
+
+        return `
+        <tr onclick="mostrarDetallesUsuario(${usuario.usuario_id})" style="cursor: pointer;">
+            <td>${usuario.usuario}</td>
+            <td>${usuario.email}</td>
+            <td><span class="shift-badge ${rolBadge}">${usuario.rol_nombre}</span></td>
+            <td>${estadoBadge}</td>
+            <td>${usuario.fecha_creacion || 'N/A'}</td>
+            <td class="actions-cell">
+                <div class="action-buttons">
+                    <button class="action-btn edit-btn" title="Editar usuario" onclick="event.stopPropagation(); editarUsuario(${usuario.usuario_id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="action-btn calendar-btn" title="Resetear contraseña" onclick="event.stopPropagation(); resetearContrasena(${usuario.usuario_id})">
+                        <i class="fas fa-key"></i>
+                    </button>
+                    <button class="action-btn delete-btn" title="Eliminar usuario" onclick="event.stopPropagation(); eliminarUsuario(${usuario.usuario_id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+        `;
+    }).join('');
+}
+
+// Cargar usuarios desde la base de datos
+async function cargarUsuarios() {
+    try {
+        const response = await fetch('/Cruds/modulos/usuarios/api');
+        const data = await response.json();
+        
+        if (data.success) {
+            usuariosData = data.usuarios || [];
+            mostrarUsuarios(usuariosData);
+        } else {
+            mostrarNotificacionBonita('error', 'Error', 'No se pudieron cargar los usuarios');
+        }
+    } catch (error) {
+        console.error('Error al cargar usuarios:', error);
+        const tbody = document.querySelector('#usuarios .empleados-table tbody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 40px; color: #dc3545;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                    Error al cargar usuarios
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Mostrar detalles del usuario
+function mostrarDetallesUsuario(usuario_id) {
+    const usuario = usuariosData.find(u => u.usuario_id === usuario_id);
+    if (!usuario) return;
+
+    const estadoClass = usuario.estado == 1 ? 'estado-activo' : 'estado-inactivo';
+    const estadoTexto = usuario.estado == 1 ? 'Activo' : 'Inactivo';
+
+    const detallesContainer = document.getElementById('detallesUsuario');
+    detallesContainer.innerHTML = `
+        <div class="detail-group">
+            <label class="detail-label">Usuario</label>
+            <div class="detail-value">${usuario.usuario || 'N/A'}</div>
+        </div>
+        <div class="detail-group">
+            <label class="detail-label">Email</label>
+            <div class="detail-value">${usuario.email || 'N/A'}</div>
+        </div>
+        <div class="detail-group">
+            <label class="detail-label">Rol</label>
+            <div class="detail-value">${usuario.rol_nombre || 'N/A'}</div>
+        </div>
+        <div class="detail-group">
+            <label class="detail-label">Estado</label>
+            <div class="detail-value">
+                <span class="estado-badge ${estadoClass}">${estadoTexto}</span>
+            </div>
+        </div>
+        <div class="detail-group">
+            <label class="detail-label">Fecha de Creación</label>
+            <div class="detail-value">${usuario.fecha_creacion || 'N/A'}</div>
+        </div>
+        ${usuario.nombre_completo ? `
+        <div class="detail-group">
+            <label class="detail-label">Nombre Completo</label>
+            <div class="detail-value">${usuario.nombre_completo}</div>
+        </div>
+        ` : ''}
+    `;
+
+    document.getElementById('modalDetalles').classList.add('show');
+}
+
+// Mostrar formulario de crear
+function mostrarFormularioCrear() {
+    document.getElementById('formCrearUsuario').reset();
+    document.getElementById('modalCrear').classList.add('show');
+}
+
+// Guardar nuevo usuario
+async function guardarUsuario() {
+    const form = document.getElementById('formCrearUsuario');
+    const formData = new FormData(form);
+
+    // Validar contraseñas
+    const contrasena = formData.get('contrasena');
+    const confirmar = formData.get('confirmar_contrasena');
+    
+    if (contrasena !== confirmar) {
+        mostrarNotificacionBonita('error', 'Error', 'Las contraseñas no coinciden');
+        return;
+    }
+
+    try {
+        const response = await fetch('/Cruds/modulos/usuarios/crear', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            cerrarModal('modalCrear');
+            cargarUsuarios();
+            mostrarNotificacionBonita('success', 'Usuario Creado', result.message);
+        } else {
+            mostrarNotificacionBonita('error', 'Error', result.message);
+        }
+    } catch (error) {
+        console.error('Error al guardar usuario:', error);
+        mostrarNotificacionBonita('error', 'Error', 'Error al guardar el usuario');
+    }
+}
+
+// Editar usuario
+function editarUsuario(usuario_id) {
+    const usuario = usuariosData.find(u => u.usuario_id === usuario_id);
+    if (!usuario) return;
+
+    usuarioEditando = usuario;
+
+    document.getElementById('editar_usuario_id').value = usuario.usuario_id;
+    document.getElementById('editar_usuario').value = usuario.usuario;
+    document.getElementById('editar_email').value = usuario.email;
+    document.getElementById('editar_rol').value = usuario.rol_id;
+    document.getElementById('editar_estado').value = usuario.estado;
+
+    document.getElementById('modalEditar').classList.add('show');
+}
+
+// Actualizar usuario
+async function actualizarUsuario() {
+    if (!usuarioEditando) return;
+
+    const form = document.getElementById('formEditarUsuario');
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch(`/Cruds/modulos/usuarios/actualizar/${usuarioEditando.usuario_id}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            cerrarModal('modalEditar');
+            cargarUsuarios();
+            mostrarNotificacionBonita('success', 'Usuario Actualizado', result.message);
+        } else {
+            mostrarNotificacionBonita('error', 'Error', result.message);
+        }
+    } catch (error) {
+        console.error('Error al actualizar usuario:', error);
+        mostrarNotificacionBonita('error', 'Error', 'Error al actualizar el usuario');
+    }
+}
+
+// Resetear contraseña
+function resetearContrasena(usuario_id) {
+    const usuario = usuariosData.find(u => u.usuario_id === usuario_id);
+    if (!usuario) return;
+
+    document.getElementById('resetear_usuario_id').value = usuario.usuario_id;
+    document.getElementById('resetear_usuario_nombre').value = usuario.usuario;
+    document.getElementById('formResetearContrasena').reset();
+    document.getElementById('resetear_usuario_id').value = usuario.usuario_id;
+    document.getElementById('resetear_usuario_nombre').value = usuario.usuario;
+
+    document.getElementById('modalResetear').classList.add('show');
+}
+
+// Confirmar reseteo de contraseña
+async function confirmarResetearContrasena() {
+    const form = document.getElementById('formResetearContrasena');
+    const formData = new FormData(form);
+    const usuario_id = formData.get('usuario_id');
+    const nueva_contrasena = formData.get('nueva_contrasena');
+    const confirmar = formData.get('confirmar_contrasena');
+
+    if (nueva_contrasena !== confirmar) {
+        mostrarNotificacionBonita('error', 'Error', 'Las contraseñas no coinciden');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/Cruds/modulos/usuarios/resetear/${usuario_id}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            cerrarModal('modalResetear');
+            mostrarNotificacionBonita('success', 'Contraseña Reseteada', result.message);
+        } else {
+            mostrarNotificacionBonita('error', 'Error', result.message);
+        }
+    } catch (error) {
+        console.error('Error al resetear contraseña:', error);
+        mostrarNotificacionBonita('error', 'Error', 'Error al resetear la contraseña');
+    }
+}
+
+// Eliminar usuario
+async function eliminarUsuario(usuario_id) {
+    const usuario = usuariosData.find(u => u.usuario_id === usuario_id);
+    if (!usuario) return;
+
+    mostrarModalConfirmacion(
+        'Eliminar Usuario',
+        `¿Estás seguro de que quieres eliminar al usuario <strong>${usuario.usuario}</strong>?`,
+        'Esta acción eliminará permanentemente el usuario y todos sus datos asociados.',
+        async () => {
+            try {
+                const response = await fetch(`/Cruds/modulos/usuarios/eliminar/${usuario_id}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    await cargarUsuarios();
+                    mostrarNotificacionBonita('success', 'Usuario Eliminado', result.message);
+                } else {
+                    mostrarNotificacionBonita('error', 'Error', result.message);
+                }
+            } catch (error) {
+                console.error('Error al eliminar usuario:', error);
+                mostrarNotificacionBonita('error', 'Error', 'Error al eliminar el usuario');
+            }
+        }
+    );
+}
+
+// Funciones de UI
+function cerrarModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+}
+
+function mostrarNotificacionBonita(tipo, titulo, mensaje) {
+    const toast = document.getElementById('notification-toast');
+    const icon = toast.querySelector('.notification-toast-icon i');
+    const title = toast.querySelector('.notification-toast-title');
+    const message = toast.querySelector('.notification-toast-message');
+
+    title.textContent = titulo;
+    message.textContent = mensaje;
+
+    toast.className = `notification-toast ${tipo}`;
+    if (tipo === 'success') {
+        icon.className = 'fas fa-check';
+    } else {
+        icon.className = 'fas fa-times';
+    }
+
+    toast.style.display = 'block';
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        cerrarNotificacionToast();
+    }, 4000);
+}
+
+function cerrarNotificacionToast() {
+    const toast = document.getElementById('notification-toast');
+    toast.classList.remove('show');
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 300);
+}
+
+function mostrarModalConfirmacion(titulo, mensaje, descripcion, callback) {
+    const modal = document.getElementById('modal-confirm');
+    const title = modal.querySelector('.modal-confirm-title');
+    const message = modal.querySelector('.modal-confirm-message');
+
+    title.textContent = titulo;
+    message.innerHTML = mensaje + '<br><small>' + descripcion + '</small>';
+
+    confirmCallback = callback;
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+}
+
+function confirmarAccion() {
+    if (confirmCallback) {
+        confirmCallback();
+    }
+    cerrarModalConfirmacion();
+}
+
+function cancelarAccion() {
+    cerrarModalConfirmacion();
+}
+
+function cerrarModalConfirmacion() {
+    const modal = document.getElementById('modal-confirm');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+    confirmCallback = null;
+}
+
+// Cerrar modales al hacer clic fuera
+document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('modal')) {
+        e.target.classList.remove('show');
+    }
+    if (e.target.classList.contains('modal-confirm')) {
+        cerrarModalConfirmacion();
+    }
+});
+
+// Inicializar
+function inicializarUsuarios() {
+    const searchInput = document.getElementById('search-input');
+    const rolFilter = document.getElementById('rol-filter');
+    const estadoFilter = document.getElementById('estado-filter');
+
+    if (searchInput && rolFilter && estadoFilter) {
+        searchInput.addEventListener('input', filtrarUsuarios);
+        rolFilter.addEventListener('change', filtrarUsuarios);
+        estadoFilter.addEventListener('change', filtrarUsuarios);
+        cargarUsuarios();
+    }
+}
+
+// Cargar al inicio
+inicializarUsuarios();
+</script>
+
+<style>
+.badge-admin {
+    background-color: #dc3545;
+    color: white;
+}
+.badge-empleado {
+    background-color: #ffc107;
+    color: #333;
+}
+.badge-cliente {
+    background-color: #28a745;
+    color: white;
+}
+.estado-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.estado-activo {
+    background: #d4edda;
+    color: #155724;
+}
+.estado-inactivo {
+    background: #f8d7da;
+    color: #721c24;
+}
+</style>
+
+{% endblock %}
+

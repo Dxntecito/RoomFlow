@@ -280,8 +280,8 @@
     <p id="comprobante_status" style="margin:0 0 0 8px;color:#333;"></p>
   </div>
 
-  <div style="margin-top:16px;">
-    <button id="volver_home"><a href="/RoomFlow">Volver al Inicio</a></button>
+    <div style="margin-top:16px;">
+    <button id="volver_home">Volver al Inicio</button>
   </div>
   </div>
 </div>
@@ -290,6 +290,18 @@
 <script src="{{ url_for('static', filename='JS/Booking_functions.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking_validations.js') }}"></script>
 <script>
+  const usuarioId = {{ session.get('usuario_id') | tojson }};
+  let banderita ="FALSE"
+  let usuario_id= "0"
+  if (!usuarioId) {
+    console.log("No hay usuario logueado");
+    banderita ="FALSE"
+    // Aquí puedes ocultar botones, redirigir, etc.
+  } else {
+    console.log("Usuario logueado:", usuarioId);
+    banderita="TRUE"
+    usuario = usuarioId
+  }
 const floorSelect = document.getElementById("floor_number");
 function filterRows() {
   const selFloor = floorSelect.value; // valor string o ""
@@ -354,8 +366,15 @@ nextLink.addEventListener("click", e => {
     alert("Seleccione al menos una habitación antes de continuar.");
     return;
   }
-  step1.style.display = "none";
-  step2.style.display = "block";
+  if (usuarioId) {
+    step1.style.display = "none";
+    step3.style.display = "block";
+    generarFormulariosHuespedes();
+  }else{
+    step1.style.display = "none";
+    step2.style.display = "block";
+  }
+  
 });
 
 // --- Paso 2 → Paso 1 ---
@@ -366,8 +385,13 @@ backToRooms.addEventListener("click", () => {
 
 // --- Paso 3 → Paso 2 ---
 backToClient.addEventListener("click", () => {
-  step3.style.display = "none";
-  step2.style.display = "block";
+  if (usuarioId) {
+    step3.style.display = "none";
+    step1.style.display = "block";
+  }else{
+    step3.style.display = "none";
+    step2.style.display = "block";
+  }
 });
 
 // estado de cliente que construirás
@@ -479,7 +503,7 @@ if (nextToGuestsBtn) {
 
       // validaciones
       if (!validarPersonaNatural()) return;
-
+      
       clientData = {
         tipo: "N",
         num_doc: dniVal,
@@ -489,6 +513,7 @@ if (nextToGuestsBtn) {
         telefono: telefonoVal || null,
         pais_id: paisVal,
         tipo_doc_id: tipo_doc_n,
+        usuario_id: usuarioId
       };
 
     } else {
@@ -512,6 +537,7 @@ if (nextToGuestsBtn) {
         pais_id: paisj,
         telefono: telefonoj,
         tipoemp_id: tipoempresaj,
+        usuario_id: usuarioId
       };
     }
 
@@ -533,14 +559,10 @@ if (nextToGuestsBtn) {
 }
 </script>
 <script>
-  const usuarioId = {{ session.get('usuario_id') | tojson }};
-  
-  if (!usuarioId) {
-    console.log("No hay usuario logueado");
-    // Aquí puedes ocultar botones, redirigir, etc.
-  } else {
-    console.log("Usuario logueado:", usuarioId);
-  }
+document.getElementById("volver_home").addEventListener("click", () => {
+  window.location.href = "/RoomFlow";
+});
 </script>
+
 
 {% endblock %}

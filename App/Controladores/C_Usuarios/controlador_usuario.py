@@ -600,6 +600,186 @@ def get_tipos_documento():
         if conexion:
             conexion.close()
 
+def get_usuarios_admin(limit=100, offset=0, search_term='', rol_filter='', estado_filter=''):
+    """
+    Obtiene usuarios para la gestión administrativa con más detalles
+    """
+    try:
+        conexion = get_connection()
+        with conexion.cursor() as cursor:
+            query = """
+                SELECT 
+                    u.usuario_id,
+                    u.usuario,
+                    u.email,
+                    u.estado,
+                    u.fecha_creacion,
+                    r.rol_id,
+                    r.nombre_rol,
+                    CASE 
+                        WHEN c.cliente_id IS NOT NULL THEN CONCAT(c.nombres, ' ', c.ape_paterno, ' ', c.ape_materno)
+                        WHEN e.empleado_id IS NOT NULL THEN CONCAT(e.nombres, ' ', e.ape_paterno, ' ', e.ape_materno)
+                        ELSE NULL
+                    END as nombre_completo
+                FROM USUARIO u
+                INNER JOIN ROL r ON u.id_rol = r.rol_id
+                LEFT JOIN CLIENTE c ON u.cliente_id = c.cliente_id
+                LEFT JOIN EMPLEADO e ON u.empleado_id = e.empleado_id
+                WHERE 1=1
+            """
+            params = []
+
+            if search_term:
+                query += " AND (u.usuario LIKE %s OR u.email LIKE %s)"
+                search_pattern = f"%{search_term}%"
+                params.extend([search_pattern, search_pattern])
+
+            if rol_filter:
+                query += " AND r.rol_id = %s"
+                params.append(rol_filter)
+            
+            if estado_filter != '':
+                query += " AND u.estado = %s"
+                params.append(estado_filter)
+
+            query += " ORDER BY u.usuario_id DESC LIMIT %s OFFSET %s"
+            params.extend([limit, offset])
+
+            cursor.execute(query, params)
+            usuarios = cursor.fetchall()
+            
+            usuarios_list = []
+            for row in usuarios:
+                usuarios_list.append({
+                    'usuario_id': row[0],
+                    'usuario': row[1],
+                    'email': row[2],
+                    'estado': row[3],
+                    'fecha_creacion': str(row[4]) if row[4] else None,
+                    'rol_id': row[5],
+                    'rol_nombre': row[6],
+                    'nombre_completo': row[7]
+                })
+            return usuarios_list
+    except Exception as ex:
+        print(f"Error al obtener usuarios: {ex}")
+        return []
+    finally:
+        if conexion:
+            conexion.close()
+
+def insert_usuario_admin(usuario, contrasena, email, id_rol, estado=1):
+    """
+    Inserta un nuevo usuario desde el panel administrativo
+    """
+    conexion = None
+    try:
+        # Verificar si el usuario o email ya existen
+        if get_usuario_by_username(usuario):
+            return {'success': False, 'message': 'El nombre de usuario ya existe'}
+        
+        if get_usuario_by_email(email):
+            return {'success': False, 'message': 'El email ya está registrado'}
+        
+        conexion = get_connection()
+        with conexion.cursor() as cursor:
+            contrasena_hash = hash_password(contrasena)
+            fecha_actual = date.today()
+            
+            sql = """
+                INSERT INTO USUARIO (usuario, contrasena, email, estado, fecha_creacion, id_rol)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (usuario, contrasena_hash, email, estado, fecha_actual, id_rol))
+            usuario_id = cursor.lastrowid
+            
+            conexion.commit()
+            return {'success': True, 'message': 'Usuario creado exitosamente', 'usuario_id': usuario_id}
+    except Exception as ex:
+        print(f"Error al insertar usuario: {ex}")
+        if conexion:
+            conexion.rollback()
+        return {'success': False, 'message': f'Error al crear usuario: {str(ex)}'}
+    finally:
+        if conexion:
+            conexion.close()
+
+def update_usuario_admin(usuario_id, usuario, email, id_rol, estado):
+    """
+    Actualiza un usuario desde el panel administrativo
+    """
+    conexion = None
+    try:
+        conexion = get_connection()
+        with conexion.cursor() as cursor:
+            # Verificar que el usuario existe
+            cursor.execute("SELECT COUNT(*) FROM USUARIO WHERE usuario_id = %s", (usuario_id,))
+            if cursor.fetchone()[0] == 0:
+                return {'success': False, 'message': 'El usuario no existe'}
+            
+            # Verificar que el nombre de usuario no esté en uso por otro usuario
+            cursor.execute("SELECT COUNT(*) FROM USUARIO WHERE usuario = %s AND usuario_id != %s", (usuario, usuario_id))
+            if cursor.fetchone()[0] > 0:
+                return {'success': False, 'message': 'El nombre de usuario ya está en uso'}
+            
+            # Verificar que el email no esté en uso por otro usuario
+            cursor.execute("SELECT COUNT(*) FROM USUARIO WHERE email = %s AND usuario_id != %s", (email, usuario_id))
+            if cursor.fetchone()[0] > 0:
+                return {'success': False, 'message': 'El email ya está en uso'}
+            
+            # Actualizar usuario
+            sql = """
+                UPDATE USUARIO 
+                SET usuario = %s, email = %s, id_rol = %s, estado = %s
+                WHERE usuario_id = %s
+            """
+            cursor.execute(sql, (usuario, email, id_rol, estado, usuario_id))
+            conexion.commit()
+            return {'success': True, 'message': 'Usuario actualizado exitosamente'}
+    except Exception as ex:
+        print(f"Error al actualizar usuario: {ex}")
+        if conexion:
+            conexion.rollback()
+        return {'success': False, 'message': f'Error al actualizar usuario: {str(ex)}'}
+    finally:
+        if conexion:
+            conexion.close()
+
+def resetear_contrasena_admin(usuario_id, nueva_contrasena):
+    """
+    Resetea la contraseña de un usuario (solo administrador)
+    """
+    conexion = None
+    try:
+        conexion = get_connection()
+        with conexion.cursor() as cursor:
+            # Verificar que el usuario existe
+            cursor.execute("SELECT COUNT(*) FROM USUARIO WHERE usuario_id = %s", (usuario_id,))
+            if cursor.fetchone()[0] == 0:
+                return {'success': False, 'message': 'El usuario no existe'}
+            
+            # Actualizar contraseña
+            contrasena_hash = hash_password(nueva_contrasena)
+            sql = "UPDATE USUARIO SET contrasena = %s WHERE usuario_id = %s"
+            cursor.execute(sql, (contrasena_hash, usuario_id))
+            conexion.commit()
+            return {'success': True, 'message': 'Contraseña reseteada exitosamente'}
+    except Exception as ex:
+        print(f"Error al resetear contraseña: {ex}")
+        if conexion:
+            conexion.rollback()
+        return {'success': False, 'message': f'Error al resetear contraseña: {str(ex)}'}
+    finally:
+        if conexion:
+            conexion.close()
+
+def eliminar_usuario_admin(usuario_id):
+    """
+    Elimina un usuario (versión administrativa)
+    Elimina el usuario y todos sus datos asociados
+    """
+    return eliminar_usuario(usuario_id)
+
 def eliminar_usuario(usuario_id):
     """
     Elimina un usuario y todos sus datos asociados (cliente o empleado)
