@@ -355,7 +355,8 @@ const habitaciones = selectedRooms.map(roomId => {
     };
 });
 
-return {
+
+  return {
     cliente: clientData,
     habitaciones: habitaciones,
     total: total,
@@ -363,8 +364,12 @@ return {
     fecha_ingreso: fecha_ingreso,
     hora_ingreso: hora_ingreso,
     fecha_salida: fecha_salida,
-    hora_salida: hora_salida
+    hora_salida: hora_salida,
+    bandera: banderita,
+    usuario_id: usuarioId
 };
+
+
 }
 // Rellena el resumen con las habitaciones seleccionadas y el total
 function populatePaymentSummary() {

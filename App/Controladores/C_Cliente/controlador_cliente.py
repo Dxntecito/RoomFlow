@@ -291,3 +291,23 @@ def registrar_cliente_juridico(cursor, cliente):
         print(f"❌ [ERROR en registrar_cliente_juridico]: {e}")
         traceback.print_exc()
         return None
+
+
+def buscar_cliente_por_idusuario(usuario_id):
+    if not usuario_id:
+        return None
+
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT c.cliente_id FROM CLIENTE c INNER JOIN USUARIO u ON u.cliente_id=c.cliente_id WHERE u.usuario_id = %s", (usuario_id,))
+            row = cursor.fetchone()
+            return row[0] if row else None
+    except Exception as e:
+        print(f"❌ [ERROR en buscar_cliente_por_usuario]: {e}")
+        traceback.print_exc()
+        return None
+    finally:
+        if connection:
+            connection.close()

@@ -5,7 +5,7 @@ from flask import jsonify, request
 import traceback
 import App.Controladores.C_Cliente.controlador_cliente as controller_client 
 from App.Controladores.C_Cliente.controlador_cliente import (guardar_cliente, buscar_cliente_natural, buscar_cliente_juridico, registrar_cliente_natural,registrar_cliente_juridico)
-def guardar_reserva(data):
+def guardar_reserva_s_usuario(data):
     """
     Guarda una reserva completa:
       - Valida el payload
@@ -83,6 +83,90 @@ def guardar_reserva(data):
                 if not cliente_id:
                     raise ValueError("❌ No se pudo registrar cliente")
 
+            # --- Insertar RESERVA ---
+            total_val = float(total) if total not in (None, '') else 0.0
+            cursor.execute("""
+                INSERT INTO RESERVA (
+                    fecha_registro, hora_registro, cliente_id, monto_total, estado,
+                    fecha_ingreso, hora_ingreso, fecha_salida, hora_salida, tipo_reserva
+                ) VALUES (CURDATE(), CURTIME(), %s, %s, 1, %s, %s, %s, %s, 'H')
+            """, (cliente_id, total_val, fecha_ingreso, hora_ingreso, fecha_salida, hora_salida))
+
+            reserva_id = cursor.lastrowid  # 👈 obtenemos el ID de la reserva
+            print(f"✅ RESERVA insertada con ID: {reserva_id}")
+
+            # --- Insertar habitaciones y huéspedes ---
+            for habitacion in habitaciones:
+                habitacion_id = habitacion.get('id_habitacion') or habitacion.get('id')
+                if not habitacion_id:
+                    raise ValueError("Falta id_habitacion en habitaciones")
+
+                cursor.execute(
+                    "INSERT INTO RESERVA_HABITACION (reserva_id, habitacion_id) VALUES (%s, %s)",
+                    (reserva_id, habitacion_id)
+                )
+                reserva_hab_id = cursor.lastrowid
+                print(f"  -> RESERVA_HABITACION creada ID={reserva_hab_id}")
+
+                for huesped in habitacion.get('huespedes', []):
+                    doc = huesped.get('documento') or huesped.get('num_doc')
+                    nombre = huesped.get('nombre') or huesped.get('nombres', '')
+                    ape_pat = huesped.get('apellido') or huesped.get('ape_paterno', '')
+                    ape_mat = huesped.get('ape_materno', '')
+
+                    cursor.execute("""
+                        INSERT INTO HUESPED (num_doc, nombre, ape_paterno, ape_materno, id_cliente, reserva_habitacion_id)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (doc, nombre, ape_pat, ape_mat, cliente_id, reserva_hab_id))
+                    print(f"    -> HUESPED insertado para hab {habitacion_id}")
+
+            # --- Guardar cambios ---
+            connection.commit()
+            print("💾 Cambios confirmados correctamente")
+            return reserva_id  # 👈 devolvemos el id sí o sí
+
+    except Exception as e:
+        print(f"❌ [ERROR guardar_reserva]: {e}")
+        traceback.print_exc()
+        if connection:
+            connection.rollback()
+        return None
+
+    finally:
+        if connection:
+            connection.close()
+            print("🔚 Conexión cerrada correctamente")
+
+def guardar_reserva_c_usuario(data):
+    """
+    Guarda una reserva completa:
+      - Valida el payload
+      - Inserta reserva, habitaciones y huéspedes
+      - Devuelve reserva_id si todo fue exitoso
+    """
+    connection = None
+    reserva_id = None  # 👈 inicializamos aquí
+
+    try:
+        connection = get_connection()
+        print("✅ Conexión obtenida correctamente")
+
+        with connection.cursor() as cursor:
+            # --- Validación del payload ---
+            if not isinstance(data, dict):
+                raise ValueError("Payload inválido: se esperaba un objeto JSON/dict")
+
+            usuario_id =data.get('usuario_id')
+            habitaciones = data.get('habitaciones', [])
+            fecha_ingreso = data.get('fecha_ingreso')
+            hora_ingreso = data.get('hora_ingreso')
+            fecha_salida = data.get('fecha_salida')
+            hora_salida = data.get('hora_salida')
+            total = data.get('total', 0)
+            print(f"📦 Habitaciones recibidas: {len(habitaciones)}")
+
+            cliente_id = controller_client.buscar_cliente_por_idusuario(usuario_id)
+            print(f"Cliente_id encontrado {cliente_id}")
             # --- Insertar RESERVA ---
             total_val = float(total) if total not in (None, '') else 0.0
             cursor.execute("""
