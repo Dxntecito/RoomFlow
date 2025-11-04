@@ -1,6 +1,6 @@
 const paymentMethodInputs = document.getElementsByName("payment_method");
 const step4El = document.getElementById("step4");
-const backToStep3Btn = document.getElementById("back_to_step3");
+
 const processPaymentBtn = document.getElementById("process_payment");
 const paymentItemsDiv = document.getElementById("payment_items");
 const paymentTotalAmount = document.getElementById("payment_total_amount");
@@ -120,159 +120,161 @@ if (method === 'card') {
 
 // Mostrar resumen actualizado
 populatePaymentSummary();
-alert("Pago validado (simulado). A continuación podrá finalizar la reserva.");
-if (finalizarReservaBtn) {
-console.log("[PAGO] Ejecutando automáticamente click en Finalizar Reserva...");
 finalizarReservaBtn.click();
-} else {
-console.warn("[PAGO] No se encontró el botón finalizarReservaBtn en el DOM.");
-}
 
 console.groupEnd();
 });
 // --- finalizarReservaBtn: flujo completo (guardar reserva -> guardar transaccion -> generar comprobante) ---
+
 if (finalizarReservaBtn) {
-finalizarReservaBtn.addEventListener("click", async () => {
+  finalizarReservaBtn.addEventListener("click", async () => {
+    // === MOSTRAR MODAL DE PROCESAMIENTO ===
+    const modal = document.getElementById("paymentModal");
+    const loader = document.getElementById("loader");
+    const status = document.getElementById("paymentStatus");
+
+    modal.style.display = "flex";
+    loader.style.display = "block";
+    status.textContent = "Procesando pago...";
+    status.classList.remove("success");
+
     finalizarReservaBtn.disabled = true;
     finalizarReservaBtn.textContent = "Guardando reserva...";
     console.group("%c[FINALIZAR] Inicio del flujo guardar_reserva -> transaccion -> comprobante", "color: blue; font-weight: bold;");
 
-    // RECOLECTAR datos de reserva (usa tu función existente)
+    // RECOLECTAR datos de reserva
     let dataReserva;
     try {
-    if (typeof recolectarDatosReserva !== 'function') throw new Error("recolectarDatosReserva() no encontrada");
-    dataReserva = recolectarDatosReserva();
-    console.log("[FINALIZAR] dataReserva:", dataReserva);
+      if (typeof recolectarDatosReserva !== 'function') throw new Error("recolectarDatosReserva() no encontrada");
+      dataReserva = recolectarDatosReserva();
+      console.log("[FINALIZAR] dataReserva:", dataReserva);
     } catch (err) {
-    console.error("[FINALIZAR] Error construyendo dataReserva:", err);
-    alert("No se pudieron recolectar los datos de la reserva. Revisa la consola.");
-    finalizarReservaBtn.disabled = false;
-    finalizarReservaBtn.textContent = "Finalizar Reserva";
-    console.groupEnd();
-    return;
+      console.error("[FINALIZAR] Error construyendo dataReserva:", err);
+      alert("No se pudieron recolectar los datos de la reserva. Revisa la consola.");
+      finalizarReservaBtn.disabled = false;
+      finalizarReservaBtn.textContent = "Finalizar Reserva";
+      modal.style.display = "none"; // cerrar modal si hay error
+      console.groupEnd();
+      return;
     }
 
-    // 1) Guardar reserva
+    // === 1) Guardar reserva ===
     let reservaId = null;
     try {
-    console.log("[FINALIZAR] Enviando request a /Rutas/TEMPLATES/guardar_reserva ...");
-    const resp = await fetch("/Rutas/TEMPLATES/guardar_reserva", {
+      console.log("[FINALIZAR] Enviando request a /Rutas/TEMPLATES/guardar_reserva ...");
+      const resp = await fetch("/Rutas/TEMPLATES/guardar_reserva", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataReserva)
-    });
+      });
 
-    const rawText = await resp.text();
-    console.log("[FINALIZAR] Response HTTP:", resp.status, resp.ok);
-    console.log("[FINALIZAR] Response RAW:", rawText);
+      const rawText = await resp.text();
+      console.log("[FINALIZAR] Response HTTP:", resp.status, resp.ok);
+      console.log("[FINALIZAR] Response RAW:", rawText);
 
-    let result;
-    try { result = JSON.parse(rawText); console.log("[FINALIZAR] JSON parseado:", result); }
-    catch (e) { console.error("[FINALIZAR] No se pudo parsear JSON:", e); alert("Respuesta inesperada del servidor. Revisa la consola."); throw e; }
+      let result;
+      try {
+        result = JSON.parse(rawText);
+        console.log("[FINALIZAR] JSON parseado:", result);
+      } catch (e) {
+        console.error("[FINALIZAR] No se pudo parsear JSON:", e);
+        alert("Respuesta inesperada del servidor. Revisa la consola.");
+        throw e;
+      }
 
-    if (resp.ok && result && result.success && result.reserva_id) {
+      if (resp.ok && result && result.success && result.reserva_id) {
         reservaId = result.reserva_id;
         console.log("[FINALIZAR] Reserva guardada OK. ID:", reservaId);
-    } else {
+      } else {
         console.error("[FINALIZAR] El backend devolvió un formato inesperado:", result);
         alert("Ocurrió un problema al guardar la reserva. Revisa la consola.");
         throw new Error("Formato de respuesta inválido al guardar reserva");
-    }
+      }
     } catch (errSave) {
-    console.error("[FINALIZAR] Error guardando reserva:", errSave);
-    finalizarReservaBtn.disabled = false;
-    finalizarReservaBtn.textContent = "Finalizar Reserva";
-    console.groupEnd();
-    return;
+      console.error("[FINALIZAR] Error guardando reserva:", errSave);
+      finalizarReservaBtn.disabled = false;
+      finalizarReservaBtn.textContent = "Finalizar Reserva";
+      modal.style.display = "none";
+      console.groupEnd();
+      return;
     }
 
+    // === 2) Guardar transacción ===
     const selectedPaymentRadio = document.querySelector('input[name="payment_method"]:checked');
     if (!selectedPaymentRadio) {
-    alert("Por favor, selecciona un método de pago antes de continuar.");
-    console.warn("⚠️ No se seleccionó ningún método de pago.");
-    return;
+      alert("Por favor, selecciona un método de pago antes de continuar.");
+      console.warn("⚠️ No se seleccionó ningún método de pago.");
+      modal.style.display = "none";
+      return;
     }
 
-    const selectedPaymentMethod = parseInt(selectedPaymentRadio.value); // 2 = Tarjeta, 3 = Billetera
-    const metodoPago = document.querySelector('input[name="payment_method"]:checked')?.value || 'card';
-    const metodoPagoId = (metodoPago === 'card') ? 1 : 2; // <-- adapta ids de METODO_PAGO en tu BD
+    const selectedPaymentMethod = parseInt(selectedPaymentRadio.value); 
     const FinalTotal = computeFinalTotal();
 
-    console.group("📦 Datos enviados a /Rutas/guardar_transaccion");
-    console.log("reservaId:", reservaId);
-    console.log("metodo_pago_id:", selectedPaymentMethod);
-    console.log("FinalTotal:", FinalTotal);
-    console.log("estado:", 1);
-    console.groupEnd();
-    // 2) Guardar transacción (si la reserva se guardó)
-    try {
-    // toma valores: método de pago y monto final
-    // --- Obtener método de pago seleccionado del grupo de radios ---
-    
+    try {    
+      console.log("[FINALIZAR] Enviando transacción:", { reservaId, selectedPaymentMethod, FinalTotal });
 
-
-    
-    console.log("[FINALIZAR] Enviando transacción:", { reservaId, metodoPago, metodoPagoId, FinalTotal });
-
-    const resp = await fetch("/Rutas/guardar_transaccion", {
+      const resp = await fetch("/Rutas/guardar_transaccion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-        reservaId: reservaId,
-        paymentMethodInputs: selectedPaymentMethod, // el controlador sabe mapear strings a ids
-        finalTotal: FinalTotal,
-        estado: 1
+          reservaId: reservaId,
+          paymentMethodInputs: selectedPaymentMethod,
+          finalTotal: FinalTotal,
+          estado: 1
         })
-    });
+      });
 
-    const transText = await resp.text();
-    console.log("[FINALIZAR] transResp HTTP:", resp.status, resp.ok);
-    console.log("[FINALIZAR] transResp RAW:", transText);
+      const transText = await resp.text();
+      console.log("[FINALIZAR] transResp HTTP:", resp.status, resp.ok);
+      console.log("[FINALIZAR] transResp RAW:", transText);
 
-    let transResult;
-    try { transResult = JSON.parse(transText); console.log("[FINALIZAR] transResult:", transResult); }
-    catch (e) { console.error("[FINALIZAR] No se parseó transResult:", e); throw e; }
+      let transResult;
+      try {
+        transResult = JSON.parse(transText);
+        console.log("[FINALIZAR] transResult:", transResult);
+      } catch (e) {
+        console.error("[FINALIZAR] No se parseó transResult:", e);
+        throw e;
+      }
 
-    if (!(resp.ok && transResult && (transResult.transaccion_id || transResult.success))) {
-        console.warn("[FINALIZAR] La creación de la transacción devolvió error o formato inesperado:", transResult);
-        // no abortamos el flujo — dependiendo de tu lógica puedes abortar aquí
+      if (!(resp.ok && transResult && (transResult.transaccion_id || transResult.success))) {
+        console.warn("[FINALIZAR] Error en la creación de transacción:", transResult);
         alert("Advertencia: No se pudo guardar la transacción correctamente.");
-    } else {
+      } else {
         console.log("[FINALIZAR] Transacción registrada OK:", transResult);
-    }
+      }
 
     } catch (errTrans) {
-    console.error("[FINALIZAR] Error guardando transacción:", errTrans);
-    alert("Error al guardar la transacción. Revisa la consola.");
-    // Continuamos para al menos generar el comprobante de la reserva
+      console.error("[FINALIZAR] Error guardando transacción:", errTrans);
+      alert("Error al guardar la transacción. Revisa la consola.");
     }
 
-    // 3) Generar comprobante (PDF) y mostrar paso 5
-  try {
-    if (step4El) step4El.style.display = "none";
-    if (step5El) step5El.style.display = "block";
-    if (comprobanteStatus) comprobanteStatus.textContent = "Generando comprobante...";
+    // === 3) Generar comprobante ===
+    try {
+      if (step4El) step4El.style.display = "none";
+      if (step5El) step5El.style.display = "block";
+      if (comprobanteStatus) comprobanteStatus.textContent = "Generando comprobante...";
 
-    console.log("[FINALIZAR] Solicitando PDF a /Rutas/crear_comprobante/" + encodeURIComponent(reservaId));
+      console.log("[FINALIZAR] Solicitando PDF a /Rutas/crear_comprobante/" + encodeURIComponent(reservaId));
 
-    const pdfResp = await fetch(`/Rutas/crear_comprobante/${encodeURIComponent(reservaId)}`, {
-      method: "GET",
-      headers: { "Accept": "application/pdf" }
-    });
+      const pdfResp = await fetch(`/Rutas/crear_comprobante/${encodeURIComponent(reservaId)}`, {
+        method: "GET",
+        headers: { "Accept": "application/pdf" }
+      });
 
-    if (!pdfResp.ok) {
-      const txt = await pdfResp.text();
-      console.error("[FINALIZAR] Error al generar PDF. Status:", pdfResp.status, "Body:", txt);
-      throw new Error("No se pudo generar el comprobante PDF");
-    }
+      if (!pdfResp.ok) {
+        const txt = await pdfResp.text();
+        console.error("[FINALIZAR] Error al generar PDF. Status:", pdfResp.status, "Body:", txt);
+        throw new Error("No se pudo generar el comprobante PDF");
+      }
 
-    const pdfBlob = await pdfResp.blob();
-    const pdfUrl = URL.createObjectURL(pdfBlob); // ✅ crear URL temporal del PDF
-    const filename = `Comprobante_${reservaId}.pdf`;
+      const pdfBlob = await pdfResp.blob();
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      const filename = `Comprobante_${reservaId}.pdf`;
 
-    // Mostrar botones
-    const downloadLink = document.getElementById("download_comprobante_link");
-    const openTabBtn = document.getElementById("open_comprobante_newtab");
+      const downloadLink = document.getElementById("download_comprobante_link");
+      const openTabBtn = document.getElementById("open_comprobante_newtab");
 
       if (downloadLink) {
         downloadLink.href = pdfUrl;
@@ -286,20 +288,27 @@ finalizarReservaBtn.addEventListener("click", async () => {
       }
 
       if (comprobanteStatus) comprobanteStatus.textContent = "Comprobante generado correctamente.";
-
       console.log("[FINALIZAR] Comprobante disponible:", filename);
 
-      } catch (errPdf) {
+      // ✅ Todo salió bien: mostrar mensaje de éxito en el modal
+      loader.style.display = "none";
+      status.textContent = "✅ Pago exitoso";
+      status.classList.add("success");
+
+      await new Promise(r => setTimeout(r, 1500)); // Espera 1.5s
+      modal.style.display = "none";
+
+    } catch (errPdf) {
       console.error("[FINALIZAR] Error generando comprobante:", errPdf);
       if (comprobanteStatus) comprobanteStatus.textContent = "Error generando comprobante. Intente descargar luego.";
       alert("Se produjo un error al generar el comprobante. Revisa la consola.");
-      }
+      modal.style.display = "none";
+    }
 
-
-      // Final: re-habilitar botón y mostrar mensaje
-      finalizarReservaBtn.disabled = false;
-      finalizarReservaBtn.textContent = "Finalizar Reserva";
-      alert("Proceso finalizado. Revisa el comprobante descargado o la consola para detalles.");
-      console.groupEnd();
+    finalizarReservaBtn.disabled = false;
+    finalizarReservaBtn.textContent = "Finalizar Reserva";
+    console.groupEnd();
   });
-  }
+}
+
+

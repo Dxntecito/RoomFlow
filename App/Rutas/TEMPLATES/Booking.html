@@ -224,14 +224,15 @@
   </div>
 
   <!-- PASO 4: Facturación / Pago (lo dejamos, pero lo ocultamos al guardar reserva) -->
-  <div id="step4" style="display:none;">
+  <!-- Tu contenido existente -->
+<div id="step4" style="display:none;">
   <h2>Facturación y pago</h2>
 
   <section id="payment_method_section">
     <label class="booking_label">Método de pago:</label>
     <div>
       <label><input type="radio" name="payment_method" value="2" checked> Tarjeta (crédito/débito)</label>
-      <label style="margin-left:1rem;"><input type="radio" name="payment_method" value="3"> Billetera electrónica</label>
+      <!-- <label style="margin-left:1rem;"><input type="radio" name="payment_method" value="3"> Billetera electrónica</label> -->
     </div>
   </section>
 
@@ -241,10 +242,20 @@
       <label class="booking_label">Titular</label>
       <input type="text" id="card_holder" placeholder="Nombre como en la tarjeta" required>
     </div>
-    <div>
-      <label class="booking_label">Número de tarjeta</label>
-      <input type="text" id="card_number" placeholder="1234 5678 9012 3456" maxlength="19" inputmode="numeric" required>
-    </div>
+    <div class="card-number-wrapper">
+  <label class="booking_label">Número de tarjeta</label>
+  <div class="card-input-container">
+    <input
+      type="text"
+      id="card_number"
+      placeholder="1234 5678 9012 3456"
+      maxlength="19"
+      inputmode="numeric"
+      required
+    >
+    <img id="card_logo" src="" alt="Card Logo" style="display:none;">
+  </div>
+</div>
     <div style="display:flex; gap:10px;">
       <div style="flex:1;">
         <label class="booking_label">Expiración (MM/AA)</label>
@@ -267,7 +278,15 @@
     <button type="button" id="back_to_step3">← Volver</button>
     <button type="button" id="process_payment">Realizar pago</button>
   </div>
+</div>
+
+<!-- 🌀 MODAL DE PROCESAMIENTO -->
+<div id="paymentModal" class="payment-modal">
+  <div class="payment-modal-content">
+    <div id="loader" class="loader"></div>
+    <h3 id="paymentStatus">Procesando pago...</h3>
   </div>
+</div>
 
   <!-- PASO 5: Comprobante / Descarga -->
   <div id="step5" style="display:none;">
@@ -290,6 +309,7 @@
 <script src="{{ url_for('static', filename='JS/Booking_functions.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking_validations.js') }}"></script>
 <script>
+  const backToStep3Btn = document.getElementById("back_to_step3");
   const usuarioId = {{ session.get('usuario_id') | tojson }};
   let banderita ="FALSE"
   let usuario_id= "0"
@@ -564,5 +584,42 @@ document.getElementById("volver_home").addEventListener("click", () => {
 });
 </script>
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const cardInput = document.getElementById("card_number");
+  const logo = document.getElementById("card_logo");
+
+  const cardPatterns = {
+    visa: /^4[0-9]{0,}$/,
+    mastercard: /^5[1-5][0-9]{0,}$/,
+    amex: /^3[47][0-9]{0,}$/
+  };
+
+  const logos = {
+    visa: "https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg",
+    mastercard: "https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg",
+    amex: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/640px-American_Express_logo_%282018%29.svg.png"
+  };
+
+  cardInput.addEventListener("input", () => {
+    let value = cardInput.value.replace(/\D/g, ""); // eliminar espacios/no dígitos
+    cardInput.value = value.replace(/(.{4})/g, "$1 ").trim(); // formatea con espacios
+
+    let found = false;
+    for (const [brand, pattern] of Object.entries(cardPatterns)) {
+      if (pattern.test(value)) {
+        logo.src = logos[brand];
+        logo.style.display = "block";
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      logo.style.display = "none";
+    }
+  });
+});
+</script>
 
 {% endblock %}

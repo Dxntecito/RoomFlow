@@ -653,3 +653,73 @@ input:checked + .slider:before {
     transform: translateY(0);
   }
 }
+
+/* ==== MODAL GENERAL ==== */
+.payment-modal {
+  display: none; /* Oculto por defecto */
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* ==== CONTENIDO ==== */
+.payment-modal-content {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  width: 300px;
+  transition: all 0.3s ease;
+}
+
+/* ==== CÍRCULO GIRATORIO ==== */
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #4caf50;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 20px;
+  animation: spin 1s linear infinite;
+}
+
+/* ==== ANIMACIÓN ==== */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ==== TEXTO ==== */
+#paymentStatus {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+/* ==== ESTILO DE ÉXITO ==== */
+.success {
+  color: #2ecc71;
+}
+.card-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+#card_number {
+  flex: 1;
+  padding-right: 50px; /* espacio para el logo */
+}
+
+#card_logo {
+  position: absolute;
+  right: 10px;
+  width: 40px;
+  height: auto;
+  transition: opacity 0.3s ease;
+  opacity: 0.8;
+}
