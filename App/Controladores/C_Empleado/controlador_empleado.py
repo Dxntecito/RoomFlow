@@ -1,12 +1,29 @@
 from bd import get_connection
 import hashlib
 from datetime import date
+import re
 
 def hash_password(password):
     """
     Hashea la contraseña usando SHA256
     """
     return hashlib.sha256(password.encode()).hexdigest()
+
+def validar_dni(dni):
+    """
+    Valida que el DNI tenga el formato correcto (8 dígitos numéricos)
+    """
+    if not dni:
+        return False, "El DNI es obligatorio"
+    
+    # Eliminar espacios en blanco
+    dni = dni.strip()
+    
+    # Verificar que tenga exactamente 8 dígitos
+    if not re.match(r'^\d{8}$', dni):
+        return False, "El DNI debe tener exactamente 8 dígitos numéricos"
+    
+    return True, ""
 
 def crear_usuario_para_empleado(cod_empleado, dni, email, empleado_id, connection):
     """
@@ -42,39 +59,6 @@ def crear_usuario_para_empleado(cod_empleado, dni, email, empleado_id, connectio
     except Exception as e:
         print(f"❌ Error al crear usuario: {e}")
         return False, f"Error al crear usuario: {str(e)}"
-
-def get_empleados(limit=10, offset=0, search_term='', rol_filter=''):
-    connection = get_connection()
-    try:
-        with connection.cursor() as cursor:
-            query = """
-                SELECT 
-                    e.empleado_id,
-                    e.nombres,
-                    e.ape_paterno,
-                    e.ape_materno,
-                    e.dni,
-                    e.movil,
-                    te.nombre_tipo AS tipo_empleado
-                FROM EMPLEADO e
-                INNER JOIN TIPO_EMPLEADO te ON e.tipo_empleado_id = te.tipo_id
-                WHERE (e.nombres LIKE %s OR e.ape_paterno LIKE %s)
-            """
-            params = [f"%{search_term}%", f"%{search_term}%"]
-
-            if rol_filter:
-                query += " AND te.tipo_id = %s"
-                params.append(rol_filter)
-
-            query += " LIMIT %s OFFSET %s"
-            params.extend([limit, offset])
-
-            cursor.execute(query, params)
-            empleados = cursor.fetchall()
-    finally:
-        connection.close()
-    return empleados
-
 
 def count_empleados(search_term='', rol_filter=''):
     connection = get_connection()
@@ -129,6 +113,14 @@ def insert_empleado_auto(dni, ape_paterno, ape_materno, nombres, sexo, movil, ti
     Insertar nuevo empleado con código generado automáticamente
     También crea automáticamente un usuario para el empleado
     """
+    # Validar formato de DNI
+    dni_valido, mensaje_error = validar_dni(dni)
+    if not dni_valido:
+        return False, mensaje_error, None
+    
+    # Normalizar DNI (eliminar espacios)
+    dni = dni.strip()
+    
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
@@ -169,14 +161,16 @@ def insert_empleado_auto(dni, ape_paterno, ape_materno, nombres, sexo, movil, ti
                 cod_empleado, dni, email, empleado_id, connection
             )
             
+            # Si falla la creación del usuario, hacer rollback
+            if not exito_usuario:
+                connection.rollback()
+                return False, f"Error al crear empleado: {mensaje_usuario}", None
+            
             connection.commit()
             
             # Mensaje de retorno
             mensaje = f"Empleado creado exitosamente con código: {cod_empleado}"
-            if exito_usuario:
-                mensaje += f"\n{mensaje_usuario}"
-            else:
-                mensaje += f"\nAdvertencia: {mensaje_usuario}"
+            mensaje += f"\n{mensaje_usuario}"
             
             return True, mensaje, cod_empleado
     except Exception as e:
@@ -190,6 +184,14 @@ def insert_empleado(cod_empleado, dni, ape_paterno, ape_materno, nombres, sexo, 
     Insertar nuevo empleado en la base de datos
     También crea automáticamente un usuario para el empleado
     """
+    # Validar formato de DNI
+    dni_valido, mensaje_error = validar_dni(dni)
+    if not dni_valido:
+        return False, mensaje_error
+    
+    # Normalizar DNI (eliminar espacios)
+    dni = dni.strip()
+    
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
@@ -222,59 +224,21 @@ def insert_empleado(cod_empleado, dni, ape_paterno, ape_materno, nombres, sexo, 
                 cod_empleado, dni, email, empleado_id, connection
             )
             
+            # Si falla la creación del usuario, hacer rollback
+            if not exito_usuario:
+                connection.rollback()
+                return False, f"Error al crear empleado: {mensaje_usuario}"
+            
             connection.commit()
             
             # Mensaje de retorno
             mensaje = "Empleado creado exitosamente"
-            if exito_usuario:
-                mensaje += f"\n{mensaje_usuario}"
-            else:
-                mensaje += f"\nAdvertencia: {mensaje_usuario}"
+            mensaje += f"\n{mensaje_usuario}"
             
             return True, mensaje
     except Exception as e:
         connection.rollback()
         return False, f"Error al crear empleado: {str(e)}"
-    finally:
-        connection.close()
-
-
-def update_empleado(empleado_id, cod_empleado, dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id):
-    """
-    Actualizar datos de empleado existente
-    """
-    connection = get_connection()
-    try:
-        with connection.cursor() as cursor:
-            # Verificar que el empleado existe
-            cursor.execute("SELECT COUNT(*) FROM EMPLEADO WHERE empleado_id = %s", (empleado_id,))
-            if cursor.fetchone()[0] == 0:
-                return False, "El empleado no existe"
-            
-            # Verificar que el DNI no esté en uso por otro empleado
-            cursor.execute("SELECT COUNT(*) FROM EMPLEADO WHERE dni = %s AND empleado_id != %s", (dni, empleado_id))
-            if cursor.fetchone()[0] > 0:
-                return False, "El DNI ya está en uso por otro empleado"
-            
-            # Verificar que el código de empleado no esté en uso por otro empleado
-            cursor.execute("SELECT COUNT(*) FROM EMPLEADO WHERE cod_empleado = %s AND empleado_id != %s", (cod_empleado, empleado_id))
-            if cursor.fetchone()[0] > 0:
-                return False, "El código de empleado ya está en uso"
-            
-            # Actualizar empleado
-            query = """
-                UPDATE EMPLEADO 
-                SET cod_empleado = %s, dni = %s, ape_paterno = %s, ape_materno = %s,
-                    nombres = %s, sexo = %s, movil = %s, tipo_empleado_id = %s
-                WHERE empleado_id = %s
-            """
-            cursor.execute(query, (cod_empleado, dni, ape_paterno, ape_materno, 
-                                  nombres, sexo, movil, tipo_empleado_id, empleado_id))
-            connection.commit()
-            return True, "Empleado actualizado exitosamente"
-    except Exception as e:
-        connection.rollback()
-        return False, f"Error al actualizar empleado: {str(e)}"
     finally:
         connection.close()
 
@@ -425,7 +389,7 @@ def get_turnos():
 def delete_empleado(empleado_id):
     """
     Eliminar empleado (eliminación física - DELETE FROM)
-    Elimina también todos los registros relacionados en DETALLE_TURNO
+    Verifica relaciones antes de eliminar y elimina todos los registros relacionados
     """
     connection = get_connection()
     try:
@@ -435,7 +399,23 @@ def delete_empleado(empleado_id):
             if cursor.fetchone()[0] == 0:
                 return False, "El empleado no existe"
             
-            # Primero, eliminar todos los registros relacionados en DETALLE_TURNO
+            # Verificar si tiene reservas asociadas
+            cursor.execute("SELECT COUNT(*) FROM RESERVA WHERE empleado_id = %s", (empleado_id,))
+            if cursor.fetchone()[0] > 0:
+                return False, "No se puede eliminar el empleado porque tiene reservas asociadas"
+            
+            # Verificar si tiene incidencias asociadas
+            cursor.execute("SELECT COUNT(*) FROM INCIDENCIA WHERE empleado_id = %s", (empleado_id,))
+            if cursor.fetchone()[0] > 0:
+                return False, "No se puede eliminar el empleado porque tiene incidencias asociadas"
+            
+            # Verificar si tiene usuario asociado
+            cursor.execute("SELECT COUNT(*) FROM USUARIO WHERE empleado_id = %s", (empleado_id,))
+            if cursor.fetchone()[0] > 0:
+                # Eliminar usuario asociado
+                cursor.execute("DELETE FROM USUARIO WHERE empleado_id = %s", (empleado_id,))
+            
+            # Eliminar todos los registros relacionados en DETALLE_TURNO
             cursor.execute("DELETE FROM DETALLE_TURNO WHERE empleado_id = %s", (empleado_id,))
             
             # Luego, eliminar el empleado
@@ -453,6 +433,14 @@ def update_empleado(empleado_id, dni, ape_paterno, ape_materno, nombres, sexo, m
     """
     Actualizar empleado existente
     """
+    # Validar formato de DNI
+    dni_valido, mensaje_error = validar_dni(dni)
+    if not dni_valido:
+        return False, mensaje_error
+    
+    # Normalizar DNI (eliminar espacios)
+    dni = dni.strip()
+    
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
@@ -489,8 +477,10 @@ def update_empleado(empleado_id, dni, ape_paterno, ape_materno, nombres, sexo, m
                         nuevo_codigo = f"{codigo_original}{contador:02d}"
                         contador += 1
                 else:
+                    # Si no cambió, mantener el código actual
                     nuevo_codigo = codigo_actual
             else:
+                # Si no se encontró el empleado (caso raro), generar código nuevo
                 nuevo_codigo = generar_codigo_empleado(tipo_empleado_id, dni)
             
             # Actualizar empleado
@@ -517,7 +507,7 @@ def update_empleado(empleado_id, dni, ape_paterno, ape_materno, nombres, sexo, m
     finally:
         connection.close()
 
-def get_empleados_activos(limit=10, offset=0, search_term='', rol_filter=''):
+def get_empleados(limit=10, offset=0, search_term='', rol_filter=''):
     """
     Obtener todos los empleados (tanto Activos como Inactivos)
     """

@@ -48,7 +48,7 @@ def Empleados():
     offset = (page - 1) * limit
     
     # Obtener empleados activos y total
-    empleados = controller_empleado.get_empleados_activos(limit, offset, search_term, rol_filter)
+    empleados = controller_empleado.get_empleados(limit, offset, search_term, rol_filter)
     total_empleados = controller_empleado.count_empleados(search_term, rol_filter)
     tipos_empleado = controller_empleado.get_tipos_empleado()
     
@@ -81,8 +81,10 @@ def CrearEmpleado():
             ape_materno = request.form.get('ape_materno')
             nombres = request.form.get('nombres')
             sexo = request.form.get('sexo')
-            movil = request.form.get('telefono')  # Cambio de 'movil' a 'telefono'
-            tipo_empleado_id = request.form.get('rol')  # Cambio de 'tipo_empleado_id' a 'rol'
+            # Aceptar tanto 'movil' como 'telefono' del formulario
+            movil = request.form.get('movil') or request.form.get('telefono')
+            # Aceptar tanto 'tipo_empleado_id' como 'rol' del formulario
+            tipo_empleado_id = request.form.get('tipo_empleado_id') or request.form.get('rol')
             email = request.form.get('email', None)  # Email opcional
             
             # Validar datos requeridos
@@ -113,7 +115,6 @@ def EditarEmpleado(empleado_id):
     if request.method == 'POST':
         try:
             # Obtener datos del formulario
-            cod_empleado = request.form.get('cod_empleado')
             dni = request.form.get('dni')
             ape_paterno = request.form.get('ape_paterno')
             ape_materno = request.form.get('ape_materno')
@@ -121,16 +122,17 @@ def EditarEmpleado(empleado_id):
             sexo = request.form.get('sexo')
             movil = request.form.get('movil')
             tipo_empleado_id = request.form.get('tipo_empleado_id')
+            estado = request.form.get('estado', 'Activo')  # Por defecto 'Activo' si no se proporciona
             
             # Validar datos requeridos
-            if not all([cod_empleado, dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id]):
+            if not all([dni, ape_paterno, ape_materno, nombres, sexo, movil, tipo_empleado_id]):
                 flash('Todos los campos son obligatorios', 'error')
                 return redirect(url_for('empleados.EditarEmpleado', empleado_id=empleado_id))
             
-            # Actualizar empleado
+            # Actualizar empleado (la función genera el código automáticamente)
             success, message = controller_empleado.update_empleado(
-                empleado_id, cod_empleado, dni, ape_paterno, ape_materno, 
-                nombres, sexo, movil, tipo_empleado_id
+                empleado_id, dni, ape_paterno, ape_materno, 
+                nombres, sexo, movil, tipo_empleado_id, estado
             )
             if success:
                 flash(message, 'success')
@@ -174,9 +176,11 @@ def ActualizarEmpleado(empleado_id):
             ape_materno = request.form.get('ape_materno')
             nombres = request.form.get('nombres')
             dni = request.form.get('dni')
-            movil = request.form.get('telefono')  # Cambio de 'movil' a 'telefono'
+            # Aceptar tanto 'movil' como 'telefono' del formulario
+            movil = request.form.get('movil') or request.form.get('telefono')
             sexo = request.form.get('sexo')
-            tipo_empleado_id = request.form.get('rol')  # Cambio de 'tipo_empleado_id' a 'rol'
+            # Aceptar tanto 'tipo_empleado_id' como 'rol' del formulario
+            tipo_empleado_id = request.form.get('tipo_empleado_id') or request.form.get('rol')
             estado = request.form.get('estado')
             
             # Validar datos requeridos
@@ -223,10 +227,9 @@ def RegistroEmpleado():
                 flash('Todos los campos son obligatorios', 'error')
                 return redirect(url_for('empleados.RegistroEmpleado'))
             
-            # Insertar empleado (usando DNI como código temporal)
-            success, message = controller_empleado.insert_empleado(
-                num_documento, num_documento, ape_paterno, ape_materno, 
-                nombres, 'M', movil, tipo_empleado_id
+            # Insertar empleado con código generado automáticamente
+            success, message, cod_empleado = controller_empleado.insert_empleado_auto(
+                num_documento, ape_paterno, ape_materno, nombres, 'M', movil, tipo_empleado_id, email
             )
             if success:
                 flash(message, 'success')
@@ -252,8 +255,12 @@ def AsignarTurno(empleado_id):
                 flash('Debe seleccionar un turno', 'error')
                 return redirect(url_for('empleados.AsignarTurno', empleado_id=empleado_id))
             
-            # TODO: Implementar lógica de asignación de turnos en la BD
-            flash('Turno asignado exitosamente', 'success')
+            # Asignar turno usando el controlador
+            success, message = controller_empleado.asignar_turno_empleado(empleado_id, turno_id)
+            if success:
+                flash(message, 'success')
+            else:
+                flash(message, 'error')
             return redirect(url_for('empleados.Empleados'))
         except Exception as ex:
             flash(f'Error: {str(ex)}', 'error')
@@ -264,12 +271,8 @@ def AsignarTurno(empleado_id):
         flash('Empleado no encontrado', 'error')
         return redirect(url_for('empleados.Empleados'))
     
-    # Obtener turnos disponibles (simulado)
-    turnos = [
-        (1, 'Mañana'),
-        (2, 'Tarde'),
-        (3, 'Noche')
-    ]
+    # Obtener turnos disponibles desde la base de datos
+    turnos = controller_empleado.get_turnos()
     
     return render_template("AsignarTurno.html", empleado=empleado, turnos=turnos)
 
@@ -281,7 +284,7 @@ def api_empleados():
     """
     try:
         # Obtener todos los empleados activos
-        empleados = controller_empleado.get_empleados_activos(limit=100, offset=0, search_term='', rol_filter='')
+        empleados = controller_empleado.get_empleados(limit=100, offset=0, search_term='', rol_filter='')
         tipos_empleado = controller_empleado.get_tipos_empleado()
         
         # Crear diccionario de tipos para mapear IDs a nombres
