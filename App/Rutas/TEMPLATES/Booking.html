@@ -83,38 +83,47 @@
     </div>
 
     <table id="booking_room_available" class="booking_label" border="1">
-      <thead>
-        <tr>
-          <th>Piso</th>
-          <th>N° Habitación</th>
-          <th>Categoría</th>
-          <th>Capacidad</th>
-          <th>Precio</th>
-          <th>Reservar</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for room in rooms %}
-        <tr class="room-row" data-floor="{{ room[4] }}" data-category="{{ room[3] }}">
-          {% for floor in floors %}
+  <thead>
+    <tr>
+      <th>Piso</th>
+      <th>N° Habitación</th>
+      <th>Categoría</th>
+      <th>Capacidad</th>
+      <th>Precio</th>
+      <th>Reservar</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% if rooms|length == 0 %}
+    <tr>
+      <td colspan="6" style="text-align: center; padding: 40px; color: #999;"> 
+        <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+        No se encontraron Habitaciones disponibles, intente con otra fecha.
+      </td>
+    </tr>
+    {% else %}
+      {% for room in rooms %}
+      <tr class="room-row" data-floor="{{ room[4] }}" data-category="{{ room[3] }}">
+        {% for floor in floors %}
           {% if room[4] == floor[0] %}
           <td>Piso {{ floor[1] }}</td>
           {% endif %}
-          {% endfor %}
-          <td>{{ room[1] }}</td>
-          {% for category in categories %}
+        {% endfor %}
+        <td>{{ room[1] }}</td>
+        {% for category in categories %}
           {% if room[3] == category[0] %}
           <td>{{ category[1] }}</td>
           <td>{{ category[4] }} Personas</td>
           {% endif %}
-          {% endfor %}
-          <td class="price" data-room-id="{{ room[0] }}">{{ room[5] }}</td>
-          <td><input class="checkbox_booking" type="checkbox" name="booking_{{ room[0] }}" value="{{ room[0] }}"
-                      id="checkbox_booking_{{ room[0] }}"></td>
-        </tr>
         {% endfor %}
-      </tbody>
-    </table>
+        <td class="price" data-room-id="{{ room[0] }}">{{ room[5] }}</td>
+        <td><input class="checkbox_booking" type="checkbox" name="booking_{{ room[0] }}" value="{{ room[0] }}" id="checkbox_booking_{{ room[0] }}"></td>
+      </tr>
+      {% endfor %}
+    {% endif %}
+  </tbody>
+</table>
+
   </div>
 
   <!-- PASO 2: Registro de cliente -->

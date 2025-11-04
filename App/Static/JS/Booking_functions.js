@@ -224,7 +224,7 @@ function bindYoMeHospedareControls() {
   const TIPO_CLIENTE_VAL = document.getElementById("tipo_cliente_switch");
   const juridico_VAL = TIPO_CLIENTE_VAL.checked;
   // ✅ Si se cumple cierta condición, ocultar todos los checkboxes
-  if (juridico_VAL) {
+  if (juridico_VAL || usuarioId) {
     checkboxes.forEach(cb => {
       cb.style.display = "none";
       const lab = document.querySelector(`label[for="${cb.id}"]`);
@@ -292,22 +292,38 @@ function bindYoMeHospedareControls() {
 }
 //GENERACION DE CAMPOS SGEGUN CANTIDAD DE HUESPEDES
 function generarCamposHuespedes(roomId, cantidadManual = null) {
-const contenedor = document.getElementById(`huespedes_${roomId}`);
-const cantidad = cantidadManual ?? parseInt(document.getElementById(`numPersonas_${roomId}`)?.value) ?? 1;
-if (!contenedor) return;
-contenedor.innerHTML = "";
-for (let i = 1; i <= cantidad; i++) {
-    contenedor.innerHTML += `
-    <div class="huesped_card">
-        <h4>Huésped ${i}</h4>
-        <input class="nombre_huesped" placeholder="Nombre">
-        <input class="apellido_huesped" placeholder="Apellido Paterno">
-        <input class ="apellido_huesped_m" placeholder="Apellido Materno">
-        <input class="doc_huesped" placeholder="N° Documento" maxlength="8">
-    </div>
-    `;
+    const contenedor = document.getElementById(`huespedes_${roomId}`);
+    const cantidad = cantidadManual ?? parseInt(document.getElementById(`numPersonas_${roomId}`)?.value) ?? 1;
+    if (!contenedor) return;
+    contenedor.innerHTML = "";
+    
+    for (let i = 1; i <= cantidad; i++) {
+        contenedor.innerHTML += `
+        <div class="huesped_card">
+            <h4>Huésped ${i}</h4>
+            <input class="nombre_huesped" placeholder="Nombre" oninput="validarNombreApellido(this)">
+            <input class="apellido_huesped" placeholder="Apellido Paterno" oninput="validarNombreApellido(this)">
+            <input class="apellido_huesped_m" placeholder="Apellido Materno" oninput="validarNombreApellido(this)">
+            <input class="doc_huesped" placeholder="N° Documento" maxlength="8" oninput="validarDocumento(this)">
+        </div>
+        `;
+    }
 }
+
+// Validación para los campos de nombre y apellidos (no permitir números)
+function validarNombreApellido(input) {
+    const valor = input.value;
+    // Reemplaza cualquier número por nada
+    input.value = valor.replace(/[0-9]/g, '');
 }
+
+// Validación para el campo de documento (solo permitir números)
+function validarDocumento(input) {
+    const valor = input.value;
+    // Reemplaza cualquier letra o carácter no numérico por nada
+    input.value = valor.replace(/[^0-9]/g, '');
+}
+
 //RECOLECTAR TODOS LOS DATOS DE LA RESERVA PARA ENVIAR AL SERVIDOR
 function recolectarDatosReserva() {
 const fechaEntradaRaw = startDateInput?.value || null;
