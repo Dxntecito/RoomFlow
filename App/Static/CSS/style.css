@@ -102,6 +102,29 @@ body {
     overflow-x: hidden;
 }
 
+/* Medios e incrustados fluidos */
+img, svg, video, canvas, iframe {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Canvas de gráficos (Chart.js) auto-ajustable) */
+.chart-canvas,
+canvas.chart-canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Contenedor base y layout fluido */
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+}
+
 /* Utilidades de texto */
 .text-center { text-align: center; }
 .text-left { text-align: left; }
@@ -441,6 +464,11 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
+    .container {
+        padding-left: var(--spacing-md);
+        padding-right: var(--spacing-md);
+    }
+
     .btn {
         padding: var(--spacing-sm) var(--spacing-md);
         font-size: var(--font-size-sm);
@@ -460,3 +488,65 @@ body {
         --spacing-lg: 1rem;
     }
 }
+
+/* Tablas responsivas */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+    min-width: 640px; /* evita que se rompa la estructura en móviles */
+}
+
+/* Filas/columnas de formularios en mobile */
+@media (max-width: 768px) {
+    .booking_row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-md);
+    }
+
+    #divider { display: none; }
+}
+
+/* Utilidades responsivas */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-lg);
+}
+
+.col { flex: 1 1 0; }
+.col-25 { flex: 0 0 25%; }
+.col-33 { flex: 0 0 33.333%; }
+.col-50 { flex: 0 0 50%; }
+.col-66 { flex: 0 0 66.666%; }
+.col-75 { flex: 0 0 75%; }
+.col-100 { flex: 0 0 100%; }
+
+@media (max-width: 992px) {
+    .col-25, .col-33, .col-50, .col-66, .col-75 { flex: 0 0 50%; }
+}
+
+@media (max-width: 768px) {
+    .col-25, .col-33, .col-50, .col-66, .col-75 { flex: 0 0 100%; }
+}
+
+/* Ocultar/mostrar por breakpoint */
+.hide-sm { display: initial; }
+.show-sm { display: none; }
+
+@media (max-width: 768px) {
+    .hide-sm { display: none !important; }
+    .show-sm { display: initial !important; }
+}
+
+/* Cartas, paneles y bloques con ajuste automático */
+.card, .panel, .block {
+    width: 100%;
+    overflow: hidden;
+}
+
+
