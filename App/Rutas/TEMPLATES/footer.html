@@ -12,17 +12,17 @@
             <div class="footer-section">
                 <h4>Conócenos</h4>
                 <ul>
-                    <li><a href="#">Hostal Bolivar</a></li>
-                    <li><a href="#">Términos y condiciones</a></li>
-                    <li><a href="#">Únete</a></li>
+                    <li><a href="{{ url_for('Index') }}">Hostal Bolivar</a></li>
+                    <li><a href="#" onclick="mostrarTerminos(); return false;">Términos y condiciones</a></li>
+                    <li><a href="{{ url_for('usuarios.Registro') }}">Únete</a></li>
                 </ul>
             </div>
             
             <div class="footer-section">
                 <h4>Soporte</h4>
                 <ul>
-                    <li><a href="#">Feedback</a></li>
-                    <li><a href="#">Roomflow</a></li>
+                    <li><a href="#" onclick="mostrarFeedback(); return false;">Feedback</a></li>
+                    <li><a href="#" onclick="mostrarRoomflow(); return false;">Roomflow</a></li>
                 </ul>
             </div>
             
@@ -34,10 +34,10 @@
                     <p><i class="fas fa-map-marker-alt"></i> Ubicación: 363 Uruguay, José Leonardo Ortiz</p>
                 </div>
                 <div class="social-icons">
-                    <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
-                    <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="https://www.facebook.com/profile.php?id=100065181211438" target="_blank" rel="noopener noreferrer" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://x.com/BolivarHostal" target="_blank" rel="noopener noreferrer" class="social-icon"><i class="fab fa-twitter"></i></a>
+                    <a href="https://www.instagram.com/hotelbolivarsb/" target="_blank" rel="noopener noreferrer" class="social-icon"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.linkedin.com/in/alessandro-dante-cabrera-altamirano-13b573252/" target="_blank" rel="noopener noreferrer" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
                 </div>
             </div>
         </div>

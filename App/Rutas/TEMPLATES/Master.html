@@ -105,17 +105,17 @@
                 <div class="footer-section">
                     <h4>Conócenos</h4>
                     <ul>
-                        <li><a href="#">Hostal Bolivar</a></li>
-                        <li><a href="#">Términos y condiciones</a></li>
-                        <li><a href="#">Únete</a></li>
+                        <li><a href="{{ url_for('Index') }}">Hostal Bolivar</a></li>
+                        <li><a href="#" onclick="mostrarTerminos(); return false;">Términos y condiciones</a></li>
+                        <li><a href="{{ url_for('usuarios.Registro') }}">Únete</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-section">
                     <h4>Soporte</h4>
                     <ul>
-                        <li><a href="#">Feedback</a></li>
-                        <li><a href="#">Roomflow</a></li>
+                        <li><a href="#" onclick="mostrarFeedback(); return false;">Feedback</a></li>
+                        <li><a href="#" onclick="mostrarRoomflow(); return false;">Roomflow</a></li>
                     </ul>
                 </div>
 
@@ -127,10 +127,10 @@
                         <p><i class="fas fa-map-marker-alt"></i> Ubicación: 363 Uruguay, José Leonardo Ortiz</p>
                     </div>
                     <div class="social-icons">
-                        <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="https://www.facebook.com/profile.php?id=100065181211438" target="_blank" rel="noopener noreferrer" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://x.com/BolivarHostal" target="_blank" rel="noopener noreferrer" class="social-icon"><i class="fab fa-twitter"></i></a>
+                        <a href="https://www.instagram.com/hotelbolivarsb/" target="_blank" rel="noopener noreferrer" class="social-icon"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.linkedin.com/in/alessandro-dante-cabrera-altamirano-13b573252/" target="_blank" rel="noopener noreferrer" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
                     </div>
                 </div>
             </div>
@@ -326,8 +326,265 @@
         a.icon-btn:hover {
             text-decoration: none;
         }
+
+        /* Estilos para modales del footer */
+        .modal-footer {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content-footer {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 30px;
+            border: 2px solid #328336;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #328336;
+        }
+
+        .modal-header-footer h3 {
+            margin: 0;
+            color: #328336;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close-footer {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-footer:hover,
+        .close-footer:focus {
+            color: #328336;
+        }
+
+        .modal-body-footer {
+            margin-top: 20px;
+            line-height: 1.8;
+        }
+
+        .modal-body-footer h4 {
+            color: #328336;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .modal-body-footer h5 {
+            color: #2c3e50;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .modal-body-footer p {
+            color: #555;
+            margin-bottom: 12px;
+        }
+
+        .modal-body-footer ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .modal-body-footer li {
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .modal-body-footer a {
+            color: #328336;
+            text-decoration: none;
+        }
+
+        .modal-body-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .equipo-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #328336;
+        }
+
+        .equipo-item h4 {
+            color: #328336;
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .equipo-item p {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .equipo-item i {
+            color: #328336;
+            width: 20px;
+        }
     </style>
 
+    <!-- Modales del Footer -->
+    <!-- Modal de Términos y Condiciones -->
+    <div id="modalTerminos" class="modal-footer">
+        <div class="modal-content-footer">
+            <div class="modal-header-footer">
+                <h3><i class="fas fa-shield-alt"></i> Términos y Condiciones</h3>
+                <span class="close-footer" onclick="cerrarModalFooter('modalTerminos')">&times;</span>
+            </div>
+            <div class="modal-body-footer">
+                <h4>Seguridad de Datos</h4>
+                <p>En HOSTAL BOLÍVAR nos comprometemos a proteger la privacidad y seguridad de los datos personales de nuestros usuarios y clientes.</p>
+                
+                <h5>1. Recopilación de Información</h5>
+                <p>Recopilamos información personal necesaria para brindar nuestros servicios, incluyendo nombre, documento de identidad, información de contacto y datos de reservas.</p>
+                
+                <h5>2. Uso de la Información</h5>
+                <p>La información recopilada se utiliza exclusivamente para:</p>
+                <ul>
+                    <li>Procesar y gestionar reservas</li>
+                    <li>Comunicarnos con los clientes sobre sus servicios</li>
+                    <li>Mejorar nuestros servicios</li>
+                    <li>Cumplir con obligaciones legales</li>
+                </ul>
+                
+                <h5>3. Protección de Datos</h5>
+                <p>Implementamos medidas de seguridad técnicas y organizativas para proteger los datos personales contra acceso no autorizado, pérdida o destrucción.</p>
+                
+                <h5>4. Compartir Información</h5>
+                <p>No compartimos información personal con terceros, excepto cuando sea necesario para cumplir con servicios contratados o requerimientos legales.</p>
+                
+                <h5>5. Derechos del Usuario</h5>
+                <p>Los usuarios tienen derecho a acceder, rectificar, eliminar o oponerse al tratamiento de sus datos personales. Para ejercer estos derechos, contáctenos a través de los canales oficiales.</p>
+                
+                <h5>6. Cookies y Tecnologías Similares</h5>
+                <p>Utilizamos cookies para mejorar la experiencia del usuario. Puede configurar su navegador para rechazar cookies, aunque esto puede afectar la funcionalidad del sitio.</p>
+                
+                <h5>7. Cambios en los Términos</h5>
+                <p>Nos reservamos el derecho de modificar estos términos. Los cambios serán notificados a través de nuestro sitio web.</p>
+                
+                <p><strong>Última actualización:</strong> Noviembre 2025</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Feedback (Equipo de Desarrollo) -->
+    <div id="modalFeedback" class="modal-footer">
+        <div class="modal-content-footer">
+            <div class="modal-header-footer">
+                <h3><i class="fas fa-users"></i> Equipo de Desarrollo - Feedback</h3>
+                <span class="close-footer" onclick="cerrarModalFooter('modalFeedback')">&times;</span>
+            </div>
+            <div class="modal-body-footer">
+                <p style="margin-bottom: 20px;">Contacta al equipo de desarrollo del software:</p>
+                
+                <div class="equipo-item">
+                    <h4><i class="fas fa-user"></i> Dante Cabrera Altamirano</h4>
+                    <p><i class="fas fa-phone"></i> <a href="tel:+51952225506">+51 952 225 506</a></p>
+                    <p><i class="fas fa-envelope"></i> <a href="mailto:alessandrodjunior28@gmail.com">alessandrodjunior28@gmail.com</a></p>
+                </div>
+
+                <div class="equipo-item">
+                    <h4><i class="fas fa-user"></i> Anny Cotos Tasilla</h4>
+                    <p><i class="fas fa-phone"></i> <a href="tel:+51912095950">+51 912 095 950</a></p>
+                    <p><i class="fas fa-envelope"></i> <a href="mailto:cotosany_07@gmail.com">cotosany_07@gmail.com</a></p>
+                </div>
+
+                <div class="equipo-item">
+                    <h4><i class="fas fa-user"></i> Felix Zuñiga Aponte</h4>
+                    <p><i class="fas fa-phone"></i> <a href="tel:+51960700508">+51 960 700 508</a></p>
+                    <p><i class="fas fa-envelope"></i> <a href="mailto:felixgatita69@gmail.com">felixgatita69@gmail.com</a></p>
+                </div>
+
+                <div class="equipo-item">
+                    <h4><i class="fas fa-user"></i> Valentino Ancajima Camacho</h4>
+                    <p><i class="fas fa-phone"></i> <a href="tel:+51978613407">+51 978 613 407</a></p>
+                    <p><i class="fas fa-envelope"></i> <a href="mailto:ancajimaosuplayer777@gmail.com">ancajimaosuplayer777@gmail.com</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Roomflow (Dueño del Hotel) -->
+    <div id="modalRoomflow" class="modal-footer">
+        <div class="modal-content-footer">
+            <div class="modal-header-footer">
+                <h3><i class="fas fa-building"></i> Roomflow - Dueño del Hotel</h3>
+                <span class="close-footer" onclick="cerrarModalFooter('modalRoomflow')">&times;</span>
+            </div>
+            <div class="modal-body-footer">
+                <p style="margin-bottom: 20px;">Contacta al dueño del hotel:</p>
+                
+                <div class="equipo-item">
+                    <h4><i class="fas fa-user-tie"></i> Ramiro Cabrera Estela</h4>
+                    <p><i class="fas fa-phone"></i> <a href="tel:+51950038074">+51 950 038 074</a></p>
+                    <p><i class="fas fa-envelope"></i> <a href="mailto:ramiro_ce28@gmail.com">ramiro_ce28@gmail.com</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funciones para abrir modales del footer
+        function mostrarTerminos() {
+            document.getElementById('modalTerminos').style.display = 'block';
+        }
+
+        function mostrarFeedback() {
+            document.getElementById('modalFeedback').style.display = 'block';
+        }
+
+        function mostrarRoomflow() {
+            document.getElementById('modalRoomflow').style.display = 'block';
+        }
+
+        // Función para cerrar modales
+        function cerrarModalFooter(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Cerrar modal al hacer click fuera de él
+        window.onclick = function(event) {
+            const modals = ['modalTerminos', 'modalFeedback', 'modalRoomflow'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    </script>
 
 </body>
 

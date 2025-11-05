@@ -27,3 +27,4 @@ matplotlib
 reportlab 
 qrcode[pil] 
 pillow
+openpyxl>=3.1.0

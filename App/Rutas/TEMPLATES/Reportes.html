@@ -154,6 +154,17 @@
         border: 2px solid #328336;
     }
 
+    .info-card.clickeable {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .info-card.clickeable:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(50, 131, 54, 0.3);
+        border-color: #2a7033;
+    }
+
     .info-label {
         font-weight: 600;
         color: #6c757d;
@@ -165,6 +176,145 @@
         font-weight: 700;
         color: #328336;
         font-size: 28px;
+    }
+
+    /* Estilos para modales */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 25px;
+        border: 2px solid #328336;
+        border-radius: 15px;
+        width: 80%;
+        max-width: 700px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #328336;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: #328336;
+        font-size: 1.5rem;
+    }
+
+    .close {
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: color 0.3s;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: #328336;
+    }
+
+    .modal-body {
+        margin-top: 20px;
+    }
+
+    .lista-tablas {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .lista-tablas li {
+        padding: 12px;
+        margin: 8px 0;
+        background: #f8f9fa;
+        border-left: 4px solid #328336;
+        border-radius: 5px;
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+    }
+
+    .tabla-conexiones {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    .tabla-conexiones th,
+    .tabla-conexiones td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .tabla-conexiones th {
+        background-color: #328336;
+        color: white;
+        font-weight: 600;
+    }
+
+    .tabla-conexiones tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    /* Estilos para botones de exportación */
+    .btn-export {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-export-pdf {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+
+    .btn-export-pdf:hover {
+        background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+        color: white;
+    }
+
+    .btn-export-excel {
+        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        color: white;
+    }
+
+    .btn-export-excel:hover {
+        background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+        color: white;
+    }
+
+    .btn-export i {
+        font-size: 16px;
     }
 
     @media (max-width: 768px) {
@@ -189,6 +339,14 @@
     <div class="reportes-header">
         <h1><i class="fas fa-chart-bar" style="color: #328336;"></i> Reportes y Estadísticas</h1>
         <p>Información detallada del sistema Hostal Bolívar</p>
+        <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center;">
+            <a href="{{ url_for('reportes.exportar_pdf') }}" class="btn-export btn-export-pdf">
+                <i class="fas fa-file-pdf"></i> Exportar PDF
+            </a>
+            <a href="{{ url_for('reportes.exportar_excel') }}" class="btn-export btn-export-excel">
+                <i class="fas fa-file-excel"></i> Exportar Excel
+            </a>
+        </div>
     </div>
 
     <!-- Tarjetas de estadísticas -->
@@ -270,11 +428,68 @@
         </div>
     </div>
 
+    <!-- Sección de Análisis Financiero -->
+    <div class="charts-section">
+        <h2><i class="fas fa-dollar-sign"></i> Análisis Financiero</h2>
+        <div class="stats-container" style="margin-bottom: 30px;">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fff3e0;">
+                    <i class="fas fa-money-bill-wave" style="color: #FF6B35;"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="total-ingresos">S/ 0.00</h3>
+                    <p>Total Ingresos</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #e8f5e9;">
+                    <i class="fas fa-calculator" style="color: #388e3c;"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="promedio-reserva">S/ 0.00</h3>
+                    <p>Promedio por Reserva</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #e3f2fd;">
+                    <i class="fas fa-arrow-up" style="color: #1976d2;"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="reserva-maxima">S/ 0.00</h3>
+                    <p>Reserva Máxima</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #f3e5f5;">
+                    <i class="fas fa-arrow-down" style="color: #7b1fa2;"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="reserva-minima">S/ 0.00</h3>
+                    <p>Reserva Mínima</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-wrapper" style="grid-column: 1 / -1;">
+                <h3>Ingresos por Mes (Últimos 12 meses)</h3>
+                <canvas id="chartIngresosMes" class="chart-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
     <!-- Información de BD -->
     <div class="db-info-section">
         <h2><i class="fas fa-database"></i> Información de la Base de Datos</h2>
         <div class="info-grid">
             <div class="info-card">
+                <div class="info-label">Nombre de la base de datos</div>
+                <div class="info-value" id="db-name">-</div>
+            </div>
+            <div class="info-card clickeable" onclick="mostrarTablas()">
                 <div class="info-label">Tablas en la BD</div>
                 <div class="info-value" id="total-tablas">0</div>
             </div>
@@ -283,12 +498,54 @@
                 <div class="info-value" id="total-registros">0</div>
             </div>
             <div class="info-card">
-                <div class="info-label">Empleados Activos</div>
-                <div class="info-value" id="empleados-activos">0</div>
+                <div class="info-label">Versión MySQL</div>
+                <div class="info-value" id="db-version">-</div>
             </div>
             <div class="info-card">
-                <div class="info-label">Empleados por Turno</div>
-                <div class="info-value" id="empleados-turnos">-</div>
+                <div class="info-label">Charset</div>
+                <div class="info-value" id="db-charset">-</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Tamaño (MB)</div>
+                <div class="info-value" id="db-size">0</div>
+            </div>
+            <div class="info-card clickeable" onclick="mostrarConexiones()">
+                <div class="info-label">Conexiones Activas</div>
+                <div class="info-value" id="db-connections">0</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Total de Índices</div>
+                <div class="info-value" id="db-indices">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Lista de Tablas -->
+    <div id="modalTablas" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-table"></i> Lista de Tablas en la Base de Datos</h3>
+                <span class="close" onclick="cerrarModal('modalTablas')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <ul id="lista-tablas" class="lista-tablas">
+                    <li>Cargando...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Conexiones Activas -->
+    <div id="modalConexiones" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plug"></i> Conexiones Activas (SHOW PROCESSLIST)</h3>
+                <span class="close" onclick="cerrarModal('modalConexiones')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="contenido-conexiones">
+                    <p>Cargando...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -309,10 +566,8 @@
                     // Procesar datos de empleados tan pronto como lleguen
                     if (data.empleados) {
                         const total = data.empleados.length;
-                        const activos = data.empleados.filter(e => e.estado === 'Activo').length;
 
                         document.getElementById('total-empleados').textContent = total;
-                        document.getElementById('empleados-activos').textContent = activos;
 
                         // Datos para gráficos
                         const empleadosPorRol = {};
@@ -321,6 +576,7 @@
                         });
 
                         // Contar por estado
+                        const activos = data.empleados.filter(e => e.estado === 'Activo').length;
                         const inactivos = data.empleados.filter(e => e.estado === 'Inactivo').length;
 
                         // Crear gráficos
@@ -443,13 +699,13 @@
                 document.getElementById('total-tablas').textContent = stats.total_tablas || 0;
                 document.getElementById('total-registros').textContent = stats.total_registros || 0;
                 
-                // Actualizar empleados por turno
-                if (stats.empleados_por_turno) {
-                    const turnos = Object.entries(stats.empleados_por_turno)
-                        .map(([turno, cantidad]) => `${turno}: ${cantidad}`)
-                        .join(', ');
-                    document.getElementById('empleados-turnos').textContent = turnos || '0';
-                }
+                // Actualizar información de la BD
+                document.getElementById('db-name').textContent = stats.db_name || '-';
+                document.getElementById('db-version').textContent = stats.db_version || '-';
+                document.getElementById('db-charset').textContent = stats.db_charset || '-';
+                document.getElementById('db-size').textContent = stats.db_size ? stats.db_size.toFixed(2) : '0';
+                document.getElementById('db-connections').textContent = stats.db_connections || 0;
+                document.getElementById('db-indices').textContent = stats.db_indices || 0;
                 
                 // Crear gráficos
                 if (stats.reservas_por_estado && Object.keys(stats.reservas_por_estado).length > 0) {
@@ -474,6 +730,24 @@
                     crearGraficoReservasMes(stats.reservas_por_mes);
                 } else {
                     mostrarMensajeGraficoVacio('chartReservasMes', 'No hay datos de reservas por mes');
+                }
+                
+                // Actualizar estadísticas financieras
+                const totalIngresos = stats.total_ingresos || 0;
+                const promedioReserva = stats.promedio_reserva || 0;
+                const reservaMaxima = stats.reserva_maxima || 0;
+                const reservaMinima = stats.reserva_minima || 0;
+                
+                document.getElementById('total-ingresos').textContent = `S/ ${totalIngresos.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('promedio-reserva').textContent = `S/ ${promedioReserva.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('reserva-maxima').textContent = `S/ ${reservaMaxima.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('reserva-minima').textContent = `S/ ${reservaMinima.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                
+                // Crear gráfico de ingresos por mes
+                if (stats.ingresos_por_mes && Object.keys(stats.ingresos_por_mes).length > 0) {
+                    crearGraficoIngresosMes(stats.ingresos_por_mes);
+                } else {
+                    mostrarMensajeGraficoVacio('chartIngresosMes', 'No hay datos de ingresos por mes');
                 }
             } else {
                 console.error('Error al cargar estadísticas:', result.message);
@@ -593,6 +867,60 @@
         });
     }
 
+    // Función para crear gráfico de ingresos por mes
+    function crearGraficoIngresosMes(datos) {
+        const ctx = document.getElementById('chartIngresosMes').getContext('2d');
+        const labels = Object.keys(datos);
+        const values = Object.values(datos);
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Ingresos (S/)',
+                    data: values,
+                    backgroundColor: 'rgba(255, 107, 53, 0.2)',
+                    borderColor: 'rgba(255, 107, 53, 1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(255, 107, 53, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Ingresos: S/ ' + context.parsed.y.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'S/ ' + value.toLocaleString('es-PE');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     // Función para crear gráfico de reservas por estado
     function crearGraficoReservasPorEstado(datos) {
         const ctx = document.getElementById('chartReservas').getContext('2d');
@@ -696,6 +1024,97 @@
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(mensaje, width / 2, height / 2);
+    }
+
+    // Función para mostrar la lista de tablas
+    async function mostrarTablas() {
+        const modal = document.getElementById('modalTablas');
+        const lista = document.getElementById('lista-tablas');
+        
+        modal.style.display = 'block';
+        lista.innerHTML = '<li>Cargando...</li>';
+        
+        try {
+            const response = await fetch('/Cruds/Reportes/api/tablas');
+            const data = await response.json();
+            
+            if (data.success && data.tablas) {
+                lista.innerHTML = '';
+                data.tablas.forEach((tabla, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${index + 1}. ${tabla}`;
+                    lista.appendChild(li);
+                });
+            } else {
+                lista.innerHTML = '<li>Error al cargar las tablas</li>';
+            }
+        } catch (error) {
+            lista.innerHTML = '<li>Error al cargar las tablas: ' + error.message + '</li>';
+        }
+    }
+
+    // Función para mostrar las conexiones activas
+    async function mostrarConexiones() {
+        const modal = document.getElementById('modalConexiones');
+        const contenido = document.getElementById('contenido-conexiones');
+        
+        modal.style.display = 'block';
+        contenido.innerHTML = '<p>Cargando...</p>';
+        
+        try {
+            const response = await fetch('/Cruds/Reportes/api/conexiones');
+            const data = await response.json();
+            
+            if (data.success && data.conexiones) {
+                if (data.conexiones.length === 0) {
+                    contenido.innerHTML = '<p>No hay conexiones activas</p>';
+                } else {
+                    let html = '<table class="tabla-conexiones"><thead><tr>';
+                    
+                    // Obtener las columnas de la primera conexión
+                    const columnas = Object.keys(data.conexiones[0]);
+                    columnas.forEach(col => {
+                        html += `<th>${col}</th>`;
+                    });
+                    html += '</tr></thead><tbody>';
+                    
+                    // Agregar las filas
+                    data.conexiones.forEach(conexion => {
+                        html += '<tr>';
+                        columnas.forEach(col => {
+                            const valor = conexion[col] !== null ? conexion[col] : '-';
+                            html += `<td>${valor}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    
+                    html += '</tbody></table>';
+                    contenido.innerHTML = html;
+                }
+            } else {
+                contenido.innerHTML = '<p>Error al cargar las conexiones</p>';
+            }
+        } catch (error) {
+            contenido.innerHTML = '<p>Error al cargar las conexiones: ' + error.message + '</p>';
+        }
+    }
+
+    // Función para cerrar modales
+    function cerrarModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    // Cerrar modal al hacer click fuera de él
+    window.onclick = function(event) {
+        const modalTablas = document.getElementById('modalTablas');
+        const modalConexiones = document.getElementById('modalConexiones');
+        
+        if (event.target === modalTablas) {
+            modalTablas.style.display = 'none';
+        }
+        if (event.target === modalConexiones) {
+            modalConexiones.style.display = 'none';
+        }
     }
 </script>
 {% endblock %}
