@@ -964,6 +964,45 @@ def get_lista_tablas():
     finally:
         connection.close()
 
+def get_atributos_tabla(nombre_tabla):
+    """
+    Obtener los atributos (columnas) de una tabla específica
+    Retorna una lista de diccionarios con información de cada columna
+    """
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    COLUMN_NAME as nombre,
+                    DATA_TYPE as tipo_dato,
+                    CHARACTER_MAXIMUM_LENGTH as longitud_maxima,
+                    IS_NULLABLE as permite_nulo,
+                    COLUMN_KEY as clave,
+                    COLUMN_DEFAULT as valor_default,
+                    EXTRA as extra
+                FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_NAME = %s
+                ORDER BY ORDINAL_POSITION
+            """, (nombre_tabla,))
+            columnas = cursor.fetchall()
+            resultado = []
+            for col in columnas:
+                atributo = {
+                    'nombre': col[0],
+                    'tipo_dato': col[1],
+                    'longitud_maxima': col[2] if col[2] else None,
+                    'permite_nulo': col[3],
+                    'clave': col[4] if col[4] else '',
+                    'valor_default': col[5] if col[5] else None,
+                    'extra': col[6] if col[6] else ''
+                }
+                resultado.append(atributo)
+            return resultado
+    finally:
+        connection.close()
+
 def get_detalle_conexiones():
     """
     Obtener el detalle de todas las conexiones activas (SHOW PROCESSLIST)

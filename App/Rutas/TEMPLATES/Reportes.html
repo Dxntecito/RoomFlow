@@ -104,11 +104,12 @@
     .chart-wrapper {
         background: #f8f9fa;
         border-radius: 12px;
-        padding: 20px;
+        padding: 25px 20px 20px 20px;
     }
 
     .chart-wrapper h3 {
         margin: 0 0 20px 0;
+        padding-top: 0;
         font-size: 1.2rem;
         color: #2c3e50;
         font-weight: 600;
@@ -117,6 +118,20 @@
     .chart-canvas {
         max-width: 100%;
         height: 300px !important;
+    }
+
+    /* Espaciado específico para Empleados por Rol, Habitaciones por Categoría y Reservas por Mes */
+    #chartEmpleadosRol,
+    #chartHabitacionesCategoria,
+    #chartReservasMes {
+        margin-top: 200px !important;
+    }
+
+    /* Títulos específicos para estos gráficos - usando selectores de contexto */
+    .charts-grid > .chart-wrapper:nth-child(1) h3,
+    .charts-grid > .chart-wrapper:nth-child(5) h3,
+    .charts-grid > .chart-wrapper:nth-child(6) h3 {
+        margin-bottom: 200px !important;
     }
 
     /* Información de BD */
@@ -201,6 +216,7 @@
         max-width: 700px;
         max-height: 80vh;
         overflow-y: auto;
+        position: relative;
     }
 
     .modal-header {
@@ -249,6 +265,97 @@
         border-radius: 5px;
         font-family: 'Courier New', monospace;
         font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .lista-tablas li:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+        box-shadow: 0 2px 8px rgba(50, 131, 54, 0.2);
+    }
+
+    .atributos-tabla {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #328336;
+    }
+
+    .atributos-tabla h4 {
+        color: #328336;
+        margin-bottom: 15px;
+        font-size: 1.2rem;
+    }
+
+    .tabla-atributos {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    .tabla-atributos th,
+    .tabla-atributos td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+        font-size: 14px;
+    }
+
+    .tabla-atributos th {
+        background-color: #328336;
+        color: white;
+        font-weight: 600;
+    }
+
+    .tabla-atributos tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    .badge-clave {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #328336;
+        color: white;
+    }
+
+    .badge-tipo {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-volver-arriba {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        margin-top: 20px;
+        background: linear-gradient(135deg, #328336 0%, #2a7033 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(50, 131, 54, 0.3);
+    }
+
+    .btn-volver-arriba:hover {
+        background: linear-gradient(135deg, #2a7033 0%, #1f5a26 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(50, 131, 54, 0.4);
+    }
+
+    .btn-volver-arriba i {
+        font-size: 16px;
     }
 
     .tabla-conexiones {
@@ -531,6 +638,15 @@
                 <ul id="lista-tablas" class="lista-tablas">
                     <li>Cargando...</li>
                 </ul>
+                <div id="atributos-tabla" class="atributos-tabla" style="display: none;">
+                    <h4 id="titulo-atributos">Atributos de la tabla: <span id="nombre-tabla-actual"></span></h4>
+                    <div id="contenido-atributos"></div>
+                    <div style="text-align: center;">
+                        <button class="btn-volver-arriba" onclick="volverArribaModal()">
+                            <i class="fas fa-arrow-up"></i> Volver Arriba
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -552,6 +668,24 @@
 </div>
 
 <script>
+    // Configuración global de Chart.js para optimizar rendimiento
+    Chart.defaults.animation = false;
+    Chart.defaults.interaction.intersect = false;
+    Chart.defaults.responsive = false;
+    Chart.defaults.maintainAspectRatio = true;
+    Chart.defaults.interaction.mode = 'nearest';
+    // Solo eventos básicos, sin resize ni scroll
+    Chart.defaults.events = ['click', 'mousemove', 'mouseout'];
+    Chart.defaults.plugins.tooltip.enabled = true;
+    Chart.defaults.plugins.tooltip.animation = false;
+    Chart.defaults.layout = {
+        padding: 0
+    };
+    // Deshabilitar resize observer
+    if (typeof ResizeObserver !== 'undefined') {
+        // No hacer nada, Chart.js no debería usar ResizeObserver con responsive: false
+    }
+    
     // Cargar datos de reportes al cargar la página
     document.addEventListener('DOMContentLoaded', function () {
         cargarReportes();
@@ -567,21 +701,21 @@
                     if (data.empleados) {
                         const total = data.empleados.length;
 
-                        document.getElementById('total-empleados').textContent = total;
+                document.getElementById('total-empleados').textContent = total;
 
-                        // Datos para gráficos
-                        const empleadosPorRol = {};
+                // Datos para gráficos
+                const empleadosPorRol = {};
                         data.empleados.forEach(e => {
-                            empleadosPorRol[e.rol] = (empleadosPorRol[e.rol] || 0) + 1;
-                        });
+                    empleadosPorRol[e.rol] = (empleadosPorRol[e.rol] || 0) + 1;
+                });
 
-                        // Contar por estado
+                // Contar por estado
                         const activos = data.empleados.filter(e => e.estado === 'Activo').length;
                         const inactivos = data.empleados.filter(e => e.estado === 'Inactivo').length;
 
-                        // Crear gráficos
-                        crearGraficoEmpleadosRol(empleadosPorRol);
-                        crearGraficoEstadoEmpleados(activos, inactivos);
+                // Crear gráficos
+                crearGraficoEmpleadosRol(empleadosPorRol);
+                crearGraficoEstadoEmpleados(activos, inactivos);
                     }
                 })
                 .catch(error => {
@@ -633,8 +767,9 @@
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: false,
+                maintainAspectRatio: true,
+                animation: false,
                 plugins: {
                     legend: {
                         display: false
@@ -675,8 +810,9 @@
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: false,
+                maintainAspectRatio: true,
+                animation: false,
                 plugins: {
                     legend: {
                         position: 'bottom'
@@ -803,8 +939,9 @@
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: false,
+                maintainAspectRatio: true,
+                animation: false,
                 plugins: {
                     legend: {
                         display: false
@@ -848,8 +985,9 @@
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: false,
+                maintainAspectRatio: true,
+                animation: false,
                 plugins: {
                     legend: {
                         display: false
@@ -893,8 +1031,9 @@
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: false,
+                maintainAspectRatio: true,
+                animation: false,
                 plugins: {
                     legend: {
                         display: false
@@ -950,8 +1089,9 @@
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: false,
+                maintainAspectRatio: true,
+                animation: false,
                 plugins: {
                     legend: {
                         position: 'bottom'
@@ -990,8 +1130,9 @@
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: false,
+                maintainAspectRatio: true,
+                animation: false,
                 plugins: {
                     legend: {
                         position: 'bottom'
@@ -1030,9 +1171,11 @@
     async function mostrarTablas() {
         const modal = document.getElementById('modalTablas');
         const lista = document.getElementById('lista-tablas');
+        const atributosDiv = document.getElementById('atributos-tabla');
         
         modal.style.display = 'block';
         lista.innerHTML = '<li>Cargando...</li>';
+        atributosDiv.style.display = 'none';
         
         try {
             const response = await fetch('/Cruds/Reportes/api/tablas');
@@ -1043,6 +1186,8 @@
                 data.tablas.forEach((tabla, index) => {
                     const li = document.createElement('li');
                     li.textContent = `${index + 1}. ${tabla}`;
+                    li.onclick = () => mostrarAtributosTabla(tabla);
+                    li.title = `Haz clic para ver los atributos de ${tabla}`;
                     lista.appendChild(li);
                 });
             } else {
@@ -1050,6 +1195,82 @@
             }
         } catch (error) {
             lista.innerHTML = '<li>Error al cargar las tablas: ' + error.message + '</li>';
+        }
+    }
+
+    // Función para mostrar los atributos de una tabla
+    async function mostrarAtributosTabla(nombreTabla) {
+        const atributosDiv = document.getElementById('atributos-tabla');
+        const contenidoAtributos = document.getElementById('contenido-atributos');
+        const nombreTablaActual = document.getElementById('nombre-tabla-actual');
+        
+        atributosDiv.style.display = 'block';
+        nombreTablaActual.textContent = nombreTabla;
+        contenidoAtributos.innerHTML = '<p>Cargando atributos...</p>';
+        
+        // Hacer scroll hacia abajo para mostrar los atributos
+        setTimeout(() => {
+            atributosDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+        
+        try {
+            const response = await fetch(`/Cruds/Reportes/api/tablas/${nombreTabla}/atributos`);
+            const data = await response.json();
+            
+            if (data.success && data.atributos) {
+                let html = '<table class="tabla-atributos">';
+                html += '<thead><tr>';
+                html += '<th>Nombre</th>';
+                html += '<th>Tipo de Dato</th>';
+                html += '<th>Longitud</th>';
+                html += '<th>Permite NULL</th>';
+                html += '<th>Clave</th>';
+                html += '<th>Valor por Defecto</th>';
+                html += '<th>Extra</th>';
+                html += '</tr></thead><tbody>';
+                
+                data.atributos.forEach(atributo => {
+                    html += '<tr>';
+                    html += `<td><strong>${atributo.nombre}</strong></td>`;
+                    
+                    // Tipo de dato con longitud si aplica
+                    let tipoCompleto = atributo.tipo_dato;
+                    if (atributo.longitud_maxima) {
+                        tipoCompleto += `(${atributo.longitud_maxima})`;
+                    }
+                    html += `<td><span class="badge-tipo">${tipoCompleto}</span></td>`;
+                    
+                    html += `<td>${atributo.longitud_maxima ? atributo.longitud_maxima : '-'}</td>`;
+                    html += `<td>${atributo.permite_nulo === 'YES' ? 'Sí' : 'No'}</td>`;
+                    
+                    // Clave (PRIMARY KEY, UNIQUE, etc.)
+                    let claveHtml = '-';
+                    if (atributo.clave === 'PRI') {
+                        claveHtml = '<span class="badge-clave">PRIMARY KEY</span>';
+                    } else if (atributo.clave === 'UNI') {
+                        claveHtml = '<span class="badge-clave">UNIQUE</span>';
+                    } else if (atributo.clave === 'MUL') {
+                        claveHtml = '<span class="badge-clave">MULTIPLE</span>';
+                    }
+                    html += `<td>${claveHtml}</td>`;
+                    
+                    html += `<td>${atributo.valor_default !== null ? atributo.valor_default : '-'}</td>`;
+                    html += `<td>${atributo.extra ? atributo.extra : '-'}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                contenidoAtributos.innerHTML = html;
+                
+                // Hacer scroll nuevamente después de cargar los datos
+                setTimeout(() => {
+                    atributosDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 200);
+            } else {
+                contenidoAtributos.innerHTML = '<p>Error al cargar los atributos de la tabla</p>';
+            }
+        } catch (error) {
+            contenidoAtributos.innerHTML = '<p>Error al cargar los atributos: ' + error.message + '</p>';
         }
     }
 
@@ -1104,17 +1325,89 @@
         document.getElementById(modalId).style.display = 'none';
     }
 
+    // Función para volver arriba en el modal
+    function volverArribaModal() {
+        const modal = document.getElementById('modalTablas');
+        const modalContent = modal.querySelector('.modal-content');
+        const modalHeader = modal.querySelector('.modal-header');
+        
+        if (modalContent && modalHeader) {
+            // Hacer scroll suave hacia arriba del contenido del modal
+            modalContent.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+            
+            // Alternativa si scrollTo no funciona en algunos navegadores
+            modalHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
     // Cerrar modal al hacer click fuera de él
     window.onclick = function(event) {
         const modalTablas = document.getElementById('modalTablas');
         const modalConexiones = document.getElementById('modalConexiones');
         
+        // Cerrar modal de tablas si se hace clic en el fondo (no en el contenido)
         if (event.target === modalTablas) {
             modalTablas.style.display = 'none';
+            // Ocultar también los atributos al cerrar
+            const atributosDiv = document.getElementById('atributos-tabla');
+            if (atributosDiv) {
+                atributosDiv.style.display = 'none';
+            }
         }
+        
+        // Cerrar modal de conexiones si se hace clic en el fondo (no en el contenido)
         if (event.target === modalConexiones) {
             modalConexiones.style.display = 'none';
         }
     }
+
+    // Agregar event listeners adicionales para asegurar que funcione
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalTablas = document.getElementById('modalTablas');
+        const modalConexiones = document.getElementById('modalConexiones');
+        
+        if (modalTablas) {
+            // Prevenir que el clic dentro del contenido cierre el modal
+            const modalContentTablas = modalTablas.querySelector('.modal-content');
+            if (modalContentTablas) {
+                modalContentTablas.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                });
+            }
+            
+            // Cerrar cuando se hace clic en el fondo
+            modalTablas.addEventListener('click', function(event) {
+                // Si el clic es directamente en el modal (fondo), cerrarlo
+                if (event.target === modalTablas) {
+                    modalTablas.style.display = 'none';
+                    const atributosDiv = document.getElementById('atributos-tabla');
+                    if (atributosDiv) {
+                        atributosDiv.style.display = 'none';
+                    }
+                }
+            });
+        }
+        
+        if (modalConexiones) {
+            // Prevenir que el clic dentro del contenido cierre el modal
+            const modalContentConexiones = modalConexiones.querySelector('.modal-content');
+            if (modalContentConexiones) {
+                modalContentConexiones.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                });
+            }
+            
+            // Cerrar cuando se hace clic en el fondo
+            modalConexiones.addEventListener('click', function(event) {
+                // Si el clic es directamente en el modal (fondo), cerrarlo
+                if (event.target === modalConexiones) {
+                    modalConexiones.style.display = 'none';
+                }
+            });
+        }
+    });
 </script>
 {% endblock %}

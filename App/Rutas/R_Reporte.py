@@ -76,6 +76,27 @@ def api_tablas():
             'message': f'Error al obtener lista de tablas: {str(e)}'
         }), 500
 
+@reportes_bp.route('/api/tablas/<nombre_tabla>/atributos', methods=['GET'])
+@admin_required
+def api_atributos_tabla(nombre_tabla):
+    """
+    Obtener los atributos (columnas) de una tabla específica
+    """
+    try:
+        from flask import request
+        atributos = controller_reporte.get_atributos_tabla(nombre_tabla)
+        
+        return jsonify({
+            'success': True,
+            'tabla': nombre_tabla,
+            'atributos': atributos
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error al obtener atributos de la tabla: {str(e)}'
+        }), 500
+
 @reportes_bp.route('/api/conexiones', methods=['GET'])
 @admin_required
 def api_conexiones():
