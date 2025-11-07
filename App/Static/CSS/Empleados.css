@@ -150,8 +150,10 @@
     background: white;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     margin-bottom: 30px;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Tabla de empleados */
@@ -159,6 +161,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
+    min-width: 700px;
 }
 
 .empleados-table thead {
