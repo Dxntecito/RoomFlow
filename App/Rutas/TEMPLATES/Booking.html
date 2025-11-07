@@ -12,72 +12,89 @@
 <div id="booking_room_page">
   <!-- 🔹 PASO 1: Selección de habitaciones -->
   <div id="step1">
-    <h2 class="booking_tittle">RESERVA DE HABITACIONES</h2>
-
-    <form class="booking_phase" method="GET" action="{{ url_for('bookingroom.BookingRoom') }}">
-      <div id="booking_date" class="green_round_div">
-        <h3 class="Booking_web_subheaders" id="leftTittleG">Fechas de reserva</h3>
-        <div class="booking_column">
-          <label for="Start_booking_date" class="booking_label">Fecha de entrada</label>
-          <input type="datetime-local"
-                id="Start_booking_date"
-                name="start"
-                class="date_input"
-                {% if start_dt is not none %}
-                  value="{{ start_dt.strftime('%Y-%m-%dT%H:%M') }}"
-                {% else %}
-                  value=""
-                {% endif %}>
-        </div>
-
-        <div id="divider"></div>
-
-        <div class="booking_column">
-          <label for="End_booking_date" class="booking_label">Fecha salida</label>
-          <input type="datetime-local"
-                id="End_booking_date"
-                name="end"
-                class="date_input"
-                {% if end_dt is not none %}
-                  value="{{ end_dt.strftime('%Y-%m-%dT%H:%M') }}"
-                {% else %}
-                  value=""
-                {% endif %}>
-        </div>
-
-
-        <button type="submit">
-          <img id="search_button_img" src="{{ url_for('static', filename='Img/search_button.png') }}" alt="search_icon">
-        </button>
+    <div class="booking-hero">
+      <div class="booking-heading">
+        <span class="booking-badge"><i class="fas fa-calendar-alt"></i> Reserva fácil</span>
+        <h2 class="booking_tittle">Reserva de habitaciones</h2>
+        <p class="booking-subtitle">Selecciona tus fechas y encuentra la habitación perfecta para tu estadía en Hostal Bolívar.</p>
       </div>
-    </form>
-    <!-- Filtros para la busqueda de habitaciones -->
-    <div id="Booking_Filters">
-      <h2 class="Booking_web_subheaders" id="block_titles">Filtros</h2>
-      <label for="floor_number" class="booking_label">Nro. de Piso</label>
-      <select class="select_design" id="floor_number" name="floor_number">
-        <option value="">-- Selecciona una opción --</option>
-        {% for floor in floors %}
-        <option value="{{ floor[0] }}">{{ floor[1] }}</option>
-        {% endfor %}
-      </select>
 
-      <label for="room_category" class="booking_label">Categoría</label>
-      <select class="select_design" id="room_category" name="turno">
-        <option value="">-- Selecciona una opción --</option>
-        {% for category in categories %}
-        <option value="{{ category[0] }}">{{ category[1] }}</option>
-        {% endfor %}
-      </select>
+      <form method="GET" action="{{ url_for('bookingroom.BookingRoom') }}" class="booking-card">
+        <div class="booking-field">
+          <label for="Start_booking_date">Fecha de entrada</label>
+          <input type="datetime-local"
+                 id="Start_booking_date"
+                 name="start"
+                 class="date_input"
+                 {% if start_dt is not none %}
+                   value="{{ start_dt.strftime('%Y-%m-%dT%H:%M') }}"
+                 {% else %}
+                   value=""
+                 {% endif %}>
+        </div>
+
+        <div class="booking-field">
+          <label for="End_booking_date">Fecha de salida</label>
+          <input type="datetime-local"
+                 id="End_booking_date"
+                 name="end"
+                 class="date_input"
+                 {% if end_dt is not none %}
+                   value="{{ end_dt.strftime('%Y-%m-%dT%H:%M') }}"
+                 {% else %}
+                   value=""
+                 {% endif %}>
+        </div>
+
+        <button type="submit" class="booking-submit">
+          <i class="fas fa-search"></i>
+          Buscar habitaciones
+        </button>
+      </form>
+    </div>
+
+    <div class="booking-filters-card" id="Booking_Filters">
+      <div class="filter-header">
+        <h3>Filtros</h3>
+        <p>Refina tu búsqueda según piso o categoría para encontrar la habitación ideal.</p>
+      </div>
+      <div class="filter-fields">
+        <div class="filter-field">
+          <label for="floor_number">Nro. de Piso</label>
+          <div class="select-wrapper">
+            <i class="fas fa-building"></i>
+            <select class="select_design" id="floor_number" name="floor_number">
+              <option value="">-- Selecciona una opción --</option>
+              {% for floor in floors %}
+              <option value="{{ floor[0] }}">{{ floor[1] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="filter-field">
+          <label for="room_category">Categoría</label>
+          <div class="select-wrapper">
+            <i class="fas fa-star"></i>
+            <select class="select_design" id="room_category" name="turno">
+              <option value="">-- Selecciona una opción --</option>
+              {% for category in categories %}
+              <option value="{{ category[0] }}">{{ category[1] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="filter-helper">Puedes combinar filtros para mostrar sólo las habitaciones que se ajustan a tus necesidades.</div>
     </div>
 
     <div>
       <h2 class="Booking_web_subheaders" id="block_titles">Habitaciones elegidas</h2>
-      <div class="green_round_div_2" id="summary_booking">
+      <div class="summary-card" id="summary_booking">
         <div id="selected_rooms"></div>
         <div id="summary_footer">
           <p id="Total_sum">Total: S/. 0.00</p>
-          <p><a href="#" class="booking_label" id="next_booking_link">→ Siguiente</a></p>
+          <p><a href="#" class="booking_label" id="next_booking_link">Continuar</a></p>
         </div>
       </div>
     </div>

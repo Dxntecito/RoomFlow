@@ -141,110 +141,168 @@ def Registro():
     # Si ya hay sesión activa, redirigir al inicio
     if 'usuario_id' in session:
         return redirect(url_for('Index'))
-    
+
+    form_data = {
+        'usuario': '',
+        'email': '',
+        'nombres': '',
+        'apellido_paterno': '',
+        'apellido_materno': '',
+        'tipo_documento_id': '1',
+        'num_documento': '',
+        'telefono': '',
+        'sexo': 'M',
+        'direccion': ''
+    }
+    errors = {}
+
     if request.method == 'POST':
         try:
             # Datos de cuenta
-            usuario = request.form.get('usuario', '').strip()
-            email = request.form.get('email', '').strip()
+            form_data['usuario'] = request.form.get('usuario', '').strip()
+            form_data['email'] = request.form.get('email', '').strip()
             contrasena = request.form.get('contrasena', '')
             confirmar_contrasena = request.form.get('confirmar_contrasena', '')
-            
+
             # Datos personales
-            nombres = request.form.get('nombres', '').strip()
-            apellido_paterno = request.form.get('apellido_paterno', '').strip()
-            apellido_materno = request.form.get('apellido_materno', '').strip()
-            tipo_documento_id = request.form.get('tipo_documento_id', '1')
-            num_documento = request.form.get('num_documento', '').strip().upper()
-            telefono = request.form.get('telefono', '').strip()
-            sexo = request.form.get('sexo', 'M')
-            direccion = request.form.get('direccion', '').strip()
-            
-            # Validar campos requeridos
-            if not all([usuario, email, contrasena, confirmar_contrasena]):
-                flash('Usuario, email y contraseña son obligatorios', 'error')
-                return render_template('Registro.html')
-            
-            if not all([nombres, apellido_paterno, apellido_materno, num_documento]):
-                flash('Todos los datos personales marcados con * son obligatorios', 'error')
-                return render_template('Registro.html')
-            
+            form_data['nombres'] = request.form.get('nombres', '').strip()
+            form_data['apellido_paterno'] = request.form.get('apellido_paterno', '').strip()
+            form_data['apellido_materno'] = request.form.get('apellido_materno', '').strip()
+            form_data['tipo_documento_id'] = request.form.get('tipo_documento_id', '1')
+            form_data['num_documento'] = request.form.get('num_documento', '').strip().upper()
+            form_data['telefono'] = request.form.get('telefono', '').strip()
+            form_data['sexo'] = request.form.get('sexo', 'M')
+            form_data['direccion'] = request.form.get('direccion', '').strip()
+
+            # Validar campos requeridos básicos
+            if not form_data['usuario']:
+                errors['usuario'] = 'El usuario es obligatorio'
+            if not form_data['email']:
+                errors['email'] = 'El correo electrónico es obligatorio'
+            if not contrasena:
+                errors['contrasena'] = 'La contraseña es obligatoria'
+            if not confirmar_contrasena:
+                errors['confirmar_contrasena'] = 'Debes confirmar la contraseña'
+            if not form_data['nombres']:
+                errors['nombres'] = 'Los nombres son obligatorios'
+            if not form_data['apellido_paterno']:
+                errors['apellido_paterno'] = 'El apellido paterno es obligatorio'
+            if not form_data['apellido_materno']:
+                errors['apellido_materno'] = 'El apellido materno es obligatorio'
+            if not form_data['num_documento']:
+                errors['num_documento'] = 'El número de documento es obligatorio'
+
+            if errors:
+                flash('Por favor, corrija los campos marcados en rojo.', 'error')
+                return render_template('Registro.html', form_data=form_data, errors=errors)
+
             # Validar usuario
-            valido, mensaje = validar_usuario_registro(usuario)
+            valido, mensaje = validar_usuario_registro(form_data['usuario'])
             if not valido:
+                errors['usuario'] = mensaje
                 flash(mensaje, 'error')
-                return render_template('Registro.html')
-            
+                return render_template('Registro.html', form_data=form_data, errors=errors)
+
             # Validar email
-            valido, mensaje = validar_email_formato(email)
+            valido, mensaje = validar_email_formato(form_data['email'])
             if not valido:
+                errors['email'] = mensaje
                 flash(mensaje, 'error')
-                return render_template('Registro.html')
-            
+                return render_template('Registro.html', form_data=form_data, errors=errors)
+
             # Validar contraseñas
             if contrasena != confirmar_contrasena:
+                errors['confirmar_contrasena'] = 'Las contraseñas no coinciden'
                 flash('Las contraseñas no coinciden', 'error')
-                return render_template('Registro.html')
-            
+                return render_template('Registro.html', form_data=form_data, errors=errors)
+
             if len(contrasena) < 6:
+                errors['contrasena'] = 'La contraseña debe tener al menos 6 caracteres'
                 flash('La contraseña debe tener al menos 6 caracteres', 'error')
-                return render_template('Registro.html')
-            
+                return render_template('Registro.html', form_data=form_data, errors=errors)
+
             # Validar nombres
-            valido, mensaje = validar_nombres_apellidos(nombres, 'Nombres')
+            valido, mensaje = validar_nombres_apellidos(form_data['nombres'], 'Nombres')
             if not valido:
+                errors['nombres'] = mensaje
                 flash(mensaje, 'error')
-                return render_template('Registro.html')
-            
-            # Validar apellido paterno
-            valido, mensaje = validar_nombres_apellidos(apellido_paterno, 'Apellido paterno')
+                return render_template('Registro.html', form_data=form_data, errors=errors)
+
+            # Validar apellidos
+            valido, mensaje = validar_nombres_apellidos(form_data['apellido_paterno'], 'Apellido paterno')
             if not valido:
+                errors['apellido_paterno'] = mensaje
                 flash(mensaje, 'error')
-                return render_template('Registro.html')
-            
-            # Validar apellido materno
-            valido, mensaje = validar_nombres_apellidos(apellido_materno, 'Apellido materno')
+                return render_template('Registro.html', form_data=form_data, errors=errors)
+
+            valido, mensaje = validar_nombres_apellidos(form_data['apellido_materno'], 'Apellido materno')
             if not valido:
+                errors['apellido_materno'] = mensaje
                 flash(mensaje, 'error')
-                return render_template('Registro.html')
-            
+                return render_template('Registro.html', form_data=form_data, errors=errors)
+
             # Validar número de documento
-            valido, mensaje = validar_numero_documento(num_documento, tipo_documento_id)
+            valido, mensaje = validar_numero_documento(form_data['num_documento'], form_data['tipo_documento_id'])
             if not valido:
+                errors['num_documento'] = mensaje
                 flash(mensaje, 'error')
-                return render_template('Registro.html')
-            
+                return render_template('Registro.html', form_data=form_data, errors=errors)
+
             # Validar teléfono (si se proporciona)
-            if telefono:
-                valido, mensaje = validar_telefono(telefono)
+            if form_data['telefono']:
+                valido, mensaje = validar_telefono(form_data['telefono'])
                 if not valido:
+                    errors['telefono'] = mensaje
                     flash(mensaje, 'error')
-                    return render_template('Registro.html')
-            
+                    return render_template('Registro.html', form_data=form_data, errors=errors)
+
             # Registrar usuario con datos personales
             resultado = controller_usuario.insert_usuario(
-                usuario=usuario,
+                usuario=form_data['usuario'],
                 contrasena=contrasena,
-                email=email,
+                email=form_data['email'],
                 id_rol=3,  # Rol Cliente
-                nombres=nombres,
-                apellido_paterno=apellido_paterno,
-                apellido_materno=apellido_materno,
-                tipo_documento_id=tipo_documento_id,
-                num_documento=num_documento,
-                telefono=telefono if telefono else None,
-                direccion=direccion if direccion else None
+                nombres=form_data['nombres'],
+                apellido_paterno=form_data['apellido_paterno'],
+                apellido_materno=form_data['apellido_materno'],
+                tipo_documento_id=form_data['tipo_documento_id'],
+                num_documento=form_data['num_documento'],
+                telefono=form_data['telefono'] if form_data['telefono'] else None,
+                direccion=form_data['direccion'] if form_data['direccion'] else None
             )
-            
+
             if resultado['success']:
                 flash('¡Registro exitoso! Ya puedes iniciar sesión con tus credenciales.', 'success')
                 return redirect(url_for('usuarios.Login'))
             else:
+                errors[resultado.get('field', 'general')] = resultado['message']
                 flash(resultado['message'], 'error')
+                return render_template('Registro.html', form_data=form_data, errors=errors)
         except Exception as ex:
             flash(f'Error al registrar usuario: {str(ex)}', 'error')
-    
-    return render_template('Registro.html')
+            errors['general'] = f'Error al registrar usuario: {str(ex)}'
+            return render_template('Registro.html', form_data=form_data, errors=errors)
+
+    return render_template('Registro.html', form_data=form_data, errors=errors)
+
+
+@usuarios_bp.route('/registro/verificar-usuario')
+def verificar_usuario_disponible():
+    """Endpoint para validar disponibilidad de nombre de usuario."""
+    usuario = request.args.get('usuario', '').strip()
+
+    if not usuario:
+        return jsonify({'available': False, 'message': 'El usuario es obligatorio.'})
+
+    valido, mensaje = validar_usuario_registro(usuario)
+    if not valido:
+        return jsonify({'available': False, 'message': mensaje})
+
+    existente = controller_usuario.get_usuario_by_username(usuario)
+    if existente:
+        return jsonify({'available': False, 'message': 'El nombre de usuario ya existe'})
+
+    return jsonify({'available': True, 'message': 'Usuario disponible'})
 
 @usuarios_bp.route('/logout')
 def Logout():

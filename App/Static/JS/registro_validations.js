@@ -38,6 +38,7 @@ function mostrarMensaje(elementId, mensaje, tipo) {
     if (messageElement) {
         messageElement.textContent = mensaje;
         messageElement.className = `validation-message ${tipo}`;
+        messageElement.style.display = 'block';
     }
 }
 
@@ -193,15 +194,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const numDocumentoInput = document.getElementById('num_documento');
     const telefonoInput = document.getElementById('telefono');
     const formulario = document.getElementById('registroForm');
+    const numDocumentoInicial = numDocumentoInput ? numDocumentoInput.value : '';
+
+    let verificarUsuarioTimeout = null;
+    let solicitudUsuarioEnCurso = null;
     
     // Validación de usuario en tiempo real
     if (usuarioInput) {
         usuarioInput.addEventListener('input', function() {
-            const resultado = validarUsuario(this.value);
+            const valorUsuario = this.value.trim();
+            const resultado = validarUsuario(valorUsuario);
             if (resultado.mensaje) {
                 mostrarMensaje('usuario-message', resultado.mensaje, resultado.valido ? 'success' : 'error');
+                if (resultado.valido) {
+                    usuarioInput.classList.remove('input-error');
+                } else {
+                    usuarioInput.classList.add('input-error');
+                }
             } else {
                 ocultarMensaje('usuario-message');
+            }
+
+            if (resultado.valido) {
+                if (verificarUsuarioTimeout) {
+                    clearTimeout(verificarUsuarioTimeout);
+                }
+
+                mostrarMensaje('usuario-message', 'Verificando disponibilidad...', 'success');
+
+                verificarUsuarioTimeout = setTimeout(() => {
+                    verificarDisponibilidadUsuario(valorUsuario);
+                }, 400);
+            } else {
+                if (solicitudUsuarioEnCurso) {
+                    solicitudUsuarioEnCurso.abort();
+                    solicitudUsuarioEnCurso = null;
+                }
             }
         });
         
@@ -211,6 +239,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
             }
         });
+    }
+
+    async function verificarDisponibilidadUsuario(usuario) {
+        if (!usuarioInput) return;
+        if (!usuario) return;
+
+        if (solicitudUsuarioEnCurso) {
+            solicitudUsuarioEnCurso.abort();
+        }
+
+        solicitudUsuarioEnCurso = new AbortController();
+        const signal = solicitudUsuarioEnCurso.signal;
+
+        try {
+            const response = await fetch(`/auth/registro/verificar-usuario?usuario=${encodeURIComponent(usuario)}`, { signal });
+            const data = await response.json();
+
+            if (usuarioInput.value.trim() !== usuario) {
+                return;
+            }
+
+            if (data.available) {
+                mostrarMensaje('usuario-message', '✓ Usuario disponible', 'success');
+                usuarioInput.classList.remove('input-error');
+            } else {
+                const mensaje = data.message.startsWith('✗') ? data.message : `✗ ${data.message}`;
+                mostrarMensaje('usuario-message', mensaje, 'error');
+                usuarioInput.classList.add('input-error');
+            }
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            mostrarMensaje('usuario-message', '✗ No se pudo verificar el usuario', 'error');
+            usuarioInput.classList.add('input-error');
+        }
     }
     
     // Validación de email en tiempo real
@@ -318,9 +380,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Cambio de tipo de documento
     if (tipoDocumentoSelect && numDocumentoInput) {
-        tipoDocumentoSelect.addEventListener('change', function() {
-            // Limpiar el campo de número de documento
-            numDocumentoInput.value = '';
+        tipoDocumentoSelect.addEventListener('change', function(event) {
+            if (event.isTrusted) {
+                numDocumentoInput.value = '';
+            }
             ocultarMensaje('num-documento-message');
             
             // Actualizar placeholder y maxlength según el tipo
@@ -507,6 +570,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar tipo de documento al cargar
     if (tipoDocumentoSelect) {
         tipoDocumentoSelect.dispatchEvent(new Event('change'));
+        if (numDocumentoInicial) {
+            numDocumentoInput.value = numDocumentoInicial;
+        }
     }
 });
 

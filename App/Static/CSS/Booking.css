@@ -1,121 +1,229 @@
 #booking_room_page{
-    margin: 5em;
-}
-.booking_tittle {
-  font-family: "Arimo", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 600;
-  font-style: normal;
+    max-width: 1200px;
+    margin: 120px auto 60px;
+    padding: 0 24px;
+    font-family: 'Inter', Arial, sans-serif;
 }
 
-    .Booking_web_subheaders {
-  font-family: "Arimo", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 500;
-  font-style: normal;
-  display: inline;
-  
+.booking-hero {
+  background: linear-gradient(135deg, rgba(50,131,54,0.92), rgba(18,90,44,0.92)),
+              url('../Img/fotohotel2.jpg') center/cover;
+  border-radius: 32px;
+  padding: 48px 42px;
+  color: #fff;
+  box-shadow: 0 20px 50px rgba(50, 131, 54, 0.18);
+  position: relative;
+  overflow: hidden;
 }
 
-
-.green_round_div {
-  border: 1px solid green;
-  height: max-content;
-  width: 60%;
-  border-radius: 50px; /* mitad de 100px → medias circunferencias */
-  padding: 5px;
-}
-.green_round_div_2 {
-  border: 1px solid green;
-  height: max-content;
-  width: 60%;
-  border-radius: 25px; /* mitad de 100px → medias circunferencias */
-
+.booking-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(255,255,255,0.12), transparent 55%);
+  pointer-events: none;
 }
 
-/* Contenedor principal en línea */
-#booking_date {
-  display: flex;
+.booking-heading {
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+  margin-bottom: 32px;
+}
+
+.booking-badge {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 20px; /* espacio entre columnas */
-  width: max-content;
-  margin-top: 2.5em;
-  margin-bottom: 2.5em;
-
+  gap: 8px;
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 18px;
 }
 
-/* Cada columna: label arriba, input abajo */
-.booking_column {
+.booking_tittle {
+  font-family: 'Arimo', sans-serif;
+  font-weight: 700;
+  font-size: 2.75rem;
+  margin: 0 0 12px 0;
+}
+
+.booking-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.85);
+}
+
+.booking-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 24px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 15px 40px rgba(15, 74, 32, 0.25);
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.booking-field {
+  flex: 1 1 220px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: 10px;
 }
 
-/* Línea divisoria vertical */
-#divider {
-  width: 2px;
-  height: 30px;
-  background-color: #006400; /* Verde oscuro */
-  border-radius: 1px;
+.booking-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1d5230;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Opcional: botón sin bordes */
-#booking_date button {
-  background: none;
-  border: none;
+.date_input {
+  width: 100%;
+  appearance: none;
+  background: #f4f8f5;
+  border: 1px solid rgba(42, 124, 72, 0.15);
+  border-radius: 16px;
+  padding: 16px 18px;
+  font-size: 1rem;
+  color: #1f2a24;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.date_input:hover {
+  background: #eef5f0;
+}
+
+.date_input:focus {
+  background: #fff;
+  border-color: #2a7c48;
+  box-shadow: 0 0 0 4px rgba(42, 124, 72, 0.15);
+}
+
+.date_input::-webkit-calendar-picker-indicator {
+  filter: invert(40%) sepia(90%) saturate(320%) hue-rotate(80deg) brightness(0.9);
   cursor: pointer;
 }
 
-#leftTittleG {
-  text-align: left;
-  width: 100%;
-  margin-left: 2.5em;
-  color: #0f9c0f;
+.booking-submit {
+  flex: 0 0 auto;
+  background: linear-gradient(135deg, #64CC4F 0%, #328336 100%);
+  border: none;
+  color: #fff;
+  padding: 16px 28px;
+  border-radius: 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 12px 24px rgba(50, 131, 54, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-#search_button_img{
-    width: 50px;
-    height: 50px;
+.booking-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(50, 131, 54, 0.35);
 }
 
-#block_titles{
-    display: block;
-    margin-top: 2em;
+.booking-filters-card {
+  margin-top: 36px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 15px 35px rgba(15, 74, 32, 0.12);
+  display: grid;
+  gap: 24px;
 }
 
-/* Selects con forma de pildora */
+.filter-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #184927;
+  font-weight: 700;
+}
+
+.filter-header p {
+  margin: 8px 0 0;
+  color: #5f7066;
+  font-size: 0.95rem;
+}
+
+.filter-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 20px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #274a35;
+  letter-spacing: 0.4px;
+}
+
+.select-wrapper {
+  position: relative;
+}
+
+.select-wrapper i {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  color: #2a7c48;
+  font-size: 0.95rem;
+}
 
 .select_design {
-  order: 2px solid green;       /* Borde verde */
-  border-radius: 25px;           /* Bordes redondeados tipo pastilla */
-  padding: 8px 16px;             /* Espaciado interno */
-  background-color: white;       /* Fondo blanco */
-  color: #006400;                /* Texto verde oscuro */
+  width: 100%;
+  border-radius: 16px;
+  padding: 14px 16px 14px 44px;
+  background-color: #f6faf7;
+  border: 1px solid rgba(42, 124, 72, 0.18);
+  color: #204430;
   font-family: "Arimo", sans-serif;
-  font-size: 14px;
-  outline: none;                 /* Quita el borde azul al enfocar */
-  appearance: none;              /* Quita el estilo por defecto del navegador */
-  cursor: pointer;               /* Manito al pasar */
-  transition: all 0.2s ease-in-out;
+  font-size: 0.95rem;
+  outline: none;
+  appearance: none;
+  transition: all 0.2s ease;
 }
 
-/* Efecto al pasar el mouse */
 .select_design:hover {
-  border-color: #2ecc71;
-
+  background-color: #eef6f1;
 }
 
-/* Efecto al hacer clic o enfocar */
 .select_design:focus {
-  border-color: #228B22;
-  box-shadow: 0 0 5px #228B22;
+  border-color: #2a7c48;
+  box-shadow: 0 0 0 4px rgba(42, 124, 72, 0.12);
+  background-color: #fff;
 }
 
-
+.filter-helper {
+  font-size: 0.85rem;
+  color: #7a8a80;
+}
 
 #summary_booking{
-    width: 95%;
+    width: 100%;
 }
 
 #summary_footer {
@@ -123,8 +231,8 @@
     justify-content: space-between; /* Total a la izquierda, Siguiente a la derecha */
     align-items: center;            
     width: 100%;
-    margin-top: 10px;
-    margin-left: 15px;               
+    margin-top: 24px;
+    margin-left: 0;               
 }
 
 #summary_footer p {
@@ -133,36 +241,60 @@
 
 #summary_footer a {
     text-decoration: none;          
-    color: rgb(0, 0, 0);                           
-    padding: 5px 15px;
-    border-radius: 20px;            
+    color: #20603a;                           
+    padding: 8px 18px;
+    border-radius: 18px;            
+    background: rgba(32, 96, 58, 0.08);
+    transition: all 0.2s ease;
 }
 
 #next_booking_link{
     font-weight: bold;
 }
 
+#summary_footer a:hover {
+    background: linear-gradient(135deg, rgba(50,131,54,0.2), rgba(18,90,44,0.35));
+    color: #0f3a21;
+}
+
+.summary-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 15px 35px rgba(17, 60, 33, 0.12);
+  border: 1px solid rgba(42,124,72,0.12);
+}
+
+#selected_rooms {
+  min-height: 48px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 #booking_room_available {
     border-collapse: separate;   /* Necesario para border-radius */
     border-spacing: 0;           /* Quita espacios extra */
-    width: 96.5%;
+    width: 100%;
     border: 2px solid transparent;     /* Borde general de la tabla */
-    border-radius: 15px;         /* Bordes redondeados de la tabla */
+    border-radius: 18px;         /* Bordes redondeados de la tabla */
     overflow: hidden;            /* Para que celdas no sobresalgan */
-    margin-left: -0.3%;
+    margin-top: 32px;
+    box-shadow: 0 12px 30px rgba(17, 60, 33, 0.12);
 }
 
 #booking_room_available th, 
 #booking_room_available td {
     border: 1px solid transparent;     /* Bordes de celdas */
-    padding: 10px;
+    padding: 14px 18px;
     text-align: center;
 }
 
 #booking_room_available thead th {
-    background-color: black;     
+    background: linear-gradient(135deg, #102c1b, #184927);
     color: white;                
-    font-weight: bold;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .checkbox_booking{

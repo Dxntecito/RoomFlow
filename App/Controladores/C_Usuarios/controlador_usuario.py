@@ -168,10 +168,10 @@ def insert_usuario(usuario, contrasena, email, id_rol=2, nombres='', apellido_pa
     try:
         # Verificar si el usuario o email ya existen
         if get_usuario_by_username(usuario):
-            return {'success': False, 'message': 'El nombre de usuario ya existe'}
+            return {'success': False, 'message': 'El nombre de usuario ya existe', 'field': 'usuario'}
         
         if get_usuario_by_email(email):
-            return {'success': False, 'message': 'El email ya está registrado'}
+            return {'success': False, 'message': 'El email ya está registrado', 'field': 'email'}
         
         conexion = get_connection()
         with conexion.cursor() as cursor:
@@ -210,7 +210,7 @@ def insert_usuario(usuario, contrasena, email, id_rol=2, nombres='', apellido_pa
                     # Si falla la creación del cliente, fallar todo el registro
                     if conexion:
                         conexion.rollback()
-                    return {'success': False, 'message': f'Error al registrar cliente: {str(e)}'}
+                    return {'success': False, 'message': f'Error al registrar cliente: {str(e)}', 'field': 'general'}
             
             # Insertar usuario con referencia al cliente
             sql_usuario = """
@@ -230,7 +230,7 @@ def insert_usuario(usuario, contrasena, email, id_rol=2, nombres='', apellido_pa
         print(f"❌ Error al insertar usuario: {ex}")
         if conexion:
             conexion.rollback()
-        return {'success': False, 'message': f'Error al registrar usuario: {str(ex)}'}
+        return {'success': False, 'message': f'Error al registrar usuario: {str(ex)}', 'field': 'general'}
     finally:
         if conexion:
             conexion.close()
