@@ -8,6 +8,36 @@
     margin: 0;
     padding: 0;
 }
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex !important;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+    margin: auto;
+}
 </style>
 
 <div class="section-content">
@@ -96,7 +126,9 @@ function abrirModalCrear() {
     document.getElementById('formTipoCliente').reset();
     document.getElementById('tipo_cliente_id_old').value = '';
     document.getElementById('tipo_cliente_id').readOnly = false;
-    document.getElementById('modalTipoCliente').style.display = 'block';
+    const modal = document.getElementById('modalTipoCliente');
+    modal.style.display = 'flex';
+    modal.classList.add('show');
 }
 
 function editarTipoCliente(id) {
@@ -108,7 +140,9 @@ function editarTipoCliente(id) {
     document.getElementById('tipo_cliente_id').readOnly = true;
     document.getElementById('descripcion').value = tipo.descripcion;
     document.getElementById('estado').value = tipo.estado;
-    document.getElementById('modalTipoCliente').style.display = 'block';
+    const modal = document.getElementById('modalTipoCliente');
+    modal.style.display = 'flex';
+    modal.classList.add('show');
 }
 
 async function guardarTipoCliente(event) {
@@ -131,7 +165,11 @@ async function eliminarTipoCliente(id) {
     if (result.success) cargarTiposCliente();
 }
 
-function cerrarModal() { document.getElementById('modalTipoCliente').style.display = 'none'; }
+function cerrarModal() { 
+    const modal = document.getElementById('modalTipoCliente');
+    modal.style.display = 'none';
+    modal.classList.remove('show');
+}
 window.onclick = (e) => { if (e.target == document.getElementById('modalTipoCliente')) cerrarModal(); }
 </script>
 

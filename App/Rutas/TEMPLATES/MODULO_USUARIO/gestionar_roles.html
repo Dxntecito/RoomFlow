@@ -8,6 +8,36 @@
     margin: 0;
     padding: 0;
 }
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex !important;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+    margin: auto;
+}
 </style>
 
 <div class="section-content" id="roles">
@@ -186,7 +216,9 @@ function abrirModalCrear() {
     document.getElementById('tituloModal').textContent = 'Crear Rol';
     document.getElementById('formRol').reset();
     document.getElementById('rol_id').value = '';
-    document.getElementById('modalRol').style.display = 'block';
+    const modal = document.getElementById('modalRol');
+    modal.style.display = 'flex';
+    modal.classList.add('show');
 }
 
 function editarRol(id) {
@@ -198,7 +230,9 @@ function editarRol(id) {
     document.getElementById('nombre_rol').value = rol.nombre_rol;
     document.getElementById('descripcion').value = rol.descripcion;
     document.getElementById('estado').value = rol.estado;
-    document.getElementById('modalRol').style.display = 'block';
+    const modal = document.getElementById('modalRol');
+    modal.style.display = 'flex';
+    modal.classList.add('show');
 }
 
 async function guardarRol(event) {
@@ -260,7 +294,9 @@ async function eliminarRol(id) {
 }
 
 function cerrarModal() {
-    document.getElementById('modalRol').style.display = 'none';
+    const modal = document.getElementById('modalRol');
+    modal.style.display = 'none';
+    modal.classList.remove('show');
 }
 
 window.onclick = function(event) {

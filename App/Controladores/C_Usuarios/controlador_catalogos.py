@@ -19,7 +19,7 @@ def get_paises():
     try:
         conexion = get_connection()
         with conexion.cursor() as cursor:
-            sql = "SELECT pais_id, nombre, estado FROM PAIS ORDER BY nombre"
+            sql = "SELECT pais_id, nombre, estado FROM PAIS ORDER BY pais_id ASC"
             cursor.execute(sql)
             resultados = cursor.fetchall()
             
@@ -102,7 +102,7 @@ def get_roles():
     try:
         conexion = get_connection()
         with conexion.cursor() as cursor:
-            sql = "SELECT rol_id, nombre_rol, descripcion, estado FROM ROL ORDER BY rol_id"
+            sql = "SELECT rol_id, nombre_rol, descripcion, estado FROM ROL ORDER BY rol_id ASC"
             cursor.execute(sql)
             resultados = cursor.fetchall()
             
@@ -185,7 +185,7 @@ def get_tipos_documento():
     try:
         conexion = get_connection()
         with conexion.cursor() as cursor:
-            sql = "SELECT tipo_doc_id, nombre_tipo_doc, estado FROM TIPO_DOCUMENTO ORDER BY nombre_tipo_doc"
+            sql = "SELECT tipo_doc_id, nombre_tipo_doc, estado FROM TIPO_DOCUMENTO ORDER BY tipo_doc_id ASC"
             cursor.execute(sql)
             resultados = cursor.fetchall()
             
@@ -267,7 +267,7 @@ def get_tipos_cliente():
     try:
         conexion = get_connection()
         with conexion.cursor() as cursor:
-            sql = "SELECT tipo_cliente_id, descripcion, estado FROM TIPO_CLIENTE ORDER BY descripcion"
+            sql = "SELECT tipo_cliente_id, descripcion, estado FROM TIPO_CLIENTE ORDER BY tipo_cliente_id ASC"
             cursor.execute(sql)
             resultados = cursor.fetchall()
             
@@ -349,7 +349,7 @@ def get_tipos_empresa():
     try:
         conexion = get_connection()
         with conexion.cursor() as cursor:
-            sql = "SELECT tipo_id, nombre_tipo, estado FROM TIPO_EMPRESA ORDER BY nombre_tipo"
+            sql = "SELECT tipo_id, nombre_tipo, estado FROM TIPO_EMPRESA ORDER BY tipo_id ASC"
             cursor.execute(sql)
             resultados = cursor.fetchall()
             
