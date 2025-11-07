@@ -1,16 +1,78 @@
 from bd import get_connection
 from datetime import datetime
+from decimal import Decimal
 from flask import request, jsonify
+from datetime import date
+
+
+def inactivar_eventos_vencidos():
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            UPDATE EVENTO
+            SET estado = 0
+            WHERE fecha < CURDATE() AND estado = 1
+        """)
+    connection.commit()
+    connection.close()
 
 def get_tipos_eventos1():
     connection = get_connection()
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT tipo_evento_id, nombre_tipo_evento FROM TIPO_EVENTO WHERE estado = 1
+            SELECT tipo_evento_id, nombre_tipo_evento,precio_por_hora FROM TIPO_EVENTO WHERE estado = 1
         """)
         tipos_evento = cursor.fetchall()
     connection.close()
     return tipos_evento
+
+def get_tipos_eventos2():
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT tipo_evento_id, nombre_tipo_evento, precio_por_hora 
+            FROM TIPO_EVENTO 
+            WHERE estado = 1
+        """)
+        rows = cursor.fetchall()
+
+    connection.close()
+
+    tipos_evento = []
+    for r in rows:
+        tipos_evento.append({
+            "tipo_evento_id": r[0],
+            "nombre_tipo_evento": r[1],
+            "precio_por_hora": r[2]
+        })
+
+    return tipos_evento
+
+
+def get_tipo_evento_by_id(tipo_evento_id):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT tipo_evento_id, nombre_tipo_evento, precio_por_hora
+            FROM TIPO_EVENTO
+            WHERE tipo_evento_id = %s
+        """, (tipo_evento_id,))
+        tipo = cursor.fetchone()
+    connection.close()
+    return tipo
+
+
+def get_tipo_por_evento():
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            select tp.tipo_evento_id,tp.nombre_tipo_evento,precio_por_hora  from TIPO_EVENTO tp inner 
+            join EVENTO ev on tp.tipo_evento_id=ev.tipo_evento_id
+        """)
+        tipos_evento = cursor.fetchall()
+    connection.close()
+    return tipos_evento
+
 
 def get_metodos_pago():
     connection = get_connection()
@@ -228,7 +290,7 @@ def get_one_tipo_evento(tipo_evento_id):
     connection = get_connection()
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT tipo_evento_id, nombre_tipo_evento, estado
+            SELECT tipo_evento_id, nombre_tipo_evento,estado, precio_por_hora
             FROM TIPO_EVENTO WHERE tipo_evento_id = %s
         """, (tipo_evento_id,))
         row = cursor.fetchone()
@@ -236,33 +298,34 @@ def get_one_tipo_evento(tipo_evento_id):
             return {
                 "tipo_evento_id": row[0],
                 "nombre_tipo_evento": row[1],
-                "estado": row[2]
+                "estado": row[2],
+                "precio_por_hora":row[3]
             }
     connection.close()
     return None
 
 
 # ✅ INSERTAR NUEVO TIPO DE EVENTO
-def insert_tipo_evento(nombre_tipo_evento, estado):
+def insert_tipo_evento(nombre_tipo_evento, estado, precio_por_hora):
     connection = get_connection()
     with connection.cursor() as cursor:
         cursor.execute("""
-            INSERT INTO TIPO_EVENTO (nombre_tipo_evento, estado)
-            VALUES (%s, %s)
-        """, (nombre_tipo_evento, estado))
+            INSERT INTO TIPO_EVENTO (nombre_tipo_evento, estado,precio_por_hora)
+            VALUES (%s, %s,%s)
+        """, (nombre_tipo_evento, estado,precio_por_hora))
     connection.commit()
     connection.close()
 
 
 # ✅ ACTUALIZAR TIPO DE EVENTO EXISTENTE
-def update_tipo_evento(nombre_tipo_evento, estado, tipo_evento_id):
+def update_tipo_evento(nombre_tipo_evento, estado,precio_por_hora, tipo_evento_id):
     connection = get_connection()
     with connection.cursor() as cursor:
         cursor.execute("""
             UPDATE TIPO_EVENTO
-            SET nombre_tipo_evento = %s, estado = %s
+            SET nombre_tipo_evento = %s, estado = %s, precio_por_hora = %s
             WHERE tipo_evento_id = %s
-        """, (nombre_tipo_evento, estado, tipo_evento_id))
+        """, (nombre_tipo_evento, estado,precio_por_hora, tipo_evento_id))
     connection.commit()
     connection.close()
 
@@ -303,8 +366,298 @@ def search_tipo_evento(query):
         cursor.execute("""
             SELECT tipo_evento_id, nombre_tipo_evento, estado
             FROM TIPO_EVENTO
-            WHERE LOWER(nombre_tipo_evento) LIKE %s
+            WHERE REPLACE(LOWER(nombre_tipo_evento), ' ', '') LIKE REPLACE(%s, ' ', '')
         """, ('%' + query.lower() + '%',))
+
         tipos = cursor.fetchall()
     connection.close()
-    return tipos
+
+    # ✅ Convertir resultados a diccionarios como tu otra función
+    results = []
+    for t in tipos:
+        results.append({
+            'tipo_evento_id': t[0],
+            'nombre_tipo_evento': t[1],
+            'estado': t[2]
+        })
+
+    return results
+
+
+
+##CONTROLADOR EVENTO
+
+def get_eventos(limit=20, offset=0):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT id_evento, nombre_evento, fecha, hora_inicio, hora_fin, estado
+            FROM EVENTO
+            LIMIT %s OFFSET %s
+        """, (limit, offset))
+        rows = cursor.fetchall()
+        eventos = []
+        for r in rows:
+            eventos.append({
+                'id_evento': r[0],
+                'nombre_evento': r[1],
+                'fecha': r[2],
+                'hora_inicio': r[3],
+                'hora_fin': r[4],
+                'estado': int(r[5])
+            })
+    connection.close()
+    return eventos
+
+
+
+# ✅ OBTENER UN TIPO DE EVENTO POR ID
+def get_one_evento(id_evento):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT 
+                e.id_evento,
+                e.nombre_evento,
+                e.fecha,
+                e.hora_inicio,
+                e.hora_fin,
+                e.numero_horas,
+                e.precio_final,
+                e.tipo_evento_id,
+                e.reserva_id,
+                e.estado
+            FROM EVENTO e
+            WHERE e.id_evento = %s
+        """, (id_evento,))
+        evento = cursor.fetchone()
+    connection.close()
+    return evento
+
+
+#UPDATE EVENTO
+
+def get_evento_by_id(id_evento):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT 
+                e.id_evento,
+                e.nombre_evento,
+                e.fecha,
+                e.hora_inicio,
+                e.hora_fin,
+                e.numero_horas,
+                e.precio_final,
+                e.tipo_evento_id,
+                e.reserva_id,
+                e.estado
+            FROM EVENTO e
+            WHERE e.id_evento = %s
+        """, (id_evento,))
+        row = cursor.fetchone()
+
+    connection.close()
+    
+    if row:
+        return {
+            "id_evento": row[0],
+            "nombre_evento": row[1],
+            "fecha": row[2],
+            "hora_inicio": row[3],
+            "hora_fin": row[4],
+            "numero_horas": row[5],
+            "precio_final": row[6],
+            "tipo_evento_id": row[7],
+            "reserva_id": row[8],
+            "estado": row[9]
+        }
+    return None
+
+def update_evento(nombre_evento, fecha, hora_inicio, hora_fin, 
+                  numero_horas, precio_final, tipo_evento_id, id_evento, motivo):
+
+    print("\n📌 Ejecutando update_evento()")
+    print("Recibido:")
+    print(" -> nombre:", nombre_evento)
+    print(" -> fecha:", fecha)
+    print(" -> horas:", numero_horas)
+    print(" -> precio_final:", precio_final)
+    print(" -> tipo_evento:", tipo_evento_id)
+    print(" -> evento_id:", id_evento)
+
+    evento_actual = get_evento_by_id(id_evento)
+    print("Evento antes:", evento_actual)
+
+
+
+    old_numero_horas = evento_actual['numero_horas']
+    old_precio_final = evento_actual['precio_final']
+
+    precio_cambiado = (old_precio_final != precio_final)
+
+    print("Precio anterior:", old_precio_final)
+    print("Precio nuevo:", precio_final)
+    print("¿Precio cambió?:", precio_cambiado)
+
+    connection = get_connection()
+    with connection.cursor() as cursor:
+
+        print("➡️ Ejecutando UPDATE en BD")
+        cursor.execute("""
+            UPDATE EVENTO
+            SET nombre_evento=%s, fecha=%s, hora_inicio=%s, hora_fin=%s,
+              numero_horas=%s, precio_final=%s, tipo_evento_id=%s
+            WHERE id_evento=%s
+        """, (nombre_evento, fecha, hora_inicio, hora_fin, 
+              numero_horas, precio_final, tipo_evento_id, id_evento))
+
+        if precio_cambiado:
+            precio_final = Decimal(str(precio_final))
+            old_precio_final = Decimal(str(old_precio_final))
+            diferencia = precio_final - old_precio_final
+            diferencia = precio_final - old_precio_final
+            print("Diferencia:", diferencia)
+
+            cursor.execute("""
+                SELECT c.comprobante_id
+                FROM EVENTO e
+                JOIN RESERVA r ON e.reserva_id = r.reserva_id
+                JOIN TRANSACCION t ON r.reserva_id = t.reserva_id
+                JOIN COMPROBANTE c ON t.transaccion_id = c.transaccion_id
+                WHERE e.id_evento = %s;
+            """, (id_evento,))
+            comprobante = cursor.fetchone()
+
+            print("Comprobante:", comprobante)
+
+            if comprobante:
+                comprobante_id = comprobante[0]
+                print("Insertando NOTA_CREDITO...")
+
+                cursor.execute("""
+                    INSERT INTO NOTA_CREDITO (comprobante_id, fecha_emision, motivo, monto_credito, estado)
+                    VALUES (%s, CURDATE(), %s, %s, 1)
+                """, (comprobante_id, motivo, abs(diferencia)))
+
+    connection.commit()
+    connection.close()
+    print("✅ UPDATE COMPLETO\n")
+
+
+#id de reserva por evento
+
+def reserva_por_evento(evento_id):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+         cursor.execute("""
+                   select reserva_id from EVENTO where id_evento = %s
+                """, (evento_id,))
+         comprobante = cursor.fetchone()
+
+
+def count_eventos():
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT COUNT(*) FROM EVENTO")
+        total = cursor.fetchone()[0]
+    connection.close()
+    return total
+def order_evento(filter, order):
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute(f"""
+            SELECT id_evento, nombre_evento, fecha, hora_inicio, hora_fin, numero_horas, precio_final, estado
+            FROM EVENTO
+            ORDER BY {filter} {order}
+        """)
+        rows = cursor.fetchall()
+    connection.close()
+    return rows
+def search_evento(query):
+    query_param = f"%{query}%"
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT id_evento, nombre_evento, fecha, hora_inicio, hora_fin, numero_horas, precio_final, estado
+            FROM EVENTO
+            WHERE nombre_evento LIKE %s
+        """, (query_param,))
+        rows = cursor.fetchall()
+    connection.close()
+
+    results = []
+    for r in rows:
+        results.append({
+            "id_evento": r[0],
+            "nombre_evento": r[1],
+            "fecha": r[2],
+            "hora_inicio": r[3],
+            "hora_fin": r[4],
+            "numero_horas": r[5],
+            "precio_final": r[6],
+            "estado": r[7]
+        })
+    return results
+
+
+
+###CAMBIO DE ESTADO
+
+def marcar_eventos_con_nota_credito_por_id(eventos):
+    """
+    Agrega un atributo 'tiene_nota_credito' a cada evento de la lista,
+    usando solo el id_evento.
+    """
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        for evento in eventos:
+            cursor.execute("""
+                SELECT COUNT(*) as count
+                FROM NOTA_CREDITO nc
+                JOIN COMPROBANTE c ON nc.comprobante_id = c.comprobante_id
+                JOIN TRANSACCION t ON c.transaccion_id = t.transaccion_id
+                JOIN RESERVA r ON t.reserva_id = r.reserva_id
+                JOIN EVENTO e ON r.reserva_id = e.reserva_id
+                WHERE e.id_evento = %s
+            """, (evento['id_evento'],))
+            evento['tiene_nota_credito'] = cursor.fetchone()[0] > 0
+
+    connection.close()
+    return eventos
+
+
+
+def baja_evento(evento_id, motivo_cancelacion):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            # 1) Obtener reserva vinculada
+            cursor.execute("SELECT reserva_id, precio_final FROM EVENTO WHERE id_evento  = %s", (evento_id,))
+            row = cursor.fetchone()
+            if not row:
+                raise ValueError(f"Evento {evento_id} no encontrado")
+            reserva_id, monto_credito = row
+
+            # 2) Cancelar evento
+            cursor.execute("UPDATE EVENTO SET estado = 0 WHERE id_evento  = %s", (evento_id,))
+
+            # 3) Cancelar reserva
+            cursor.execute("UPDATE RESERVA SET estado = 0, motivo = %s WHERE reserva_id = %s",
+                           (motivo_cancelacion, reserva_id))
+
+            # 4) Crear nota de crédito
+            cursor.execute("""
+                INSERT INTO NOTA_CREDITO (comprobante_id, fecha_emision, motivo, monto_credito, estado)
+                SELECT c.comprobante_id, CURDATE(), %s, %s, 1
+                FROM COMPROBANTE c
+                JOIN TRANSACCION t ON c.transaccion_id = t.transaccion_id
+                WHERE t.reserva_id = %s
+            """, (motivo_cancelacion, monto_credito, reserva_id))
+
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise e
+    finally:
+        connection.close()

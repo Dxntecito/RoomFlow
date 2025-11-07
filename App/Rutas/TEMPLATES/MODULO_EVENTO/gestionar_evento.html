@@ -1,7 +1,580 @@
 {% extends "/MODULO_EVENTO/Crud_evento.html" %}
 
-{% block booking_content %}
-<div id="eventos">
-    <p>En proceso...</p>
+{% block evento_content %}
+
+{% if mode == 'list' %}
+<div class="content-crud-evento section-content" id="evento">
+
+    <h2 class="section-title-f">Gestionar Eventos</h2>
+
+    <div class="alert alert-success" id="alert-evento-success" style="display: none;"></div>
+    <div class="alert alert-error" id="alert-evento-error" style="display: none;"></div>
+
+    <!-- Barra de búsqueda y filtros -->
+    <div class="search-filters-section">
+        <div class="search-section">
+            <label for="search-input" class="search-label">Buscar</label>
+            <div class="search-form">
+                <input type="text" id="search-input" name="search" class="search-input" placeholder="Buscar evento...">
+                <button type="button" class="search-button" onclick="buscarEventos()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="actions-section">
+            <button type="button" onclick="window.location.href='{{ url_for('eventos.Eventos') }}'"
+                class="create-button">
+                <i class="fas fa-plus"></i> Crear nuevo
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de Tipos de Evento Existentes -->
+    <div class="table-container">
+        <table class="eventos-table tbl-list">
+            <thead>
+                <tr>
+                    <th class="text-center">ID</th>
+                    <th class="text-center">Nombre del Evento</th>
+                    <th class="text-center">Fecha</th>
+                    <th class="text-center">Hora Inicio</th>
+                    <th class="text-center">Hora Fin</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center">Acción</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-eventos-body">
+                {% if eventos|length > 0 %}
+                {% for evento in eventos %}
+                <tr>
+                    <td class="text-center">{{ evento['id_evento'] }}</td>
+                    <td class="text-center">{{ evento['nombre_evento'] }}</td>
+                    <td class="text-center">{{ evento['fecha'] }}</td>
+                    <td class="text-center">{{ evento['hora_inicio'] }}</td>
+                    <td class="text-center">{{ evento['hora_fin'] }}</td>
+                    <td class="text-center">{{ 'Activo' if evento['estado'] == 1 or evento['estado'] == '1' else
+                        'Inactivo' }}</td>
+
+
+                    <td class="text-center">
+                        <div class="action-buttons2">
+                            <button type="button" class="action-btn edit-btn" id="btn-editazao"
+                                onclick="window.location.href='{{ url_for('modulos.EditEvento', id_evento=evento['id_evento']) }}'"
+                                {% if evento['estado']==0 %} disabled class="disabled-btn" {% endif %}>
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+
+                            <button type="button" class="action-btn view-btn"
+                                onclick="window.location.href='{{ url_for('modulos.ViewEvento', id_evento=evento['id_evento']) }}'">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+
+                            <button class="action-btn delete-btn" data-id="{{ evento['id_evento'] }}" id="btn-baja"
+                                title="Dar de baja evento" onclick="darBaja(event)" {% if evento['estado']==0 or
+                                evento['tiene_nota_credito'] %} disabled class="disabled-btn" {% endif %}>
+                                <i class="fas fa-minus"></i>
+                            </button>
+
+
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center p-3">No hay eventos registrados</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        <div class="pagination-container"
+            style="display: flex; justify-content: center; margin-top: 15px; margin-bottom: 15px; gap: 10px;">
+            {% if page > 1 %}
+            <a href="{{ url_for('modulos.evento', page=page-1) }}" class="pagination-btn">« Anterior</a>
+            {% else %}
+            <span class="pagination-btn disabled">« Anterior</span>
+            {% endif %}
+
+            {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+            <span class="pagination-btn current">{{ p }}</span>
+            {% else %}
+            <a href="{{ url_for('modulos.evento', page=p) }}" class="pagination-btn">{{ p }}</a>
+            {% endif %}
+            {% endfor %}
+
+            {% if page < total_pages %} <a href="{{ url_for('modulos.evento', page=page+1) }}" class="pagination-btn">
+                Siguiente »</a>
+                {% else %}
+                <span class="pagination-btn disabled">Siguiente »</span>
+                {% endif %}
+        </div>
+
+    </div>
+
+    {% else %}
+    <!-- Formulario Insert / Edit / View -->
+    <div class="content-crud-evento section-content" id="form-evento-section">
+        <div class="form-promocion-f"
+            style="background: #f9f9f9; padding: 25px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #328336;">
+
+            <h3 style="color: #328336; margin-top: 0;">
+                {% if mode=='insert' %}
+                Crear Nuevo Evento
+                {% elif mode=='edit' %}
+                Editar Evento {{ evento['id_evento'] }}
+                {% elif mode=='view' %}
+                Ver Evento {{ evento['id_evento'] }}
+                {% endif %}
+            </h3>
+
+
+            <form id="form-evento" style="margin-bottom: 0;"
+                action="{{ url_for('modulos.SaveEvento') if mode=='insert' else url_for('modulos.UpdateEvento') }}"
+                method="POST">
+
+                <input type="hidden" name="id_evento" value="{{ evento['id_evento'] if evento else '' }}">
+
+
+                <div class="form-grid" style="margin-bottom: 25px;">
+
+                    <div class="form-group">
+                        <label>Nombre *</label>
+                        {% if mode=='view' %}
+                        <input class="form-control bg-light" value="{{ evento['nombre_evento'] }}" readonly>
+                        {% else %}
+                        <input name="nombre_evento" class="form-control"
+                            value="{{ evento['nombre_evento'] if evento else '' }}" required>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fecha *</label>
+                        {% if mode=='view' %}
+                        <input class="form-control bg-light" value="{{ evento['fecha'] }}" readonly>
+                        {% else %}
+                        <input type="date" name="fecha" id="fecha" class="form-control"
+                            value="{{ evento['fecha'] if evento else '' }}" min="{{ current_date }}" required>
+                            {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Hora Inicio *</label>
+                        {% if mode=='view' %}
+                        <input class="form-control bg-light" value="{{ evento['hora_inicio'] }}" readonly>
+                        {% else %}
+                        <input type="time" name="hora_inicio" id="hora_inicio" class="form-control"
+                            value="{{ evento['hora_inicio'] if evento else '' }}" required>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Hora Fin *</label>
+                        {% if mode=='view' %}
+                        <input class="form-control bg-light" value="{{ evento['hora_fin'] }}" readonly>
+                        {% else %}
+                        <input type="time" name="hora_fin" id="hora_fin" class="form-control"
+                            value="{{ evento['hora_fin'] if evento else '' }}" required>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label>N° Horas *</label>
+                        {% if mode=='view' %}
+                        <input class="form-control bg-light" value="{{ evento['numero_horas'] }}" readonly>
+                        {% else %}
+                        <input type="number" step="0.5" name="numero_horas" id="numero_horas" class="form-control"
+                            value="{{ evento['numero_horas'] if evento else '' }}" required >
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Precio Final *</label>
+                        {% if mode=='view' %}
+                        <input class="form-control bg-light" value="{{ evento['precio_final'] }}" readonly>
+                        {% else %}
+                        <input type="number" step="0.01" name="precio_final" id="precio_final" class="form-control"
+                            value="{{ evento['precio_final'] if evento else '' }}" required >
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo Evento *</label>
+                        {% if mode=='view' %}
+                        <input class="form-control bg-light"
+                            value="{% for t in tipos_eventos %}{% if t['tipo_evento_id']==evento['tipo_evento_id'] %}{{ t['nombre_tipo_evento'] }}{% endif %}{% endfor %}"
+                            readonly>
+                        {% else %}
+
+                        <select name="tipo_evento_id" id="tipo_evento_id" class="form-control" required>
+                            {% for t in tipos_eventos %}
+                            <option value="{{ t['tipo_evento_id'] }}" {% if evento and
+                                evento['tipo_evento_id']==t['tipo_evento_id'] %} selected {% endif %}>
+                                {{ t['nombre_tipo_evento'] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                    </div>
+
+                    <!-- <div class="form-group">
+                        <label>Estado *</label>
+                        {% if mode=='view' %}
+                        <input class="form-control bg-light"
+                            value="{{ 'Activo' if evento['estado']==1 else 'Inactivo' }}" readonly>
+                        {% else %}
+                        <select name="estado" class="form-control">
+                            <option value="1" {% if evento and evento['estado']==1 %}selected{% endif %}>Activo</option>
+                            <option value="0" {% if evento and evento['estado']==0 %}selected{% endif %}>Inactivo
+                            </option>
+                        </select>
+                        {% endif %}
+                    </div> -->
+
+                </div>
+
+                <div class="form-actions" style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #f0f0f0;">
+                    <a href="{{ url_for('modulos.evento') }}" class="btn btn-light btn-volver">Volver</a>
+                    {% if mode != 'view' %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% endif %}
+
+    <!-- Modal confirmación -->
+
+    <div id="modal-baja" class="modal-confirm" style="display: none;">
+        <div class="modal-confirm-content">
+            <div class="modal-confirm-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="modal-confirm-title">Dar de baja Evento</h3>
+            <p class="modal-confirm-message">Ingrese motivo de baja:</p>
+            <textarea id="motivoBaja" class="form-control" placeholder="Motivo de la baja..." rows="3"></textarea>
+            <div class="modal-confirm-buttons" style="margin-top: 10px;">
+                <button class="btn-confirm btn-confirm-danger" onclick="confirmarBaja()">
+                    <i class="fas fa-minus"></i> Dar de baja
+                </button>
+                <button class="btn-confirm btn-confirm-secondary" onclick="cancelarBaja()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificación toast -->
+    <div id="notification-toast" class="notification-toast" style="display: none;">
+        <button class="notification-toast-close" onclick="cerrarNotificacionToast()">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="notification-toast-header">
+            <div class="notification-toast-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="notification-toast-body">
+                <h4 class="notification-toast-title">Título</h4>
+                <p class="notification-toast-message">Mensaje</p>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Campo oculto para almacenar el ID a eliminar -->
+<script>
+    let eventoIdBaja = null;
+
+    function darBaja(event) {
+        event.stopPropagation();
+        const button = event.currentTarget;
+        eventoIdBaja = button.dataset.id;
+
+        if (!eventoIdBaja) return console.error("No se encontró el ID del evento.");
+
+        // Mostrar modal
+        const modal = document.getElementById('modal-baja');
+        modal.style.display = 'flex';
+        modal.classList.add('show');
+    }
+
+    function confirmarBaja() {
+        const motivo = document.getElementById('motivoBaja').value.trim();
+        if (!motivo) return alert("Debe ingresar un motivo de baja.");
+
+        fetch('/Cruds/BajaEvento', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ evento_id: eventoIdBaja, motivo: motivo })
+        })
+
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    mostrarNotificacionBonita('success', 'Evento dado de baja', `El evento con ID ${eventoIdBaja} ha sido dado de baja correctamente.`);
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    mostrarNotificacionBonita('error', 'Error', result.message || 'No se pudo dar de baja el evento.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                mostrarNotificacionBonita('error', 'Error', 'Ocurrió un error al dar de baja el evento.');
+            });
+
+        cerrarBaja();
+    }
+
+    function cancelarBaja() {
+        cerrarBaja();
+    }
+
+    function cerrarBaja() {
+        const modal = document.getElementById('modal-baja');
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+        eventoIdBaja = null;
+        document.getElementById('motivoBaja').value = '';
+    }
+
+    // Función para mostrar notificación tipo toast (reusa tu código actual)
+    function mostrarNotificacionBonita(tipo, titulo, mensaje) {
+        const toast = document.getElementById('notification-toast');
+        const icon = toast.querySelector('.notification-toast-icon i');
+        const title = toast.querySelector('.notification-toast-title');
+        const message = toast.querySelector('.notification-toast-message');
+
+        title.textContent = titulo;
+        message.textContent = mensaje;
+
+        toast.className = `notification-toast ${tipo}`;
+        icon.className = (tipo === 'success') ? 'fas fa-check' : 'fas fa-times';
+
+        toast.style.display = 'block';
+        toast.classList.add('show');
+
+        setTimeout(() => cerrarNotificacionToast(), 4000);
+    }
+
+    function cerrarNotificacionToast() {
+        const toast = document.getElementById('notification-toast');
+        toast.classList.remove('show');
+        setTimeout(() => toast.style.display = 'none', 300);
+    }
+
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const input = document.getElementById("search-input");
+        const tbody = document.getElementById("tabla-tipos-evento-body");
+        let tiposEventoData = []; // almacenamiento local de resultados
+
+        // ✅ Cargar todos desde backend al inicio
+        async function cargarTiposEventoInicial() {
+            try {
+                const response = await fetch('/Cruds/SearchTiposEventos?query=');
+                tiposEventoData = await response.json();
+                mostrarTiposEvento(tiposEventoData);
+            } catch (error) {
+                console.error("Error al cargar tipos evento:", error);
+            }
+        }
+
+        // ✅ Mostrar en tabla
+        function mostrarTiposEvento(data) {
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align:center;padding:40px;color:#999;">
+                        <i class="fas fa-search" style="font-size:24px;margin-bottom:10px;"></i>
+                        No se encontraron resultados
+                    </td>
+                </tr>
+            `;
+                return;
+            }
+
+            tbody.innerHTML = data.map(evento => `
+            <tr>
+                <td class="col-id text-center">${evento.tipo_evento_id}</td>
+                <td class="col-numero text-center">${evento.nombre_tipo_evento}</td>
+                <td class="col-estado text-center">${evento.estado == 1 ? 'Activo' : 'Inactivo'}</td>
+                <td class="col-accion text-center">
+                    <div class="action-buttons2">
+                        <button type="button" class="action-btn edit-btn" 
+                            onclick="window.location.href='/Cruds/EditTipoEvento/${evento.tipo_evento_id}'">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button type="button" class="action-btn view-btn" 
+                            onclick="window.location.href='/Cruds/ViewTipoEvento/${evento.tipo_evento_id}'">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                        <button type="button" class="action-btn delete-btn" 
+                            data-id="${evento.tipo_evento_id}" onclick="eliminarTipoEvento(event)">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+        }
+
+        // ✅ Filtrar local mientras escribe
+        function filtrarLocal() {
+            const search = input.value.toLowerCase().trim();
+
+            if (search === "") {
+                mostrarTiposEvento(tiposEventoData);
+                return;
+            }
+
+            const filtrados = tiposEventoData.filter(t => {
+                const nombre = t.nombre_tipo_evento.toLowerCase();
+                const partes = nombre.split(" ");
+
+                // Coincidencia por palabra que empieza igual
+                return partes.some(p => p.startsWith(search)) ||
+                    t.tipo_evento_id.toString().includes(search);
+            });
+
+            mostrarTiposEvento(filtrados);
+        }
+
+        // ✅ Buscar en servidor (cuando presiona botón o Enter)
+        async function buscarEnServidor() {
+            const query = input.value.trim();
+
+            try {
+                const response = await fetch(`/Cruds/SearchTiposEventos?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                tiposEventoData = data; // actualizar cache
+                mostrarTiposEvento(data);
+            } catch (e) {
+                console.error("Error backend:", e);
+            }
+        }
+
+        // 🎯 Eventos:
+        input.addEventListener("input", filtrarLocal);
+
+        // Enter → búsqueda servidor
+        input.addEventListener("keydown", e => {
+            if (e.key === "Enter") {
+                buscarEnServidor();
+            }
+        });
+
+        // Hacer accesible al botón existente
+        window.buscarTiposEvento = buscarEnServidor;
+
+        // Inicial
+        cargarTiposEventoInicial();
+    });
+</script>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // ✅ Define aquí el ID del enlace activo en el menú
+        const activeId = "nav-tipos-evento";
+
+        const nav = document.getElementById("nav-principal");
+        if (!nav) return;
+
+        const links = nav.querySelectorAll("a");
+        links.forEach(link => {
+            if (link.id === activeId) {
+                link.classList.add("active");
+            } else {
+                link.classList.remove("active");
+            }
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- Cálculo automático de horas y precio ---
+        const tiposEventos = {
+        {% for t in tipos_eventos %}
+        { { t['tipo_evento_id'] } }: { { t['precio_por_hora'] if t.get('precio_por_hora') is not none else 0 } },
+        {% endfor %}
+    };
+
+    function actualizarHorasYPrecio() {
+        const horaInicioInput = document.getElementById('hora_inicio');
+        const horaFinInput = document.getElementById('hora_fin');
+        const numeroHorasInput = document.getElementById('numero_horas');
+        const precioFinalInput = document.getElementById('precio_final');
+        const tipoEventoSelect = document.getElementById('tipo_evento_id');
+
+        const horaInicio = horaInicioInput.value;
+        const horaFin = horaFinInput.value;
+        const tipoEventoId = tipoEventoSelect.value;
+
+        if (horaInicio && horaFin && tipoEventoId) {
+            const [h1, m1] = horaInicio.split(':').map(Number);
+            const [h2, m2] = horaFin.split(':').map(Number);
+
+            let diffHoras = (h2 + m2 / 60) - (h1 + m1 / 60);
+            if (diffHoras < 0) diffHoras += 24; // Manejo de eventos que pasan medianoche
+
+            numeroHorasInput.value = diffHoras.toFixed(1);
+
+            const precioBase = tiposEventos[tipoEventoId] || 0;
+            precioFinalInput.value = (precioBase * diffHoras).toFixed(2);
+        }
+    }
+
+    // Escuchar cambios
+    document.getElementById('hora_inicio').addEventListener('change', actualizarHorasYPrecio);
+    document.getElementById('hora_fin').addEventListener('change', actualizarHorasYPrecio);
+    document.getElementById('tipo_evento_id').addEventListener('change', actualizarHorasYPrecio);
+
+    // Inicializar cálculo al cargar
+    actualizarHorasYPrecio();
+
+    // --- Validación antes de enviar ---
+    const form = document.getElementById('form-evento');
+    form.addEventListener('submit', function (e) {
+        const fecha = document.getElementById('fecha').value;
+        const horaInicio = document.getElementById('hora_inicio').value;
+        const horaFin = document.getElementById('hora_fin').value;
+
+        if (!fecha || !horaInicio || !horaFin) return; // Ya requiere HTML5
+
+        // Convertir a Date locales
+        const [hInicio, mInicio] = horaInicio.split(':').map(Number);
+        const [hFin, mFin] = horaFin.split(':').map(Number);
+
+        const inicio = new Date(fecha);
+        inicio.setHours(hInicio, mInicio, 0, 0);
+
+        const fin = new Date(fecha);
+        fin.setHours(hFin, mFin, 0, 0);
+
+        const ahora = new Date();
+
+        if (fin <= inicio) {
+            e.preventDefault();
+            mostrarNotificacionBonita('error', 'Error de validación', 'La hora de fin debe ser posterior a la hora de inicio.');
+            return;
+        }
+
+        if (inicio < ahora) {
+            e.preventDefault();
+            mostrarNotificacionBonita('error', 'Error de validación', 'La fecha y hora de inicio no pueden ser anteriores a la fecha y hora actual.');
+            return;
+        }
+    });
+
+</script>
+
+
 {% endblock %}
