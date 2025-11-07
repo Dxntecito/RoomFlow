@@ -1,0 +1,275 @@
+{% extends "/MODULO_USUARIO/Crud_Usuario.html" %}
+
+{% block user_content %}
+
+<style>
+.section-content {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+</style>
+
+<div class="section-content" id="roles">
+    <h2 class="section-title">Gestionar Roles de Usuario</h2>
+
+    <!-- Barra de búsqueda y botón crear -->
+    <div class="search-filters-section">
+        <div class="search-section">
+            <label for="search-input" class="search-label">Buscar</label>
+            <div class="search-form">
+                <input type="text" id="search-input" name="search" class="search-input"
+                    placeholder="Buscar por nombre o descripción..." onkeyup="filtrarRoles()">
+                <button type="button" class="search-button" onclick="filtrarRoles()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <label for="estado-filter" class="filter-label">Estado</label>
+            <div class="filter-form">
+                <select id="estado-filter" class="rol-select" onchange="filtrarRoles()">
+                    <option value="">Todos</option>
+                    <option value="1">Activos</option>
+                    <option value="0">Inactivos</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="actions-section">
+            <button class="create-button" onclick="abrirModalCrear()">
+                <i class="fas fa-plus"></i> Crear Rol
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de roles -->
+    <div class="table-container">
+        <table class="empleados-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>NOMBRE</th>
+                    <th>DESCRIPCIÓN</th>
+                    <th>ESTADO</th>
+                    <th>ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-roles">
+                <!-- Se llena con JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="sin-resultados" class="sin-resultados" style="display: none;">
+        <i class="fas fa-search"></i>
+        <p>No se encontraron roles</p>
+    </div>
+</div>
+
+<!-- Modal Crear/Editar Rol -->
+<div id="modalRol" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="tituloModal">Crear Rol</h3>
+            <button class="modal-close" onclick="cerrarModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="formRol" onsubmit="guardarRol(event)">
+                <input type="hidden" id="rol_id" name="rol_id">
+                
+                <div class="form-group">
+                    <label for="nombre_rol">Nombre del Rol *</label>
+                    <input type="text" id="nombre_rol" name="nombre_rol" required maxlength="50">
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion">Descripción *</label>
+                    <input type="text" id="descripcion" name="descripcion" required maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="estado">Estado *</label>
+                    <select id="estado" name="estado" required>
+                        <option value="1">Activo</option>
+                        <option value="0">Inactivo</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-modal btn-modal-secondary" onclick="cerrarModal()">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button type="button" class="btn-modal btn-modal-primary" onclick="document.getElementById('formRol').requestSubmit()">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let roles = [];
+let rolesFiltrados = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    cargarRoles();
+});
+
+async function cargarRoles() {
+    try {
+        const response = await fetch('/Cruds/api/roles');
+        const data = await response.json();
+        
+        if (data.success) {
+            roles = data.roles;
+            rolesFiltrados = roles;
+            mostrarRoles();
+        }
+    } catch (error) {
+        console.error('Error al cargar roles:', error);
+        alert('Error al cargar los roles');
+    }
+}
+
+function mostrarRoles() {
+    const tbody = document.getElementById('tabla-roles');
+    const sinResultados = document.getElementById('sin-resultados');
+    
+    if (rolesFiltrados.length === 0) {
+        tbody.innerHTML = '';
+        sinResultados.style.display = 'block';
+        return;
+    }
+    
+    sinResultados.style.display = 'none';
+    
+    tbody.innerHTML = rolesFiltrados.map(rol => `
+        <tr>
+            <td>${rol.rol_id}</td>
+            <td>${rol.nombre_rol}</td>
+            <td>${rol.descripcion}</td>
+            <td>
+                <span class="estado-badge ${rol.estado == 1 ? 'activo' : 'inactivo'}">
+                    ${rol.estado == 1 ? 'Activo' : 'Inactivo'}
+                </span>
+            </td>
+            <td>
+                <button class="action-btn edit-btn" onclick="editarRol(${rol.rol_id})" title="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn delete-btn" onclick="eliminarRol(${rol.rol_id})" title="Eliminar">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function filtrarRoles() {
+    const busqueda = document.getElementById('search-input').value.toLowerCase();
+    const estadoFilter = document.getElementById('estado-filter').value;
+    
+    rolesFiltrados = roles.filter(rol => {
+        const matchBusqueda = rol.nombre_rol.toLowerCase().includes(busqueda) || rol.descripcion.toLowerCase().includes(busqueda);
+        const matchEstado = estadoFilter === '' || rol.estado == estadoFilter;
+        return matchBusqueda && matchEstado;
+    });
+    
+    mostrarRoles();
+}
+
+function abrirModalCrear() {
+    document.getElementById('tituloModal').textContent = 'Crear Rol';
+    document.getElementById('formRol').reset();
+    document.getElementById('rol_id').value = '';
+    document.getElementById('modalRol').style.display = 'block';
+}
+
+function editarRol(id) {
+    const rol = roles.find(r => r.rol_id === id);
+    if (!rol) return;
+    
+    document.getElementById('tituloModal').textContent = 'Editar Rol';
+    document.getElementById('rol_id').value = rol.rol_id;
+    document.getElementById('nombre_rol').value = rol.nombre_rol;
+    document.getElementById('descripcion').value = rol.descripcion;
+    document.getElementById('estado').value = rol.estado;
+    document.getElementById('modalRol').style.display = 'block';
+}
+
+async function guardarRol(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const rolId = formData.get('rol_id');
+    const url = rolId ? `/Cruds/api/roles/${rolId}` : '/Cruds/api/roles';
+    const method = rolId ? 'PUT' : 'POST';
+    
+    const data = {
+        nombre_rol: formData.get('nombre_rol'),
+        descripcion: formData.get('descripcion'),
+        estado: parseInt(formData.get('estado'))
+    };
+    
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            cerrarModal();
+            cargarRoles();
+        } else {
+            alert(result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar el rol');
+    }
+}
+
+async function eliminarRol(id) {
+    if (!confirm('¿Estás seguro de eliminar este rol? Esto puede afectar a usuarios que lo tengan asignado.')) return;
+    
+    try {
+        const response = await fetch(`/Cruds/api/roles/${id}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            cargarRoles();
+        } else {
+            alert(result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar el rol');
+    }
+}
+
+function cerrarModal() {
+    document.getElementById('modalRol').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('modalRol');
+    if (event.target == modal) {
+        cerrarModal();
+    }
+}
+</script>
+
+{% endblock %}
+

@@ -1,0 +1,134 @@
+{% extends "/MODULO_USUARIO/Crud_Usuario.html" %}
+
+{% block user_content %}
+
+<style>
+.section-content {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+</style>
+
+<div class="section-content">
+    <h2 class="section-title">Gestionar Tipos de Documento</h2>
+
+    <div class="search-filters-section">
+        <div class="search-section">
+            <label for="search-input" class="search-label">Buscar</label>
+            <div class="search-form">
+                <input type="text" id="search-input" class="search-input" placeholder="Buscar por nombre..." onkeyup="filtrarTiposDoc()">
+                <button type="button" class="search-button" onclick="filtrarTiposDoc()"><i class="fas fa-search"></i></button>
+            </div>
+        </div>
+        <div class="filters-section">
+            <label for="estado-filter" class="filter-label">Estado</label>
+            <div class="filter-form">
+                <select id="estado-filter" class="rol-select" onchange="filtrarTiposDoc()">
+                    <option value="">Todos</option>
+                    <option value="1">Activos</option>
+                    <option value="0">Inactivos</option>
+                </select>
+            </div>
+        </div>
+        <div class="actions-section">
+            <button class="create-button" onclick="abrirModalCrear()"><i class="fas fa-plus"></i> Crear Tipo de Documento</button>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="empleados-table">
+            <thead>
+                <tr><th>ID</th><th>NOMBRE</th><th>ESTADO</th><th>ACCIONES</th></tr>
+            </thead>
+            <tbody id="tabla-tipos-doc"></tbody>
+        </table>
+    </div>
+    <div id="sin-resultados" class="sin-resultados" style="display: none;"><i class="fas fa-search"></i><p>No se encontraron tipos de documento</p></div>
+</div>
+
+<div id="modalTipoDoc" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title" id="tituloModal">Crear Tipo de Documento</h3><button class="modal-close" onclick="cerrarModal()"><i class="fas fa-times"></i></button></div>
+        <div class="modal-body">
+            <form id="formTipoDoc" onsubmit="guardarTipoDoc(event)">
+                <input type="hidden" id="tipo_doc_id">
+                <div class="form-group"><label for="nombre_tipo_doc">Nombre *</label><input type="text" id="nombre_tipo_doc" required maxlength="20"></div>
+                <div class="form-group"><label for="estado">Estado *</label><select id="estado" required><option value="1">Activo</option><option value="0">Inactivo</option></select></div>
+            </form>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn-modal btn-modal-secondary" onclick="cerrarModal()"><i class="fas fa-times"></i> Cancelar</button><button type="button" class="btn-modal btn-modal-primary" onclick="document.getElementById('formTipoDoc').requestSubmit()"><i class="fas fa-save"></i> Guardar</button></div>
+    </div>
+</div>
+
+<script>
+let tiposDoc = [], tiposDocFiltrados = [];
+document.addEventListener('DOMContentLoaded', () => cargarTiposDoc());
+
+async function cargarTiposDoc() {
+    const response = await fetch('/Cruds/api/tipos-documento');
+    const data = await response.json();
+    if (data.success) { tiposDoc = tiposDocFiltrados = data.tipos; mostrarTiposDoc(); }
+}
+
+function mostrarTiposDoc() {
+    const tbody = document.getElementById('tabla-tipos-doc');
+    const sinResultados = document.getElementById('sin-resultados');
+    if (tiposDocFiltrados.length === 0) { tbody.innerHTML = ''; sinResultados.style.display = 'block'; return; }
+    sinResultados.style.display = 'none';
+    tbody.innerHTML = tiposDocFiltrados.map(tipo => `<tr><td>${tipo.tipo_doc_id}</td><td>${tipo.nombre_tipo_doc}</td><td><span class="estado-badge ${tipo.estado == 1 ? 'activo' : 'inactivo'}">${tipo.estado == 1 ? 'Activo' : 'Inactivo'}</span></td><td><button class="action-btn edit-btn" onclick="editarTipoDoc(${tipo.tipo_doc_id})"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="eliminarTipoDoc(${tipo.tipo_doc_id})"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+}
+
+function filtrarTiposDoc() {
+    const busqueda = document.getElementById('search-input').value.toLowerCase();
+    const estadoFilter = document.getElementById('estado-filter').value;
+    tiposDocFiltrados = tiposDoc.filter(t => {
+        const matchBusqueda = t.nombre_tipo_doc.toLowerCase().includes(busqueda);
+        const matchEstado = estadoFilter === '' || t.estado == estadoFilter;
+        return matchBusqueda && matchEstado;
+    });
+    mostrarTiposDoc();
+}
+
+function abrirModalCrear() {
+    document.getElementById('tituloModal').textContent = 'Crear Tipo de Documento';
+    document.getElementById('formTipoDoc').reset();
+    document.getElementById('tipo_doc_id').value = '';
+    document.getElementById('modalTipoDoc').style.display = 'block';
+}
+
+function editarTipoDoc(id) {
+    const tipo = tiposDoc.find(t => t.tipo_doc_id === id);
+    if (!tipo) return;
+    document.getElementById('tituloModal').textContent = 'Editar Tipo de Documento';
+    document.getElementById('tipo_doc_id').value = tipo.tipo_doc_id;
+    document.getElementById('nombre_tipo_doc').value = tipo.nombre_tipo_doc;
+    document.getElementById('estado').value = tipo.estado;
+    document.getElementById('modalTipoDoc').style.display = 'block';
+}
+
+async function guardarTipoDoc(event) {
+    event.preventDefault();
+    const id = document.getElementById('tipo_doc_id').value;
+    const url = id ? `/Cruds/api/tipos-documento/${id}` : '/Cruds/api/tipos-documento';
+    const data = { nombre_tipo_doc: document.getElementById('nombre_tipo_doc').value, estado: parseInt(document.getElementById('estado').value) };
+    const response = await fetch(url, { method: id ? 'PUT' : 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+    const result = await response.json();
+    alert(result.message);
+    if (result.success) { cerrarModal(); cargarTiposDoc(); }
+}
+
+async function eliminarTipoDoc(id) {
+    if (!confirm('¿Eliminar este tipo de documento?')) return;
+    const response = await fetch(`/Cruds/api/tipos-documento/${id}`, { method: 'DELETE' });
+    const result = await response.json();
+    alert(result.message);
+    if (result.success) cargarTiposDoc();
+}
+
+function cerrarModal() { document.getElementById('modalTipoDoc').style.display = 'none'; }
+window.onclick = (e) => { if (e.target == document.getElementById('modalTipoDoc')) cerrarModal(); }
+</script>
+
+{% endblock %}
+

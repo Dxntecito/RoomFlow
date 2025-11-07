@@ -402,6 +402,232 @@ def eliminar_usuario(usuario_id):
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error: {str(e)}'})
 
+# ==========================================
+# RUTAS PARA GESTIÓN DE CATÁLOGOS
+# ==========================================
+
+from App.Controladores.C_Usuarios import controlador_catalogos
+
+# ===== PAÍSES =====
+@modulos_bp.route('/modulos/gestionar-paises', methods=['GET'])
+@login_required
+def gestionar_paises():
+    usuario_id = session.get('usuario_id')
+    perfil = controller_usuario.get_perfil_completo(usuario_id)
+    tipos_documento = controller_usuario.get_tipos_documento()
+    
+    if session.get('rol_id') != 1:
+        flash('No tienes permisos para acceder a este módulo', 'danger')
+        return redirect(url_for('modulos.modulos'))
+    
+    return render_template("/MODULO_USUARIO/gestionar_paises.html", perfil=perfil, tipos_documento=tipos_documento)
+
+@modulos_bp.route('/api/paises', methods=['GET'])
+@login_required
+def api_get_paises():
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    return jsonify(controlador_catalogos.get_paises())
+
+@modulos_bp.route('/api/paises', methods=['POST'])
+@login_required
+def api_create_pais():
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    data = request.get_json()
+    return jsonify(controlador_catalogos.insert_pais(data['nombre'], data['estado']))
+
+@modulos_bp.route('/api/paises/<int:pais_id>', methods=['PUT'])
+@login_required
+def api_update_pais(pais_id):
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    data = request.get_json()
+    return jsonify(controlador_catalogos.update_pais(pais_id, data['nombre'], data['estado']))
+
+@modulos_bp.route('/api/paises/<int:pais_id>', methods=['DELETE'])
+@login_required
+def api_delete_pais(pais_id):
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    return jsonify(controlador_catalogos.delete_pais(pais_id))
+
+# ===== ROLES =====
+@modulos_bp.route('/modulos/gestionar-roles', methods=['GET'])
+@login_required
+def gestionar_roles():
+    usuario_id = session.get('usuario_id')
+    perfil = controller_usuario.get_perfil_completo(usuario_id)
+    tipos_documento = controller_usuario.get_tipos_documento()
+    
+    if session.get('rol_id') != 1:
+        flash('No tienes permisos para acceder a este módulo', 'danger')
+        return redirect(url_for('modulos.modulos'))
+    
+    return render_template("/MODULO_USUARIO/gestionar_roles.html", perfil=perfil, tipos_documento=tipos_documento)
+
+@modulos_bp.route('/api/roles', methods=['GET'])
+@login_required
+def api_get_roles():
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    return jsonify(controlador_catalogos.get_roles())
+
+@modulos_bp.route('/api/roles', methods=['POST'])
+@login_required
+def api_create_rol():
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    data = request.get_json()
+    return jsonify(controlador_catalogos.insert_rol(data['nombre_rol'], data['descripcion'], data['estado']))
+
+@modulos_bp.route('/api/roles/<int:rol_id>', methods=['PUT'])
+@login_required
+def api_update_rol(rol_id):
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    data = request.get_json()
+    return jsonify(controlador_catalogos.update_rol(rol_id, data['nombre_rol'], data['descripcion'], data['estado']))
+
+@modulos_bp.route('/api/roles/<int:rol_id>', methods=['DELETE'])
+@login_required
+def api_delete_rol(rol_id):
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    return jsonify(controlador_catalogos.delete_rol(rol_id))
+
+# ===== TIPOS DE DOCUMENTO =====
+@modulos_bp.route('/modulos/gestionar-tipo-documento', methods=['GET'])
+@login_required
+def gestionar_tipo_documento():
+    usuario_id = session.get('usuario_id')
+    perfil = controller_usuario.get_perfil_completo(usuario_id)
+    tipos_documento = controller_usuario.get_tipos_documento()
+    
+    if session.get('rol_id') != 1:
+        flash('No tienes permisos para acceder a este módulo', 'danger')
+        return redirect(url_for('modulos.modulos'))
+    
+    return render_template("/MODULO_USUARIO/gestionar_tipo_documento.html", perfil=perfil, tipos_documento=tipos_documento)
+
+@modulos_bp.route('/api/tipos-documento', methods=['GET'])
+@login_required
+def api_get_tipos_documento():
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    return jsonify(controlador_catalogos.get_tipos_documento())
+
+@modulos_bp.route('/api/tipos-documento', methods=['POST'])
+@login_required
+def api_create_tipo_documento():
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    data = request.get_json()
+    return jsonify(controlador_catalogos.insert_tipo_documento(data['nombre_tipo_doc'], data['estado']))
+
+@modulos_bp.route('/api/tipos-documento/<int:tipo_doc_id>', methods=['PUT'])
+@login_required
+def api_update_tipo_documento(tipo_doc_id):
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    data = request.get_json()
+    return jsonify(controlador_catalogos.update_tipo_documento(tipo_doc_id, data['nombre_tipo_doc'], data['estado']))
+
+@modulos_bp.route('/api/tipos-documento/<int:tipo_doc_id>', methods=['DELETE'])
+@login_required
+def api_delete_tipo_documento(tipo_doc_id):
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    return jsonify(controlador_catalogos.delete_tipo_documento(tipo_doc_id))
+
+# ===== TIPOS DE CLIENTE =====
+@modulos_bp.route('/modulos/gestionar-tipo-cliente', methods=['GET'])
+@login_required
+def gestionar_tipo_cliente():
+    usuario_id = session.get('usuario_id')
+    perfil = controller_usuario.get_perfil_completo(usuario_id)
+    tipos_documento = controller_usuario.get_tipos_documento()
+    
+    if session.get('rol_id') != 1:
+        flash('No tienes permisos para acceder a este módulo', 'danger')
+        return redirect(url_for('modulos.modulos'))
+    
+    return render_template("/MODULO_USUARIO/gestionar_tipo_cliente.html", perfil=perfil, tipos_documento=tipos_documento)
+
+@modulos_bp.route('/api/tipos-cliente', methods=['GET'])
+@login_required
+def api_get_tipos_cliente():
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    return jsonify(controlador_catalogos.get_tipos_cliente())
+
+@modulos_bp.route('/api/tipos-cliente', methods=['POST'])
+@login_required
+def api_create_tipo_cliente():
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    data = request.get_json()
+    return jsonify(controlador_catalogos.insert_tipo_cliente(data['tipo_cliente_id'], data['descripcion'], data['estado']))
+
+@modulos_bp.route('/api/tipos-cliente/<string:tipo_cliente_id>', methods=['PUT'])
+@login_required
+def api_update_tipo_cliente(tipo_cliente_id):
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    data = request.get_json()
+    return jsonify(controlador_catalogos.update_tipo_cliente(tipo_cliente_id, data['tipo_cliente_id'], data['descripcion'], data['estado']))
+
+@modulos_bp.route('/api/tipos-cliente/<string:tipo_cliente_id>', methods=['DELETE'])
+@login_required
+def api_delete_tipo_cliente(tipo_cliente_id):
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    return jsonify(controlador_catalogos.delete_tipo_cliente(tipo_cliente_id))
+
+# ===== TIPOS DE EMPRESA =====
+@modulos_bp.route('/modulos/gestionar-tipo-empresa', methods=['GET'])
+@login_required
+def gestionar_tipo_empresa():
+    usuario_id = session.get('usuario_id')
+    perfil = controller_usuario.get_perfil_completo(usuario_id)
+    tipos_documento = controller_usuario.get_tipos_documento()
+    
+    if session.get('rol_id') != 1:
+        flash('No tienes permisos para acceder a este módulo', 'danger')
+        return redirect(url_for('modulos.modulos'))
+    
+    return render_template("/MODULO_USUARIO/gestionar_tipo_empresa.html", perfil=perfil, tipos_documento=tipos_documento)
+
+@modulos_bp.route('/api/tipos-empresa', methods=['GET'])
+@login_required
+def api_get_tipos_empresa():
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    return jsonify(controlador_catalogos.get_tipos_empresa())
+
+@modulos_bp.route('/api/tipos-empresa', methods=['POST'])
+@login_required
+def api_create_tipo_empresa():
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    data = request.get_json()
+    return jsonify(controlador_catalogos.insert_tipo_empresa(data['nombre_tipo'], data['estado']))
+
+@modulos_bp.route('/api/tipos-empresa/<int:tipo_id>', methods=['PUT'])
+@login_required
+def api_update_tipo_empresa(tipo_id):
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    data = request.get_json()
+    return jsonify(controlador_catalogos.update_tipo_empresa(tipo_id, data['nombre_tipo'], data['estado']))
+
+@modulos_bp.route('/api/tipos-empresa/<int:tipo_id>', methods=['DELETE'])
+@login_required
+def api_delete_tipo_empresa(tipo_id):
+    if session.get('rol_id') != 1:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 403
+    return jsonify(controlador_catalogos.delete_tipo_empresa(tipo_id))
+
 ###########    FIN MODULO USUARIO    ###########
 
 

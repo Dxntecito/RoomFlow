@@ -1,0 +1,268 @@
+{% extends "/MODULO_USUARIO/Crud_Usuario.html" %}
+
+{% block user_content %}
+
+<style>
+.section-content {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+</style>
+
+<div class="section-content" id="paises">
+    <h2 class="section-title">Gestionar Países</h2>
+
+    <!-- Barra de búsqueda y botón crear -->
+    <div class="search-filters-section">
+        <div class="search-section">
+            <label for="search-input" class="search-label">Buscar</label>
+            <div class="search-form">
+                <input type="text" id="search-input" name="search" class="search-input"
+                    placeholder="Buscar por nombre..." onkeyup="filtrarPaises()">
+                <button type="button" class="search-button" onclick="filtrarPaises()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <label for="estado-filter" class="filter-label">Estado</label>
+            <div class="filter-form">
+                <select id="estado-filter" class="rol-select" onchange="filtrarPaises()">
+                    <option value="">Todos</option>
+                    <option value="1">Activos</option>
+                    <option value="0">Inactivos</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="actions-section">
+            <button class="create-button" onclick="abrirModalCrear()">
+                <i class="fas fa-plus"></i> Crear País
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de países -->
+    <div class="table-container">
+        <table class="empleados-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>NOMBRE</th>
+                    <th>ESTADO</th>
+                    <th>ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-paises">
+                <!-- Se llena con JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="sin-resultados" class="sin-resultados" style="display: none;">
+        <i class="fas fa-search"></i>
+        <p>No se encontraron países</p>
+    </div>
+</div>
+
+<!-- Modal Crear/Editar País -->
+<div id="modalPais" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="tituloModal">Crear País</h3>
+            <button class="modal-close" onclick="cerrarModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="formPais" onsubmit="guardarPais(event)">
+                <input type="hidden" id="pais_id" name="pais_id">
+                
+                <div class="form-group">
+                    <label for="nombre">Nombre del País *</label>
+                    <input type="text" id="nombre" name="nombre" required maxlength="50">
+                </div>
+
+                <div class="form-group">
+                    <label for="estado">Estado *</label>
+                    <select id="estado" name="estado" required>
+                        <option value="1">Activo</option>
+                        <option value="0">Inactivo</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-modal btn-modal-secondary" onclick="cerrarModal()">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button type="button" class="btn-modal btn-modal-primary" onclick="document.getElementById('formPais').requestSubmit()">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let paises = [];
+let paisesFiltrados = [];
+
+// Cargar países al inicio
+document.addEventListener('DOMContentLoaded', function() {
+    cargarPaises();
+});
+
+async function cargarPaises() {
+    try {
+        const response = await fetch('/Cruds/api/paises');
+        const data = await response.json();
+        
+        if (data.success) {
+            paises = data.paises;
+            paisesFiltrados = paises;
+            mostrarPaises();
+        }
+    } catch (error) {
+        console.error('Error al cargar países:', error);
+        alert('Error al cargar los países');
+    }
+}
+
+function mostrarPaises() {
+    const tbody = document.getElementById('tabla-paises');
+    const sinResultados = document.getElementById('sin-resultados');
+    
+    if (paisesFiltrados.length === 0) {
+        tbody.innerHTML = '';
+        sinResultados.style.display = 'block';
+        return;
+    }
+    
+    sinResultados.style.display = 'none';
+    
+    tbody.innerHTML = paisesFiltrados.map(pais => `
+        <tr>
+            <td>${pais.pais_id}</td>
+            <td>${pais.nombre}</td>
+            <td>
+                <span class="estado-badge ${pais.estado == 1 ? 'activo' : 'inactivo'}">
+                    ${pais.estado == 1 ? 'Activo' : 'Inactivo'}
+                </span>
+            </td>
+            <td>
+                <button class="action-btn edit-btn" onclick="editarPais(${pais.pais_id})" title="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn delete-btn" onclick="eliminarPais(${pais.pais_id})" title="Eliminar">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function filtrarPaises() {
+    const busqueda = document.getElementById('search-input').value.toLowerCase();
+    const estadoFilter = document.getElementById('estado-filter').value;
+    
+    paisesFiltrados = paises.filter(pais => {
+        const matchBusqueda = pais.nombre.toLowerCase().includes(busqueda);
+        const matchEstado = estadoFilter === '' || pais.estado == estadoFilter;
+        return matchBusqueda && matchEstado;
+    });
+    
+    mostrarPaises();
+}
+
+function abrirModalCrear() {
+    document.getElementById('tituloModal').textContent = 'Crear País';
+    document.getElementById('formPais').reset();
+    document.getElementById('pais_id').value = '';
+    document.getElementById('modalPais').style.display = 'block';
+}
+
+function editarPais(id) {
+    const pais = paises.find(p => p.pais_id === id);
+    if (!pais) return;
+    
+    document.getElementById('tituloModal').textContent = 'Editar País';
+    document.getElementById('pais_id').value = pais.pais_id;
+    document.getElementById('nombre').value = pais.nombre;
+    document.getElementById('estado').value = pais.estado;
+    document.getElementById('modalPais').style.display = 'block';
+}
+
+async function guardarPais(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const paisId = formData.get('pais_id');
+    const url = paisId ? `/Cruds/api/paises/${paisId}` : '/Cruds/api/paises';
+    const method = paisId ? 'PUT' : 'POST';
+    
+    const data = {
+        nombre: formData.get('nombre'),
+        estado: parseInt(formData.get('estado'))
+    };
+    
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            cerrarModal();
+            cargarPaises();
+        } else {
+            alert(result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar el país');
+    }
+}
+
+async function eliminarPais(id) {
+    if (!confirm('¿Estás seguro de eliminar este país?')) return;
+    
+    try {
+        const response = await fetch(`/Cruds/api/paises/${id}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            cargarPaises();
+        } else {
+            alert(result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar el país');
+    }
+}
+
+function cerrarModal() {
+    document.getElementById('modalPais').style.display = 'none';
+}
+
+// Cerrar modal al hacer click fuera
+window.onclick = function(event) {
+    const modal = document.getElementById('modalPais');
+    if (event.target == modal) {
+        cerrarModal();
+    }
+}
+</script>
+
+{% endblock %}
+

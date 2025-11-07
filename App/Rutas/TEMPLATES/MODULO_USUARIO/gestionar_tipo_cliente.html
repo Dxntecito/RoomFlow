@@ -1,0 +1,139 @@
+{% extends "/MODULO_USUARIO/Crud_Usuario.html" %}
+
+{% block user_content %}
+
+<style>
+.section-content {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+</style>
+
+<div class="section-content">
+    <h2 class="section-title">Gestionar Tipos de Cliente</h2>
+
+    <div class="search-filters-section">
+        <div class="search-section">
+            <label for="search-input" class="search-label">Buscar</label>
+            <div class="search-form">
+                <input type="text" id="search-input" class="search-input" placeholder="Buscar..." onkeyup="filtrarTiposCliente()">
+                <button type="button" class="search-button" onclick="filtrarTiposCliente()"><i class="fas fa-search"></i></button>
+            </div>
+        </div>
+        <div class="filters-section">
+            <label for="estado-filter" class="filter-label">Estado</label>
+            <div class="filter-form">
+                <select id="estado-filter" class="rol-select" onchange="filtrarTiposCliente()">
+                    <option value="">Todos</option>
+                    <option value="1">Activos</option>
+                    <option value="0">Inactivos</option>
+                </select>
+            </div>
+        </div>
+        <div class="actions-section">
+            <button class="create-button" onclick="abrirModalCrear()"><i class="fas fa-plus"></i> Crear Tipo de Cliente</button>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="empleados-table">
+            <thead>
+                <tr><th>ID</th><th>DESCRIPCIÓN</th><th>ESTADO</th><th>ACCIONES</th></tr>
+            </thead>
+            <tbody id="tabla-tipos-cliente"></tbody>
+        </table>
+    </div>
+    <div id="sin-resultados" class="sin-resultados" style="display: none;"><i class="fas fa-search"></i><p>No se encontraron tipos de cliente</p></div>
+</div>
+
+<div id="modalTipoCliente" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title" id="tituloModal">Crear Tipo de Cliente</h3><button class="modal-close" onclick="cerrarModal()"><i class="fas fa-times"></i></button></div>
+        <div class="modal-body">
+            <form id="formTipoCliente" onsubmit="guardarTipoCliente(event)">
+                <input type="hidden" id="tipo_cliente_id_old">
+                <div class="form-group"><label for="tipo_cliente_id">ID (1 carácter) *</label><input type="text" id="tipo_cliente_id" required maxlength="1"></div>
+                <div class="form-group"><label for="descripcion">Descripción *</label><input type="text" id="descripcion" required maxlength="50"></div>
+                <div class="form-group"><label for="estado">Estado *</label><select id="estado" required><option value="1">Activo</option><option value="0">Inactivo</option></select></div>
+            </form>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn-modal btn-modal-secondary" onclick="cerrarModal()"><i class="fas fa-times"></i> Cancelar</button><button type="button" class="btn-modal btn-modal-primary" onclick="document.getElementById('formTipoCliente').requestSubmit()"><i class="fas fa-save"></i> Guardar</button></div>
+    </div>
+</div>
+
+<script>
+let tiposCliente = [], tiposClienteFiltrados = [];
+document.addEventListener('DOMContentLoaded', () => cargarTiposCliente());
+
+async function cargarTiposCliente() {
+    const response = await fetch('/Cruds/api/tipos-cliente');
+    const data = await response.json();
+    if (data.success) { tiposCliente = tiposClienteFiltrados = data.tipos; mostrarTiposCliente(); }
+}
+
+function mostrarTiposCliente() {
+    const tbody = document.getElementById('tabla-tipos-cliente');
+    const sinResultados = document.getElementById('sin-resultados');
+    if (tiposClienteFiltrados.length === 0) { tbody.innerHTML = ''; sinResultados.style.display = 'block'; return; }
+    sinResultados.style.display = 'none';
+    tbody.innerHTML = tiposClienteFiltrados.map(tipo => `<tr><td>${tipo.tipo_cliente_id}</td><td>${tipo.descripcion}</td><td><span class="estado-badge ${tipo.estado == 1 ? 'activo' : 'inactivo'}">${tipo.estado == 1 ? 'Activo' : 'Inactivo'}</span></td><td><button class="action-btn edit-btn" onclick="editarTipoCliente('${tipo.tipo_cliente_id}')"><i class="fas fa-edit"></i></button><button class="action-btn delete-btn" onclick="eliminarTipoCliente('${tipo.tipo_cliente_id}')"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+}
+
+function filtrarTiposCliente() {
+    const busqueda = document.getElementById('search-input').value.toLowerCase();
+    const estadoFilter = document.getElementById('estado-filter').value;
+    tiposClienteFiltrados = tiposCliente.filter(t => {
+        const matchBusqueda = t.descripcion.toLowerCase().includes(busqueda) || t.tipo_cliente_id.toLowerCase().includes(busqueda);
+        const matchEstado = estadoFilter === '' || t.estado == estadoFilter;
+        return matchBusqueda && matchEstado;
+    });
+    mostrarTiposCliente();
+}
+
+function abrirModalCrear() {
+    document.getElementById('tituloModal').textContent = 'Crear Tipo de Cliente';
+    document.getElementById('formTipoCliente').reset();
+    document.getElementById('tipo_cliente_id_old').value = '';
+    document.getElementById('tipo_cliente_id').readOnly = false;
+    document.getElementById('modalTipoCliente').style.display = 'block';
+}
+
+function editarTipoCliente(id) {
+    const tipo = tiposCliente.find(t => t.tipo_cliente_id === id);
+    if (!tipo) return;
+    document.getElementById('tituloModal').textContent = 'Editar Tipo de Cliente';
+    document.getElementById('tipo_cliente_id_old').value = tipo.tipo_cliente_id;
+    document.getElementById('tipo_cliente_id').value = tipo.tipo_cliente_id;
+    document.getElementById('tipo_cliente_id').readOnly = true;
+    document.getElementById('descripcion').value = tipo.descripcion;
+    document.getElementById('estado').value = tipo.estado;
+    document.getElementById('modalTipoCliente').style.display = 'block';
+}
+
+async function guardarTipoCliente(event) {
+    event.preventDefault();
+    const oldId = document.getElementById('tipo_cliente_id_old').value;
+    const id = document.getElementById('tipo_cliente_id').value;
+    const url = oldId ? `/Cruds/api/tipos-cliente/${oldId}` : '/Cruds/api/tipos-cliente';
+    const data = { tipo_cliente_id: id, descripcion: document.getElementById('descripcion').value, estado: parseInt(document.getElementById('estado').value) };
+    const response = await fetch(url, { method: oldId ? 'PUT' : 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+    const result = await response.json();
+    alert(result.message);
+    if (result.success) { cerrarModal(); cargarTiposCliente(); }
+}
+
+async function eliminarTipoCliente(id) {
+    if (!confirm('¿Eliminar este tipo de cliente?')) return;
+    const response = await fetch(`/Cruds/api/tipos-cliente/${id}`, { method: 'DELETE' });
+    const result = await response.json();
+    alert(result.message);
+    if (result.success) cargarTiposCliente();
+}
+
+function cerrarModal() { document.getElementById('modalTipoCliente').style.display = 'none'; }
+window.onclick = (e) => { if (e.target == document.getElementById('modalTipoCliente')) cerrarModal(); }
+</script>
+
+{% endblock %}
+
