@@ -1,0 +1,233 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+<style>
+    /* Estilos para el formulario de recuperación */
+    .recovery-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 120px 20px 40px 20px;
+        background: linear-gradient(135deg, #328336 0%, #64CC4F 100%);
+    }
+
+    .recovery-box {
+        background: white;
+        border-radius: 20px;
+        padding: 50px 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 450px;
+        width: 100%;
+        animation: fadeInUp 0.5s ease;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .recovery-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .recovery-icon {
+        font-size: 60px;
+        color: #328336;
+        margin-bottom: 20px;
+    }
+
+    .recovery-header h2 {
+        color: #333;
+        font-size: 28px;
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+
+    .recovery-header p {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-group label {
+        display: block;
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 15px 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #328336;
+        box-shadow: 0 0 0 3px rgba(50, 131, 54, 0.1);
+    }
+
+    .btn-recovery {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #328336, #64CC4F);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    .btn-recovery:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(50, 131, 54, 0.3);
+    }
+
+    .back-link {
+        text-align: center;
+        margin-top: 25px;
+    }
+
+    .back-link a {
+        color: #328336;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: color 0.3s;
+    }
+
+    .back-link a:hover {
+        color: #64CC4F;
+        text-decoration: underline;
+    }
+
+    /* Alerts */
+    .alert {
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+
+    .alert-error, .alert-danger {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffeeba;
+        color: #856404;
+    }
+
+    .alert-info {
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="recovery-container">
+    <div class="recovery-box">
+        <div class="recovery-header">
+            <div class="recovery-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h2>Recuperar Contraseña</h2>
+            <p>Ingresa tu correo electrónico y te enviaremos un código de recuperación</p>
+        </div>
+
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('usuarios.RecuperarContrasena') }}">
+            <div class="form-group">
+                <label for="email">
+                    <i class="fas fa-envelope"></i> Correo Electrónico
+                </label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="ejemplo@correo.com" 
+                    required
+                    autocomplete="email"
+                >
+            </div>
+
+            <button type="submit" class="btn-recovery">
+                <i class="fas fa-paper-plane"></i> Enviar Código
+            </button>
+        </form>
+
+        <div class="back-link">
+            <a href="{{ url_for('usuarios.Login') }}">
+                <i class="fas fa-arrow-left"></i> Volver al inicio de sesión
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-hide alerts after 7 seconds
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.style.transition = 'opacity 0.5s ease';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 7000);
+</script>
+{% endblock %}
+

@@ -1,0 +1,351 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+<style>
+    /* Estilos para validación de código */
+    .validation-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 120px 20px 40px 20px;
+        background: linear-gradient(135deg, #328336 0%, #64CC4F 100%);
+    }
+
+    .validation-box {
+        background: white;
+        border-radius: 20px;
+        padding: 50px 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 100%;
+        animation: fadeInUp 0.5s ease;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .validation-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .validation-icon {
+        font-size: 60px;
+        color: #328336;
+        margin-bottom: 20px;
+    }
+
+    .validation-header h2 {
+        color: #333;
+        font-size: 28px;
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+
+    .validation-header p {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-group label {
+        display: block;
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .code-input {
+        width: 100%;
+        padding: 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 32px;
+        text-align: center;
+        letter-spacing: 15px;
+        font-weight: bold;
+        color: #328336;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .code-input:focus {
+        outline: none;
+        border-color: #328336;
+        box-shadow: 0 0 0 3px rgba(50, 131, 54, 0.1);
+    }
+
+    .code-input::placeholder {
+        letter-spacing: 10px;
+        color: #ccc;
+    }
+
+    .btn-validate {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #328336, #64CC4F);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    .btn-validate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(50, 131, 54, 0.3);
+    }
+
+    .btn-resend {
+        width: 100%;
+        padding: 12px;
+        background: white;
+        color: #328336;
+        border: 2px solid #328336;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 15px;
+    }
+
+    .btn-resend:hover {
+        background: #f8f9fa;
+    }
+
+    .btn-resend:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .back-link {
+        text-align: center;
+        margin-top: 25px;
+    }
+
+    .back-link a {
+        color: #328336;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: color 0.3s;
+    }
+
+    .back-link a:hover {
+        color: #64CC4F;
+        text-decoration: underline;
+    }
+
+    .info-box {
+        background: #e7f3ff;
+        border: 1px solid #b3d9ff;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #004085;
+        font-size: 13px;
+    }
+
+    /* Alerts */
+    .alert {
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+
+    .alert-error, .alert-danger {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffeeba;
+        color: #856404;
+    }
+
+    .alert-info {
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+    }
+
+    #countdown {
+        font-weight: bold;
+        color: #328336;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="validation-container">
+    <div class="validation-box">
+        <div class="validation-header">
+            <div class="validation-icon">
+                <i class="fas fa-envelope-open-text"></i>
+            </div>
+            <h2>Validar Código</h2>
+            <p>Ingresa el código de 6 dígitos que recibiste por email</p>
+        </div>
+
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="info-box">
+            <i class="fas fa-info-circle"></i> El código es válido por 10 minutos
+        </div>
+
+        <form method="POST" action="{{ url_for('usuarios.ValidarCodigo') }}" id="formValidacion">
+            <div class="form-group">
+                <label for="codigo">
+                    <i class="fas fa-key"></i> Código de Recuperación
+                </label>
+                <input 
+                    type="text" 
+                    id="codigo" 
+                    name="codigo" 
+                    class="code-input"
+                    placeholder="000000" 
+                    maxlength="6"
+                    pattern="[0-9]{6}"
+                    required
+                    autocomplete="off"
+                    inputmode="numeric"
+                >
+            </div>
+
+            <button type="submit" class="btn-validate">
+                <i class="fas fa-check"></i> Validar Código
+            </button>
+
+            <button type="button" class="btn-resend" id="btnReenviar" onclick="reenviarCodigo()">
+                <i class="fas fa-redo"></i> Reenviar Código <span id="countdown"></span>
+            </button>
+        </form>
+
+        <div class="back-link">
+            <a href="{{ url_for('usuarios.RecuperarContrasena') }}">
+                <i class="fas fa-arrow-left"></i> Volver a solicitar código
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-formato del código (solo números)
+    const codigoInput = document.getElementById('codigo');
+    codigoInput.addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    // Contador de reenvío (60 segundos)
+    let segundos = 60;
+    const btnReenviar = document.getElementById('btnReenviar');
+    const countdownSpan = document.getElementById('countdown');
+
+    function actualizarContador() {
+        if (segundos > 0) {
+            countdownSpan.textContent = `(${segundos}s)`;
+            btnReenviar.disabled = true;
+            segundos--;
+            setTimeout(actualizarContador, 1000);
+        } else {
+            countdownSpan.textContent = '';
+            btnReenviar.disabled = false;
+        }
+    }
+
+    // Iniciar contador
+    actualizarContador();
+
+    // Función para reenviar código
+    async function reenviarCodigo() {
+        btnReenviar.disabled = true;
+        btnReenviar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+
+        try {
+            const response = await fetch('{{ url_for("usuarios.ReenviarCodigo") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert('✅ Código reenviado exitosamente. Revisa tu email.');
+                segundos = 60;
+                actualizarContador();
+            } else {
+                alert('❌ ' + data.message);
+                btnReenviar.disabled = false;
+            }
+        } catch (error) {
+            alert('❌ Error al reenviar el código');
+            btnReenviar.disabled = false;
+        }
+
+        btnReenviar.innerHTML = '<i class="fas fa-redo"></i> Reenviar Código <span id="countdown"></span>';
+    }
+
+    // Auto-hide alerts
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.style.transition = 'opacity 0.5s ease';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 7000);
+</script>
+{% endblock %}
+

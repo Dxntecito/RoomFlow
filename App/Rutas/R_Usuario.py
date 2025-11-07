@@ -420,3 +420,255 @@ def verificar_disponibilidad_email(email):
         'disponible': email_existente is None
     })
 
+# ============================================
+# RUTAS PARA RECUPERACIÓN DE CONTRASEÑA
+# ============================================
+
+# Variable global para el objeto mail (se asigna desde main.py)
+mail = None
+
+@usuarios_bp.route('/recuperar-contrasena', methods=['GET', 'POST'])
+def RecuperarContrasena():
+    """
+    Paso 1: Solicitar recuperación de contraseña (ingresa email)
+    """
+    if request.method == 'POST':
+        try:
+            email = request.form.get('email', '').strip()
+            
+            if not email:
+                flash('El email es obligatorio', 'error')
+                return render_template('RecuperarContrasena.html')
+            
+            # Verificar que el email existe
+            usuario_data = controller_usuario.get_usuario_by_email(email)
+            if not usuario_data:
+                # Por seguridad, no revelamos si el email existe o no
+                flash('Si el email existe en nuestro sistema, recibirás un código de recuperación en unos momentos.', 'info')
+                return render_template('RecuperarContrasena.html')
+            
+            usuario_id = usuario_data['usuario_id']
+            
+            # Generar código de recuperación
+            resultado = controller_usuario.crear_codigo_recuperacion(usuario_id)
+            
+            if not resultado['success']:
+                flash('Error al generar código de recuperación', 'error')
+                return render_template('RecuperarContrasena.html')
+            
+            codigo = resultado['codigo']
+            
+            # Enviar email con el código
+            try:
+                from flask_mail import Message
+                
+                msg = Message(
+                    subject='Código de Recuperación de Contraseña - Hotel RoomFlow',
+                    recipients=[email]
+                )
+                
+                msg.html = f"""
+                <html>
+                <head>
+                    <style>
+                        body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }}
+                        .container {{ max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+                        .header {{ background: #328336; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; margin: -30px -30px 30px -30px; }}
+                        .code {{ font-size: 32px; font-weight: bold; color: #328336; text-align: center; padding: 20px; background: #f0f8f0; border-radius: 10px; letter-spacing: 10px; margin: 20px 0; }}
+                        .warning {{ color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 5px; margin: 20px 0; }}
+                        .footer {{ text-align: center; color: #666; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>🏨 Hotel RoomFlow</h1>
+                            <p>Recuperación de Contraseña</p>
+                        </div>
+                        
+                        <p>Hola,</p>
+                        <p>Has solicitado recuperar tu contraseña. Tu código de recuperación es:</p>
+                        
+                        <div class="code">{codigo}</div>
+                        
+                        <p>Este código es válido por <strong>10 minutos</strong>.</p>
+                        
+                        <div class="warning">
+                            <strong>⚠️ Importante:</strong> Si no solicitaste este código, ignora este mensaje. Tu cuenta permanece segura.
+                        </div>
+                        
+                        <p>Para continuar, ingresa este código en la página de recuperación de contraseña.</p>
+                        
+                        <div class="footer">
+                            <p>Este es un mensaje automático, por favor no respondas a este correo.</p>
+                            <p>&copy; 2025 Hotel RoomFlow - Sistema de Gestión Hotelera</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
+                
+                mail.send(msg)
+                
+                flash('Se ha enviado un código de recuperación a tu email. Revisa tu bandeja de entrada.', 'success')
+                # Guardar email en sesión para el siguiente paso
+                session['email_recuperacion'] = email
+                return redirect(url_for('usuarios.ValidarCodigo'))
+                
+            except Exception as e:
+                print(f"Error al enviar email: {e}")
+                flash('Error al enviar el email. Intenta nuevamente más tarde.', 'error')
+                return render_template('RecuperarContrasena.html')
+                
+        except Exception as ex:
+            flash(f'Error: {str(ex)}', 'error')
+            return render_template('RecuperarContrasena.html')
+    
+    return render_template('RecuperarContrasena.html')
+
+@usuarios_bp.route('/validar-codigo', methods=['GET', 'POST'])
+def ValidarCodigo():
+    """
+    Paso 2: Validar el código recibido por email
+    """
+    if request.method == 'POST':
+        try:
+            codigo = request.form.get('codigo', '').strip()
+            
+            if not codigo:
+                flash('Debes ingresar el código', 'error')
+                return render_template('ValidarCodigo.html')
+            
+            # Validar el código
+            resultado = controller_usuario.validar_codigo_recuperacion(codigo)
+            
+            if not resultado['success']:
+                flash(resultado['message'], 'error')
+                return render_template('ValidarCodigo.html')
+            
+            # Código válido, guardar en sesión y redirigir a cambio de contraseña
+            session['codigo_recuperacion'] = codigo
+            return redirect(url_for('usuarios.NuevaContrasena'))
+            
+        except Exception as ex:
+            flash(f'Error: {str(ex)}', 'error')
+            return render_template('ValidarCodigo.html')
+    
+    # Verificar que viene del paso anterior
+    if 'email_recuperacion' not in session:
+        flash('Sesión expirada. Solicita un nuevo código.', 'warning')
+        return redirect(url_for('usuarios.RecuperarContrasena'))
+    
+    return render_template('ValidarCodigo.html')
+
+@usuarios_bp.route('/nueva-contrasena', methods=['GET', 'POST'])
+def NuevaContrasena():
+    """
+    Paso 3: Establecer nueva contraseña
+    """
+    # Verificar que viene del paso anterior
+    if 'codigo_recuperacion' not in session:
+        flash('Sesión inválida. Solicita un nuevo código.', 'warning')
+        return redirect(url_for('usuarios.RecuperarContrasena'))
+    
+    if request.method == 'POST':
+        try:
+            nueva_contrasena = request.form.get('nueva_contrasena', '')
+            confirmar_contrasena = request.form.get('confirmar_contrasena', '')
+            
+            if not nueva_contrasena or not confirmar_contrasena:
+                flash('Ambos campos son obligatorios', 'error')
+                return render_template('NuevaContrasena.html')
+            
+            if nueva_contrasena != confirmar_contrasena:
+                flash('Las contraseñas no coinciden', 'error')
+                return render_template('NuevaContrasena.html')
+            
+            if len(nueva_contrasena) < 6:
+                flash('La contraseña debe tener al menos 6 caracteres', 'error')
+                return render_template('NuevaContrasena.html')
+            
+            # Cambiar contraseña
+            codigo = session['codigo_recuperacion']
+            resultado = controller_usuario.cambiar_contrasena_con_codigo(codigo, nueva_contrasena)
+            
+            if not resultado['success']:
+                flash(resultado['message'], 'error')
+                return render_template('NuevaContrasena.html')
+            
+            # Limpiar sesión
+            session.pop('email_recuperacion', None)
+            session.pop('codigo_recuperacion', None)
+            
+            flash('¡Contraseña cambiada exitosamente! Ya puedes iniciar sesión.', 'success')
+            return redirect(url_for('usuarios.Login'))
+            
+        except Exception as ex:
+            flash(f'Error: {str(ex)}', 'error')
+            return render_template('NuevaContrasena.html')
+    
+    return render_template('NuevaContrasena.html')
+
+@usuarios_bp.route('/reenviar-codigo', methods=['POST'])
+def ReenviarCodigo():
+    """
+    Reenvía el código de recuperación
+    """
+    try:
+        if 'email_recuperacion' not in session:
+            return jsonify({'success': False, 'message': 'Sesión expirada'})
+        
+        email = session['email_recuperacion']
+        usuario_data = controller_usuario.get_usuario_by_email(email)
+        
+        if not usuario_data:
+            return jsonify({'success': False, 'message': 'Usuario no encontrado'})
+        
+        # Generar nuevo código
+        resultado = controller_usuario.crear_codigo_recuperacion(usuario_data['usuario_id'])
+        
+        if not resultado['success']:
+            return jsonify({'success': False, 'message': 'Error al generar código'})
+        
+        codigo = resultado['codigo']
+        
+        # Enviar email
+        from flask_mail import Message
+        
+        msg = Message(
+            subject='Nuevo Código de Recuperación - Hotel RoomFlow',
+            recipients=[email]
+        )
+        
+        msg.html = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }}
+                .container {{ max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+                .header {{ background: #328336; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; margin: -30px -30px 30px -30px; }}
+                .code {{ font-size: 32px; font-weight: bold; color: #328336; text-align: center; padding: 20px; background: #f0f8f0; border-radius: 10px; letter-spacing: 10px; margin: 20px 0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🏨 Hotel RoomFlow</h1>
+                    <p>Nuevo Código de Recuperación</p>
+                </div>
+                <p>Has solicitado un nuevo código de recuperación:</p>
+                <div class="code">{codigo}</div>
+                <p>Este código es válido por <strong>10 minutos</strong>.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        mail.send(msg)
+        
+        return jsonify({'success': True, 'message': 'Código reenviado exitosamente'})
+        
+    except Exception as e:
+        print(f"Error al reenviar código: {e}")
+        return jsonify({'success': False, 'message': 'Error al enviar el código'})
+

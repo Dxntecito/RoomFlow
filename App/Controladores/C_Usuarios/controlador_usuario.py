@@ -1,6 +1,8 @@
 from bd import get_connection
 import hashlib
-from datetime import date
+from datetime import date, datetime, timedelta
+import random
+import string
 
 def hash_password(password):
     """
@@ -962,6 +964,146 @@ def eliminar_usuario(usuario_id):
         if conexion:
             conexion.rollback()
         return {'success': False, 'message': f'Error al eliminar la cuenta: {str(ex)}'}
+    finally:
+        if conexion:
+            conexion.close()
+
+# ============================================
+# FUNCIONES PARA RECUPERACIÓN DE CONTRASEÑA
+# ============================================
+
+def generar_codigo_recuperacion():
+    """
+    Genera un código aleatorio de 6 dígitos
+    """
+    return ''.join(random.choices(string.digits, k=6))
+
+def crear_codigo_recuperacion(usuario_id):
+    """
+    Crea un código de recuperación para un usuario
+    El código expira en 10 minutos
+    """
+    conexion = None
+    try:
+        conexion = get_connection()
+        with conexion.cursor() as cursor:
+            # Invalidar códigos anteriores del usuario
+            sql_invalidar = "UPDATE CODIGO_RECUPERACION SET usado = 1 WHERE usuario_id = %s AND usado = 0"
+            cursor.execute(sql_invalidar, (usuario_id,))
+            
+            # Generar nuevo código
+            codigo = generar_codigo_recuperacion()
+            fecha_creacion = datetime.now()
+            fecha_expiracion = fecha_creacion + timedelta(minutes=10)
+            
+            # Insertar código
+            sql_insertar = """
+                INSERT INTO CODIGO_RECUPERACION (usuario_id, codigo, fecha_creacion, fecha_expiracion, usado)
+                VALUES (%s, %s, %s, %s, 0)
+            """
+            cursor.execute(sql_insertar, (usuario_id, codigo, fecha_creacion, fecha_expiracion))
+            conexion.commit()
+            
+            return {'success': True, 'codigo': codigo}
+    except Exception as ex:
+        print(f"Error al crear código de recuperación: {ex}")
+        if conexion:
+            conexion.rollback()
+        return {'success': False, 'message': str(ex)}
+    finally:
+        if conexion:
+            conexion.close()
+
+def validar_codigo_recuperacion(codigo):
+    """
+    Valida un código de recuperación
+    Retorna el usuario_id si el código es válido
+    """
+    conexion = None
+    try:
+        conexion = get_connection()
+        with conexion.cursor() as cursor:
+            sql = """
+                SELECT usuario_id, fecha_expiracion 
+                FROM CODIGO_RECUPERACION 
+                WHERE codigo = %s AND usado = 0
+                ORDER BY fecha_creacion DESC
+                LIMIT 1
+            """
+            cursor.execute(sql, (codigo,))
+            resultado = cursor.fetchone()
+            
+            if not resultado:
+                return {'success': False, 'message': 'Código inválido o ya utilizado'}
+            
+            usuario_id = resultado[0]
+            fecha_expiracion = resultado[1]
+            
+            # Verificar si expiró
+            if datetime.now() > fecha_expiracion:
+                return {'success': False, 'message': 'El código ha expirado. Solicita uno nuevo.'}
+            
+            return {'success': True, 'usuario_id': usuario_id}
+    except Exception as ex:
+        print(f"Error al validar código: {ex}")
+        return {'success': False, 'message': str(ex)}
+    finally:
+        if conexion:
+            conexion.close()
+
+def cambiar_contrasena_con_codigo(codigo, nueva_contrasena):
+    """
+    Cambia la contraseña usando un código de recuperación válido
+    """
+    conexion = None
+    try:
+        # Primero validar el código
+        validacion = validar_codigo_recuperacion(codigo)
+        if not validacion['success']:
+            return validacion
+        
+        usuario_id = validacion['usuario_id']
+        
+        conexion = get_connection()
+        with conexion.cursor() as cursor:
+            # Actualizar contraseña
+            contrasena_hash = hash_password(nueva_contrasena)
+            sql_update = "UPDATE USUARIO SET contrasena = %s WHERE usuario_id = %s"
+            cursor.execute(sql_update, (contrasena_hash, usuario_id))
+            
+            # Marcar código como usado
+            sql_marcar = "UPDATE CODIGO_RECUPERACION SET usado = 1 WHERE codigo = %s"
+            cursor.execute(sql_marcar, (codigo,))
+            
+            conexion.commit()
+            return {'success': True, 'message': 'Contraseña cambiada exitosamente'}
+    except Exception as ex:
+        print(f"Error al cambiar contraseña: {ex}")
+        if conexion:
+            conexion.rollback()
+        return {'success': False, 'message': str(ex)}
+    finally:
+        if conexion:
+            conexion.close()
+
+def limpiar_codigos_expirados():
+    """
+    Limpia códigos de recuperación expirados o usados (función de mantenimiento)
+    """
+    conexion = None
+    try:
+        conexion = get_connection()
+        with conexion.cursor() as cursor:
+            sql = "DELETE FROM CODIGO_RECUPERACION WHERE fecha_expiracion < NOW() OR usado = 1"
+            cursor.execute(sql)
+            conexion.commit()
+            filas_eliminadas = cursor.rowcount
+            return {'success': True, 'eliminados': filas_eliminadas}
+    except Exception as ex:
+        print(f"Error al limpiar códigos: {ex}")
+        if conexion:
+            conexion.rollback()
+        return {'success': False, 'message': str(ex)}
     finally:
         if conexion:
             conexion.close()

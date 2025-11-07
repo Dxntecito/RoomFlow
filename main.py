@@ -1,6 +1,8 @@
 from flask import Flask, render_template,request,session,redirect,url_for,g
 from bd import get_connection
 from flask_socketio import SocketIO
+from flask_mail import Mail
+import os
 
 from App.Rutas.R_Reserva import bookingroom_bp
 from App.Rutas.R_Empleados import empleados_bp
@@ -22,6 +24,16 @@ from App.Rutas.R_Modulos import modulos_bp
 
 app = Flask(__name__, template_folder="./App/Rutas/TEMPLATES", static_folder="./App/Static")
 app.secret_key = 'clave_super_secreta_123'
+
+# === Config de correo (Gmail SMTP) ===
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'valentinoandca@gmail.com')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'gcdl wgwf lego lmin')
+app.config['MAIL_DEFAULT_SENDER'] = ('Hotel RoomFlow', 'valentinoandca@gmail.com')
+
+mail = Mail(app)
 
 socketio = SocketIO(app)
 
@@ -46,6 +58,10 @@ def Index():
 
 from flask import request, render_template
 from datetime import datetime
+
+# Hacer mail accesible para otros módulos
+from App.Rutas import R_Usuario
+R_Usuario.mail = mail
 
 # Iniciar el servidor
 if __name__ == "__main__":
