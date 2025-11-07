@@ -1,5 +1,8 @@
 from flask import render_template, Blueprint, session, redirect, url_for, flash,request,jsonify
 from functools import wraps
+from decimal import Decimal
+from datetime import date, timedelta
+
 import App.Controladores.C_Usuarios.controlador_usuario as controller_usuario
 import App.Controladores.C_Reserva.controlador_piso as controller_piso
 import App.Controladores.C_Evento.controlador_evento as controlador_evento
@@ -635,15 +638,29 @@ def api_delete_tipo_empresa(tipo_id):
 @modulos_bp.route('/modulos/Evento', methods=['GET'])
 @login_required
 def evento():
+    controlador_evento.inactivar_eventos_vencidos()
     usuario_id = session.get('usuario_id')
     perfil = controller_usuario.get_perfil_completo(usuario_id)
     tipos_documento = controller_usuario.get_tipos_documento()
+
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    offset = (page - 1) * per_page
+
+    eventos = controlador_evento.get_eventos(limit=per_page, offset=offset)
+    total_eventos = controlador_evento.count_eventos()
+    total_pages = (total_eventos + per_page - 1) // per_page
+    controlador_evento.marcar_eventos_con_nota_credito_por_id(eventos)
     
     if not perfil:
         flash('Usuario no encontrado', 'error')
         return redirect(url_for('Index'))
     
-    return render_template("/MODULO_EVENTO/gestionar_evento.html", perfil=perfil, tipos_documento=tipos_documento)
+    return render_template("/MODULO_EVENTO/gestionar_evento.html", perfil=perfil, tipos_documento=tipos_documento,eventos=eventos,
+        mode="list",
+        filter='id_evento',
+        page=page,
+        total_pages=total_pages)
 
 # LISTADO CON FILTRO Y PAGINACIÓN
 @modulos_bp.route('/TiposEventos')
@@ -734,15 +751,15 @@ def NewTipoEvento():
         mode='insert'
     )
 
-
+		
 # GUARDAR NUEVO
 @modulos_bp.route('/SaveTipoEvento', methods=['POST'])
 def SaveTipoEvento():
     try:
         nombre_tipo_evento = request.form['nombre_tipo_evento']
         estado = request.form['estado']
-
-        controlador_evento.insert_tipo_evento(nombre_tipo_evento, estado)
+        precio_por_hora = request.form['precio_por_hora']
+        controlador_evento.insert_tipo_evento(nombre_tipo_evento, estado, precio_por_hora)
         flash("Tipo de evento creado correctamente", "success")
     except Exception as e:
         flash(f"Error al crear el tipo de evento: {str(e)}", "error")
@@ -762,19 +779,201 @@ def DeleteTipoEvento():
 
 
 # BUSQUEDA AJAX
+
+
+# BUSQUEDA AJAX
 @modulos_bp.route('/SearchTiposEventos')
 def SearchTiposEventos():
     query = request.args.get('query', '').strip()
+
     if query:
         resultados = controlador_evento.search_tipo_evento(query)
     else:
         resultados = controlador_evento.get_tipos_eventos()
 
-    tipos_json = [
-        {"tipo_evento_id": t[0], "nombre_tipo_evento": t[1], "estado": t[2]}
-        for t in resultados
-    ]
-    return jsonify(tipos_json)
+    # ✅ resultados ya son diccionarios, así que devolvemos directo
+    return jsonify(resultados)
+
 
 
 ###########    INCIO MODULO EVENTO    ###########
+# @modulos_bp.route('/Eventos')
+# def eventos():
+#     page = int(request.args.get('page', 1))
+#     per_page = 7
+#     offset = (page - 1) * per_page
+
+#     eventos = controlador_evento.get_eventos(limit=per_page, offset=offset)
+
+#     # Llamamos a la función que marca si ya tienen nota de crédito
+#     controlador_evento.marcar_eventos_con_nota_credito_por_id(eventos)
+
+#     total_eventos = controlador_evento.count_eventos()
+#     total_pages = (total_eventos + per_page - 1) // per_page
+
+#     return render_template(
+#         '/MODULO_EVENTO/gestionar_evento.html',
+#         eventos=eventos,
+#         mode="list",
+#         filter='id_evento',
+#         page=page,
+#         total_pages=total_pages
+#     )
+
+
+
+@modulos_bp.route('/FilterEventos/<string:filter>')
+def FilterEventos(filter):
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    order = request.args.get('order', 'asc')
+
+    eventos_all = controlador_evento.order_evento(filter, order)
+    eventos_all = [
+        dict(
+            id_evento=e[0],
+            nombre_evento=e[1],
+            fecha=e[2],
+            hora_inicio=e[3],
+            hora_fin=e[4],
+            estado=e[5]
+        ) for e in eventos_all
+    ]
+
+    total_eventos = len(eventos_all)
+    total_pages = (total_eventos + per_page - 1) // per_page
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    eventos = eventos_all[start:end]
+
+    return render_template(
+        '/MODULO_EVENTO/gestionar_evento.html',
+        eventos=eventos,
+        mode='list',
+        filter=filter,
+        order=order,
+        page=page,
+        total_pages=total_pages
+        
+    )
+
+@modulos_bp.route('/ViewEvento/<int:id_evento>')
+def ViewEvento(id_evento):
+    evento = controlador_evento.get_evento_by_id(id_evento)
+    tipos_eventos = controlador_evento.get_tipos_eventos2()
+    return render_template(
+        '/MODULO_EVENTO/gestionar_evento.html',
+        evento=evento,
+        tipos_eventos=tipos_eventos,
+        mode='view'
+    )
+
+@modulos_bp.route('/EditEvento/<int:id_evento>')
+def EditEvento(id_evento):
+    evento = controlador_evento.get_evento_by_id(id_evento)   # ✅ función correcta
+    tipos_eventos = controlador_evento.get_tipos_eventos2()
+    return render_template(
+        '/MODULO_EVENTO/gestionar_evento.html',
+        evento=evento,
+        mode='edit',
+        tipos_eventos=tipos_eventos, current_date=date.today() + timedelta(days=1)
+    )
+
+
+@modulos_bp.route('/UpdateEvento', methods=['POST'])
+def UpdateEvento():
+    try:
+        id_evento = int(request.form['id_evento'])
+        nombre_evento = request.form['nombre_evento']
+        fecha = request.form['fecha']
+        hora_inicio = request.form['hora_inicio']
+        hora_fin = request.form['hora_fin']
+        # estado = int(request.form.get('estado', 1))
+
+        numero_horas = Decimal(str(request.form['numero_horas']))
+        tipo_evento_id = int(request.form['tipo_evento_id'])
+
+        motivo = "Cambio de monto"  # puedes cambiarlo
+
+        print("\n✅ DATOS RECIBIDOS DEL FORMULARIO:")
+        print("ID:", id_evento)
+        print("Nombre:", nombre_evento)
+        print("Fecha:", fecha)
+        print("Hora inicio:", hora_inicio)
+        print("Hora fin:", hora_fin)
+        # print("Estado:", estado)
+        print("Horas:", numero_horas)
+        print("Tipo evento:", tipo_evento_id)
+
+        # Obtener precio base
+        tipo = controlador_evento.get_tipo_evento_by_id(tipo_evento_id)
+        precio_base = Decimal(str(tipo[2]))
+        precio_final = precio_base * numero_horas
+
+        print("Precio base:", precio_base)
+        print("Precio final calculado:", precio_final)
+
+        controlador_evento.update_evento(
+            nombre_evento, fecha, hora_inicio, hora_fin, 
+            numero_horas, precio_final, tipo_evento_id, id_evento, motivo
+        )
+
+        flash("Evento actualizado correctamente", "success")
+
+    except Exception as e:
+        print(" ERROR EN UpdateEvento:", e)
+        flash(f"Error al actualizar el evento: {str(e)}", "error")
+
+    return redirect(url_for('modulos.evento'))
+
+
+
+
+@modulos_bp.route('/NewEvento')
+def NewEvento():
+    return render_template('/MODULO_EVENTO/gestionar_evento.html', evento=None, mode='insert')
+@modulos_bp.route('/SaveEvento', methods=['POST'])
+def SaveEvento():
+    try:
+        nombre_evento = request.form['nombre_evento']
+        fecha = request.form['fecha']
+        hora_inicio = request.form['hora_inicio']
+        hora_fin = request.form['hora_fin']
+        estado = request.form['estado']
+
+        controlador_evento.insert_evento(nombre_evento, fecha, hora_inicio, hora_fin, estado)
+        flash("Evento creado correctamente", "success")
+    except Exception as e:
+        flash(f"Error al crear el evento: {str(e)}", "error")
+
+    return redirect(url_for('modulos.FilterEventos', filter='id_evento'))
+@modulos_bp.route('/SearchEventos')
+def SearchEventos():
+    query = request.args.get('query', '').strip()
+
+    if query:
+        resultados = controlador_evento.search_evento(query)
+    else:
+        resultados = controlador_evento.get_eventos()
+
+    return jsonify(resultados)
+
+
+@modulos_bp.route('/BajaEvento', methods=['POST'])
+def baja_evento_route():
+    try:
+        evento_id = int(request.form['evento_id'])
+        motivo = request.form['motivo']  # Obligatorio
+
+        # Llamar a la función corregida
+        controlador_evento.baja_evento(evento_id, motivo)
+
+        return jsonify({"success": True, "message": "Evento dado de baja correctamente"})
+    except Exception as e:
+        print("❌ Error en baja_evento_route:", e)
+        return jsonify({"success": False, "message": str(e)})
+
+
+
+###########    FIN MODULO EVENTO    ###########

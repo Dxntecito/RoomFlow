@@ -20,7 +20,8 @@
         </div>
         <div>
             <label style="font-size: 12px; color: #999;">Fecha de reserva</label>
-            <input id="search-fecha" type="date" value="" style="color: #328336; font-weight: 500;">
+            <input id="search-fecha" type="date" value="" style="color: #328336; font-weight: 500;"
+                min="{{ current_date }}">
         </div>
         <div class="divider"></div>
         <div>
@@ -41,7 +42,7 @@
     </div>
 
     <div class="main-content">
-        <form action="{{ url_for('eventos.procesar_pago_route') }}" method="POST" id="form-pago">
+        <form method="POST" id="form-pago">
             <div class="form-card">
                 <h3 class="section-title-events">DATOS DEL EVENTO</h3>
 
@@ -68,7 +69,7 @@
                         <label>Tipo de evento</label>
                         <select name="tipo_evento_id" class="form-control" required>
                             <option value="">Seleccionar</option>
-                            {% for evento in tipos_evento %}
+                            {% for evento in tipos_evento1 %}
                             <option value="{{ evento[0] }}">{{ evento[1] }}</option>
                             {% endfor %}
                         </select>
@@ -288,7 +289,8 @@
                     Factura
                 </label>
 
-                <button class="pay-button" id="btn-pagar" type="submit">Pagar</button>
+                <button class="pay-button" id="btn-pagar" type="button">Pagar</button>
+
                 <div id="flash-message"></div>
                 <!-- Modal de procesamiento -->
                 <div id="modal-pago" class="modal-pago">
@@ -437,47 +439,70 @@
 
         }, { once: false });
     })();
+</script><script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // Mapa de precios por tipo de evento
+        const tiposEventos = {
+            {% for t in tipos_evento1 %}
+            {{ t[0] }}: {{ t[2] if t[2] is not none else 0 }},
+            {% endfor %}
+        };
+
+        console.log("Tipos de eventos cargados:", tiposEventos); // ✅ Debug
+
+        let horas = 0;
+        let total = 0;
+
+        function calcularHoras(entrada, salida) {
+            if (!entrada || !salida) return 0;
+            const [h1, m1] = entrada.split(":").map(Number);
+            const [h2, m2] = salida.split(":").map(Number);
+
+            let diff = (h2 + m2 / 60) - (h1 + m1 / 60);
+            if (diff < 0) diff += 24;
+            return diff;
+        }
+
+        function actualizarResumen() {
+            const fecha = document.getElementById("evento-fecha").value;
+            const entrada = document.getElementById("evento-hora-entrada").value;
+            const salida = document.getElementById("evento-hora-salida").value;
+            const tipoEventoSelect = document.querySelector('select[name="tipo_evento_id"]');
+            const tipoEventoId = tipoEventoSelect ? tipoEventoSelect.value : null;
+
+            console.log("Tipo evento seleccionado:", tipoEventoId); // ✅ Debug
+
+            horas = calcularHoras(entrada, salida);
+            const precioBase = tiposEventos[tipoEventoId] || 0;
+            total = horas * precioBase;
+
+            console.log("Horas:", horas, "Precio base:", precioBase, "Total:", total); // ✅ Debug
+
+            // Actualizar resumen visual
+            document.getElementById("resumen-fecha").textContent = fecha || "—";
+            document.getElementById("resumen-horas").textContent =
+                horas > 0 ? `${horas.toFixed(1)} × S/ ${precioBase.toFixed(2)}` : "—";
+            document.getElementById("resumen-total").textContent =
+                horas > 0 ? `S/ ${total.toFixed(2)}` : "S/ 0";
+
+            // Exponer variables globales para el botón pagar
+            window.horas = horas;
+            window.total = total;
+        }
+
+        // Escuchar cambios en todos los campos relevantes
+        document.getElementById("evento-fecha")?.addEventListener("change", actualizarResumen);
+        document.getElementById("evento-hora-entrada")?.addEventListener("change", actualizarResumen);
+        document.getElementById("evento-hora-salida")?.addEventListener("change", actualizarResumen);
+        document.querySelector('select[name="tipo_evento_id"]')?.addEventListener("change", actualizarResumen);
+
+        actualizarResumen(); // inicializar al cargar
+    });
 </script>
 
 
 <script>
-    const PRECIO_POR_HORA = 50;
-    let horas = 0;
-    let total = 0;
-
-    // Función para calcular diferencia de horas
-    function calcularHoras(entrada, salida) {
-        if (!entrada || !salida) return 0;
-        const [h1, m1] = entrada.split(":").map(Number);
-        const [h2, m2] = salida.split(":").map(Number);
-
-        const t1 = h1 * 60 + m1;
-        const t2 = h2 * 60 + m2;
-        const diffMin = t2 - t1;
-        return diffMin > 0 ? diffMin / 60 : 0;
-    }
-
-    // Actualizar resumen de pago
-    function actualizarResumen() {
-        const fecha = document.getElementById("search-fecha").value;
-        const entrada = document.getElementById("search-hora-entrada").value;
-        const salida = document.getElementById("search-hora-salida").value;
-
-        horas = calcularHoras(entrada, salida);       // 👈 actualizamos variable global
-        total = horas * PRECIO_POR_HORA;             // 👈 también total
-
-        document.getElementById("resumen-fecha").textContent = fecha || "—";
-        document.getElementById("resumen-horas").textContent =
-            horas > 0 ? `${horas} × S/ ${PRECIO_POR_HORA}` : "—";
-        document.getElementById("resumen-total").textContent =
-            horas > 0 ? `S/ ${total.toFixed(2)}` : "S/ 0";
-    }
-
-    // Escuchar cambios en los campos
-    ["search-fecha", "search-hora-entrada", "search-hora-salida"].forEach(id => {
-        document.getElementById(id).addEventListener("change", actualizarResumen);
-    });
-
     //ERROR
 
     function showFieldError(input, message) {
@@ -509,128 +534,155 @@
 
 
     // Al enviar el formulario
-    document.getElementById("btn-pagar").addEventListener("click", async (e) => {
-        e.preventDefault();
-
+    document.addEventListener("DOMContentLoaded", () => {
+        const btnPagar = document.getElementById("btn-pagar");
         const form = document.getElementById("form-pago");
-        const tipoCliente = document.getElementById("tipo_cliente").value; // N o J
-        const metodo = document.querySelector('input[name="metodo_pago_id"]:checked');
-
-        // --- Validación general ---
-        const camposRequeridos = ["evento-fecha", "evento-hora-entrada", "evento-hora-salida"];
-        for (const id of camposRequeridos) {
-            if (!document.getElementById(id).value) {
-                showFlash("Completa todos los datos del evento antes de pagar.");
-                return;
-            }
-        }
-        clearFieldErrors(form);
-
-        // --- Validar tipo de evento y nombre ---
-        const tipoEvento = form.querySelector('select[name="tipo_evento_id"]').value;
-        const nombreEvento = form.querySelector('input[name="nombre_evento"]').value.trim();
-        if (!tipoEvento || !nombreEvento) {
-            showFlash("Completa el tipo y nombre del evento.");
-            return;
-        }
-
-        // --- Validar datos del cliente ---
-        if (tipoCliente === "N") {
-            const naturalCampos = ["ape_paterno", "ape_materno", "nombres", "pais_id", "telefono", "tipo_doc_id", "nro_doc"];
-            for (const name of naturalCampos) {
-                const input = form.querySelector(`[name="${name}"]`);
-                if (input && !input.value.trim()) {
-                    showFieldError(input, "Campo obligatorio");
-                    return;
-                }
-
-                const pattern = input.getAttribute("pattern");
-                if (pattern && !new RegExp(pattern).test(input.value.trim())) {
-                    showFieldError(input, "Formato inválido");
-                    return;
-                }
-            }
-        } else {
-            const juridicoCampos = ["ruc", "razon_social", "telefono", "pais_id", "direccion"];
-            for (const name of juridicoCampos) {
-                const input = form.querySelector(`[name="${name}"]`);
-                if (input && !input.value.trim()) {
-                    showFieldError(input, "Campo obligatorio");
-                    return;
-                }
-
-                const pattern = input.getAttribute("pattern");
-                if (pattern && !new RegExp(pattern).test(input.value.trim())) {
-                    showFieldError(input, "Formato inválido");
-                    return;
-                }
-            }
-        }
-
-        // --- Validar método de pago ---
-        if (!metodo) {
-            showFlash("Selecciona un método de pago.");
-            return;
-        }
-
-        const metodoNombre = metodo.dataset.nombre;
-        if (metodoNombre.includes("tarjeta")) {
-            const num = form.querySelector('[name="num_tarjeta"]').value.trim();
-            const cvv = form.querySelector('[name="codigo_seguridad"]').value.trim();
-            if (!num || !cvv) {
-                showFlash("Completa los datos de la tarjeta.");
-                return;
-            }
-        } else if (metodoNombre.includes("efectivo")) {
-            const monto = form.querySelector('[name="monto_efectivo"]').value.trim();
-            if (!monto) {
-                showFlash("Ingresa el monto entregado.");
-                return;
-            }
-        } else if (metodoNombre.includes("monedero")) {
-            const tel = form.querySelector('[name="telefono_monedero"]').value.trim();
-            const clave = form.querySelector('[name="clave_monedero"]').value.trim();
-            if (!tel || !clave) {
-                showFlash("Completa los datos del monedero virtual.");
-                return;
-            }
-        }
-
-        // --- Si todo OK, mostrar modal y enviar al backend ---
         const modal = document.getElementById("modal-pago");
         const anim = document.getElementById("animacion-pago");
         const texto = document.getElementById("texto-pago");
 
-        modal.style.display = "flex";
-        anim.className = "animacion-pago";
-        texto.textContent = "Procesando pago...";
+        // Listener del botón de pago
+        btnPagar.addEventListener("click", async (e) => {
+            e.preventDefault();
+            console.log("🔹 Click detectado en Pagar");
 
-        const formData = new FormData(form);
-        formData.append("numero_horas", horas);
-        formData.append("precio_final", total);
-
-        try {
-            const response = await fetch("/Eventos/procesar_pago", {
-                method: "POST",
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                window.location.href = data.redirect_url; // ✅ redirige al index
-            } else {
-                showFlash(data.message || "Error desconocido al procesar el pago.");
+            // --- Validación general ---
+            const camposRequeridos = ["evento-fecha", "evento-hora-entrada", "evento-hora-salida"];
+            for (const id of camposRequeridos) {
+                const campo = document.getElementById(id);
+                if (!campo || !campo.value) {
+                    showFlash("Completa todos los datos del evento antes de pagar.");
+                    return;
+                }
             }
-        } catch (err) {
-            console.error("Error:", err);
-            anim.className = "check-error";
-            texto.textContent = "Error al procesar el pago.";
-            setTimeout(() => modal.style.display = "none", 1500);
-        }
 
+            clearFieldErrors(form);
+
+            // --- Validar tipo de evento y nombre ---
+            const tipoEvento = form.querySelector('select[name="tipo_evento_id"]').value;
+            const nombreEvento = form.querySelector('input[name="nombre_evento"]').value.trim();
+            if (!tipoEvento || !nombreEvento) {
+                showFlash("Completa el tipo y nombre del evento.");
+                return;
+            }
+
+            // --- Validar datos del cliente ---
+            const tipoCliente = document.getElementById("tipo_cliente").value;
+
+            if (tipoCliente === "N") {
+                const campos = ["ape_paterno", "ape_materno", "nombres", "pais_id", "telefono", "tipo_doc_id", "nro_doc"];
+                for (const name of campos) {
+                    const input = form.querySelector(`[name="${name}"]`);
+                    if (!input || !input.value.trim()) {
+                        showFieldError(input, "Campo obligatorio");
+                        return;
+                    }
+                    const pattern = input.getAttribute("pattern");
+                    if (pattern && !new RegExp(pattern).test(input.value.trim())) {
+                        showFieldError(input, "Formato inválido");
+                        return;
+                    }
+                }
+            } else {
+                const campos = ["ruc", "razon_social", "telefono", "pais_id", "direccion"];
+                for (const name of campos) {
+                    const input = form.querySelector(`[name="${name}"]`);
+                    if (!input || !input.value.trim()) {
+                        showFieldError(input, "Campo obligatorio");
+                        return;
+                    }
+                    const pattern = input.getAttribute("pattern");
+                    if (pattern && !new RegExp(pattern).test(input.value.trim())) {
+                        showFieldError(input, "Formato inválido");
+                        return;
+                    }
+                }
+            }
+
+            // --- Validar método de pago ---
+            const metodo = form.querySelector('input[name="metodo_pago_id"]:checked');
+            if (!metodo) {
+                showFlash("Selecciona un método de pago.");
+                return;
+            }
+
+            const metodoNombre = metodo.dataset.nombre.toLowerCase();
+            if (metodoNombre.includes("tarjeta")) {
+                const num = form.querySelector('[name="num_tarjeta"]').value.trim();
+                const cvv = form.querySelector('[name="codigo_seguridad"]').value.trim();
+                if (!num || !cvv) {
+                    showFlash("Completa los datos de la tarjeta.");
+                    return;
+                }
+            } else if (metodoNombre.includes("efectivo")) {
+                const monto = form.querySelector('[name="monto_efectivo"]').value.trim();
+                if (!monto) {
+                    showFlash("Ingresa el monto entregado.");
+                    return;
+                }
+            } else if (metodoNombre.includes("monedero")) {
+                const tel = form.querySelector('[name="telefono_monedero"]').value.trim();
+                const clave = form.querySelector('[name="clave_monedero"]').value.trim();
+                if (!tel || !clave) {
+                    showFlash("Completa los datos del monedero virtual.");
+                    return;
+                }
+            }
+
+            // --- Mostrar modal de procesamiento ---
+            modal.style.display = "flex";
+            anim.className = "animacion-pago";
+            texto.textContent = "Procesando pago...";
+
+            // --- Preparar datos para enviar ---
+            const formData = new FormData(form);
+            formData.append("numero_horas", horas);
+            formData.append("precio_final", total);
+
+            // --- Enviar al backend ---
+            try {
+                const response = await fetch("/Eventos/procesar_pago", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // ✅ Éxito: mostrar animación y redirigir
+                    anim.className = "check-success";
+                    texto.textContent = "¡Pago exitoso!";
+
+                    console.log("✅ Pago exitoso, redirigiendo...");
+
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 1500); // Espera 1.5s para mostrar el éxito
+
+                } else {
+                    // ❌ Error: mostrar mensaje
+                    showFlash(data.message || data.error || "Error desconocido al procesar el pago.");
+                    anim.className = "check-error";
+                    texto.textContent = "Error al procesar el pago.";
+
+                    setTimeout(() => {
+                        modal.style.display = "none";
+                    }, 2000);
+                }
+
+            } catch (err) {
+                // ❌ Error de red o del servidor
+                console.error("❌ Error en fetch:", err);
+                showFlash("Error de conexión. Intenta nuevamente.");
+                anim.className = "check-error";
+                texto.textContent = "Error de conexión.";
+
+                setTimeout(() => {
+                    modal.style.display = "none";
+                }, 2000);
+            }
+        });
     });
-
 </script>
 <script>
     const toggle = document.getElementById('toggleCliente');

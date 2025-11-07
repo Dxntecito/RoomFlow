@@ -13,13 +13,13 @@
     <!-- ===== SIDEBAR IZQUIERDA ===== -->
     <nav class="sidebar" id="nav-principal">
       <h2>Módulo Eventos</h2>
-      <a href="{{ url_for ('modulos.evento') }}" id="nav-evento">👤 Gestionar Eventos</a>
-      <a href="{{ url_for ('modulos.tipos_eventos') }}" id="nav-tipo_evento">👤 Gestionar Tipos de evento</a>
-      <a href="#">Secciones a agregar</a>
+      <a href="{{ url_for('modulos.evento') }}" id="nav-evento">👤 Gestionar eventos</a>
+
+      <a href="{{ url_for ('modulos.tipos_eventos') }}" id="nav-tipo_evento">👤 Gestionar tipos de evento</a>
     </nav>
 <main class="content-crud-reserva" id="main-reserva">
     <!-- ===== CONTENIDO RESERVA ===== -->
-    {% block booking_content %}
+    {% block evento_content %}
 
     {% endblock %}
     <!-- ===== CONTENIDO PROMOCIONES ===== -->

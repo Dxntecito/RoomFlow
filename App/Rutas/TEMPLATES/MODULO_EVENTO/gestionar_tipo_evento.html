@@ -57,10 +57,12 @@
                                 onclick="window.location.href='{{ url_for('modulos.ViewTipoEvento', tipo_evento_id=evento['tipo_evento_id']) }}'">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
-                            <button class="action-btn delete-btn" data-id="{{ evento['tipo_evento_id'] }}"
-                                title="Eliminar tipo de evento" onclick="eliminarTipoEvento(event)">
-                                <i class="fas fa-trash"></i>
+                            <button class="action-btn delete-btn" data-id="{{ evento['id_evento'] }}"
+                                title="Dar de baja evento" {% if evento['tiene_nota_credito'] %} disabled
+                                style="opacity:0.5; cursor:not-allowed;" {% endif %} onclick="darBaja(event)">
+                                <i class="fas fa-minus"></i>
                             </button>
+
 
                         </div>
                     </td>
@@ -107,6 +109,17 @@
                         {% else %}
                         <input type="text" id="nombre-tipo-evento" name="nombre_tipo_evento" class="form-control"
                             value="{{ tipo_evento['nombre_tipo_evento'] if tipo_evento else '' }}" required>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="precio_por_hora">Precio *</label>
+                        {% if mode=='view' %}
+                        <input type="number" id="precio_por_hora" class="form-control bg-light"
+                            value="{{ tipo_evento['precio_por_hora'] }}" readonly>
+                        {% else %}
+                        <input type="number" id="precio_por_hora" name="precio_por_hora" class="form-control"
+                            value="{{ tipo_evento['precio_por_hora'] if tipo_evento else '' }}" required>
                         {% endif %}
                     </div>
 
@@ -302,125 +315,30 @@
 </script>
 <script>
     document.addEventListener("DOMContentLoaded", () => {
+
         const input = document.getElementById("search-input");
         const tbody = document.getElementById("tabla-tipos-evento-body");
+        let tiposEventoData = []; // almacenamiento local de resultados
 
-        // ✅ Función para cargar todos los tipos de evento (usa tu endpoint general)
-        async function cargarTodosLosTiposEvento() {
+        // ✅ Cargar todos desde backend al inicio
+        async function cargarTiposEventoInicial() {
             try {
-                const response = await fetch('/Cruds/SearchTiposEventos'); // sin query
-                const data = await response.json();
-
-                tbody.innerHTML = data.map(evento => `
-                    <tr>
-                        <td class="col-id text-center">${evento.tipo_evento_id}</td>
-                        <td class="col-numero text-center">${evento.nombre_tipo_evento}</td>
-                        <td class="col-estado text-center">${evento.estado == 1 ? 'Activo' : 'Inactivo'}</td>
-                        <td class="col-accion text-center">
-                            <div class="action-buttons2">
-                                <button type="button" class="action-btn edit-btn" 
-                                    onclick="window.location.href='/Cruds/EditTipoEvento/${evento.tipo_evento_id}'">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                <button type="button" class="action-btn view-btn" 
-                                    onclick="window.location.href='/Cruds/ViewTipoEvento/${evento.tipo_evento_id}'">
-                                    <i class="fa-solid fa-eye"></i>
-                                </button>
-                                <button type="button" class="action-btn delete-btn" 
-                                    data-id="${evento.tipo_evento_id}" onclick="eliminarTipoEvento(event)">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `).join("");
+                const response = await fetch('/Cruds/SearchTiposEventos?query=');
+                tiposEventoData = await response.json();
+                mostrarTiposEvento(tiposEventoData);
             } catch (error) {
-                console.error("Error al cargar los tipos de evento:", error);
+                console.error("Error al cargar tipos evento:", error);
             }
         }
 
-        // 🔍 Buscar tipos de evento (solo cuando se presiona el botón)
-        async function buscarTiposEvento() {
-            const query = input.value.trim();
-
-            // Si el campo está vacío, mostrar todos los tipos de evento
-            if (query.length === 0) {
-                cargarTodosLosTiposEvento();
-                return;
-            }
-
-            try {
-                const response = await fetch(`/Cruds/SearchTiposEventos?query=${encodeURIComponent(query)}`);
-                const data = await response.json();
-
-                if (data.length > 0) {
-                    tbody.innerHTML = data.map(evento => `
-                        <tr>
-                            <td class="col-id text-center">${evento.tipo_evento_id}</td>
-                            <td class="col-numero text-center">${evento.nombre_tipo_evento}</td>
-                            <td class="col-estado text-center">${evento.estado == 1 ? 'Activo' : 'Inactivo'}</td>
-                            <td class="col-accion text-center">
-                                <div class="action-buttons2">
-                                    <button type="button" class="action-btn edit-btn" 
-                                        onclick="window.location.href='/Cruds/EditTipoEvento/${evento.tipo_evento_id}'">
-                                        <i class="fa-solid fa-pen"></i>
-                                    </button>
-                                    <button type="button" class="action-btn view-btn" 
-                                        onclick="window.location.href='/Cruds/ViewTipoEvento/${evento.tipo_evento_id}'">
-                                        <i class="fa-solid fa-eye"></i>
-                                    </button>
-                                    <button type="button" class="action-btn delete-btn" 
-                                        data-id="${evento.tipo_evento_id}" onclick="eliminarTipoEvento(event)">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `).join("");
-                } else {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="4" style="text-align: center; padding: 40px; color: #999;"> 
-                                <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-                                No se encontraron tipos de evento 
-                            </td>
-                        </tr>
-                    `;
-                }
-            } catch (error) {
-                console.error("Error al buscar tipos de evento:", error);
-            }
-        }
-
-        // ✅ Si el usuario borra el texto y deja el campo vacío, recargar la tabla
-        input.addEventListener("input", () => {
-            if (input.value.trim().length === 0) {
-                cargarTodosLosTiposEvento();
-            }
-        });
-
-        // ✅ Cargar todos los eventos al abrir la página
-        cargarTodosLosTiposEvento();
-
-        // ✅ Hacer accesible la función al botón
-        window.buscarTiposEvento = buscarTiposEvento;
-    });
-</script>
-
-<script>
-    async function cargarTodosLosTiposEvento() {
-        const tbody = document.getElementById("tabla-tipos-evento-body");
-
-        try {
-            const response = await fetch("/Cruds/SearchTiposEvento"); // sin query => devuelve todos
-            const data = await response.json();
-
-            if (!data.length) {
+        // ✅ Mostrar en tabla
+        function mostrarTiposEvento(data) {
+            if (!data || data.length === 0) {
                 tbody.innerHTML = `
                 <tr>
-                    <td colspan="4" style="text-align: center; padding: 40px; color: #999;">
-                        <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-                        No se encontraron tipos de evento
+                    <td colspan="4" style="text-align:center;padding:40px;color:#999;">
+                        <i class="fas fa-search" style="font-size:24px;margin-bottom:10px;"></i>
+                        No se encontraron resultados
                     </td>
                 </tr>
             `;
@@ -430,47 +348,82 @@
             tbody.innerHTML = data.map(evento => `
             <tr>
                 <td class="col-id text-center">${evento.tipo_evento_id}</td>
-                <td class="col-nombre text-center">${evento.nombre_tipo_evento}</td>
+                <td class="col-numero text-center">${evento.nombre_tipo_evento}</td>
                 <td class="col-estado text-center">${evento.estado == 1 ? 'Activo' : 'Inactivo'}</td>
                 <td class="col-accion text-center">
                     <div class="action-buttons2">
-                        <button 
-                            type="button" 
-                            class="action-btn edit-btn"
+                        <button type="button" class="action-btn edit-btn" 
                             onclick="window.location.href='/Cruds/EditTipoEvento/${evento.tipo_evento_id}'">
                             <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button 
-                            type="button" 
-                            class="action-btn view-btn"
+                        <button type="button" class="action-btn view-btn" 
                             onclick="window.location.href='/Cruds/ViewTipoEvento/${evento.tipo_evento_id}'">
                             <i class="fa-solid fa-eye"></i>
                         </button>
-                        <button 
-                            type="button" 
-                            class="action-btn delete-btn" 
-                            data-id="${evento.tipo_evento_id}" 
-                            title="Eliminar tipo de evento"
-                            onclick="eliminarTipoEvento(event)">
-                            <i class="fas fa-trash"></i>
+                        <button type="button" class="action-btn delete-btn" 
+                            data-id="${evento.tipo_evento_id}" onclick="eliminarTipoEvento(event)">
+                            <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
                 </td>
             </tr>
-        `).join("");
-        } catch (error) {
-            console.error("Error al cargar los tipos de evento:", error);
-            tbody.innerHTML = `
-            <tr>
-                <td colspan="4" style="text-align: center; padding: 40px; color: #999;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-                    Error al cargar los tipos de evento
-                </td>
-            </tr>
-        `;
+        `).join('');
         }
-    }
+
+        // ✅ Filtrar local mientras escribe
+        function filtrarLocal() {
+            const search = input.value.toLowerCase().trim();
+
+            if (search === "") {
+                mostrarTiposEvento(tiposEventoData);
+                return;
+            }
+
+            const filtrados = tiposEventoData.filter(t => {
+                const nombre = t.nombre_tipo_evento.toLowerCase();
+                const partes = nombre.split(" ");
+
+                // Coincidencia por palabra que empieza igual
+                return partes.some(p => p.startsWith(search)) ||
+                    t.tipo_evento_id.toString().includes(search);
+            });
+
+            mostrarTiposEvento(filtrados);
+        }
+
+        // ✅ Buscar en servidor (cuando presiona botón o Enter)
+        async function buscarEnServidor() {
+            const query = input.value.trim();
+
+            try {
+                const response = await fetch(`/Cruds/SearchTiposEventos?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                tiposEventoData = data; // actualizar cache
+                mostrarTiposEvento(data);
+            } catch (e) {
+                console.error("Error backend:", e);
+            }
+        }
+
+        // 🎯 Eventos:
+        input.addEventListener("input", filtrarLocal);
+
+        // Enter → búsqueda servidor
+        input.addEventListener("keydown", e => {
+            if (e.key === "Enter") {
+                buscarEnServidor();
+            }
+        });
+
+        // Hacer accesible al botón existente
+        window.buscarTiposEvento = buscarEnServidor;
+
+        // Inicial
+        cargarTiposEventoInicial();
+    });
 </script>
+
+
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
