@@ -7,9 +7,82 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='CSS/Booking_huespedes.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='CSS/pago.css') }}">
+<style>
+  .progress-container {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items:baseline;
+  width: 80%;
+  margin: 40px auto;
+}
+
+.progress-line {
+  position: absolute;
+  top: 18px; /* centrado respecto a los círculos */
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background-color: #ccc;
+  z-index: 1;
+}
+
+.progress-step {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  flex: 1;
+}
+
+.circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #ccc;
+  color: white;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.progress-step.active .circle {
+  background-color: #1abc9c; /* verde */
+  transform: scale(1.1);
+}
+
+.progress-step.completed .circle {
+  background-color: #1abc9c;
+}
+
+.progress-step p {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+}
+
+</style>
 {% endblock %}
 {% block content %}
 <div id="booking_room_page">
+  <div id="booking_room_page">
+  <div class="progress-container">
+  <div class="progress-line"></div>
+  <div class="progress-step active" data-step="1">
+    <div class="circle">1</div>
+    <p>Habitaciones</p>
+  </div>
+  <div class="progress-step" data-step="2">
+    <div class="circle">2</div>
+    <p>Tus datos</p>
+  </div>
+  <div class="progress-step" data-step="3">
+    <div class="circle">3</div>
+    <p>Finalizar reserva</p>
+  </div>
+</div>
   <!-- 🔹 PASO 1: Selección de habitaciones -->
   <div id="step1">
     <div class="booking-hero">
@@ -334,6 +407,77 @@
 <script src="{{ url_for('static', filename='JS/Booking_payment.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking_functions.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking_validations.js') }}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const fechaEntrada = document.getElementById("Start_booking_date");
+  const fechaSalida = document.getElementById("End_booking_date");
+  const form = document.querySelector(".booking-card");
+
+  // Poner la fecha mínima en la hora actual
+  const now = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  const localNow = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  fechaEntrada.min = localNow;
+  fechaSalida.min = localNow;
+
+  form.addEventListener("submit", (e) => {
+    const entrada = new Date(fechaEntrada.value);
+    const salida = new Date(fechaSalida.value);
+
+    if (!fechaEntrada.value || !fechaSalida.value) {
+      alert("⚠️ Debes seleccionar ambas fechas.");
+      e.preventDefault();
+      return;
+    }
+
+    if (entrada >= salida) {
+      alert("⚠️ La fecha de entrada debe ser antes que la fecha de salida.");
+      e.preventDefault();
+      return;
+    }
+  });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const steps = document.querySelectorAll('.progress-step');
+  const line = document.querySelector('.progress-line');
+  let currentStep = 1;
+
+  function setStep(step) {
+    steps.forEach((el, i) => {
+      el.classList.remove('active', 'completed');
+      if (i + 1 < step) el.classList.add('completed');
+      if (i + 1 === step) el.classList.add('active');
+    });
+    const percent = (step - 1) / (steps.length - 1) * 100;
+    line.style.background = `linear-gradient(to right, #009879 ${percent}%, #ccc ${percent}%)`;
+    currentStep = step;
+  }
+
+  // Paso 1 por defecto
+  setStep(1);
+
+  // --- Eventos ---
+  const nextBookingLink = document.getElementById('next_booking_link');
+  const paymentPhaseBtn = document.getElementById('payment_phase');
+
+  if (nextBookingLink) {
+    nextBookingLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      setStep(2); // activa "Tus datos"
+    });
+  }
+
+  if (paymentPhaseBtn) {
+    paymentPhaseBtn.addEventListener('click', (e) => {
+      setStep(3); // activa "Finalizar reserva"
+    });
+  }
+});
+</script>
+
 <script>
   const backToStep3Btn = document.getElementById("back_to_step3");
   const usuarioId = {{ session.get('usuario_id') | tojson }};

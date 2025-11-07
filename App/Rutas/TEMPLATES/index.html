@@ -2,7 +2,10 @@
 
 <!-- Para estilos exclusivamente para esta pagina -->
 {% block stiles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/Booking.css') }}">
+<style>
 
+</style>
 {% endblock %}
 
 {% block content %} 
@@ -11,27 +14,29 @@
         <div class="hero-image">
             <div class="hero-overlay">
                 <h2 class="hero-title">BOLÍVAR</h2>
-                <div class="booking-form-2">
-                    <span class="booking-text">
-                        ¡Empieza tu reservación ahora!
-                    </span>
-                    <form method="GET" action="{{ url_for('bookingroom.BookingRoom') }}" class="booking-form">
-                        <div class="date-input">
-                            <label>Fecha entrada</label>
-                            <input type="datetime-local" id="fechaEntrada" class="date_input"  value="{{ request.args.get('start', '') }}" name="start">
-                        </div>
-                        <div class="date-input">
-                            <label>Fecha salida</label>
-                            <input type="datetime-local" id="fechaSalida" name="end"  value="{{ request.args.get('end', '') }}" >
-                        </div>
-                        <button class="search-btn" id="btnBuscar" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </form>
-
-
-
+                <div class="booking-hero">
+                <div class="booking-heading" style="text-align: start;">
+                  <p class="booking-subtitle" >Selecciona tus fechas y encuentra la habitación perfecta para tu estadía en Hostal Bolívar.</p>
                 </div>
+
+                <form method="GET" action="{{ url_for('bookingroom.BookingRoom') }}" class="booking-card">
+                  <div class="booking-field">
+                    <label for="fechaEntrada">Fecha de entrada</label>
+                    <input type="datetime-local" id="fechaEntrada" name="start" class="date_input">
+                  </div>
+
+                  <div class="booking-field">
+                    <label for="fechaSalida">Fecha de salida</label>
+                    <input type="datetime-local" id="fechaSalida" name="end" class="date_input">
+                  </div>
+
+                  <button type="submit" class="booking-submit">
+                    <i class="fas fa-search"></i>
+                    Buscar habitaciones
+                  </button>
+                </form>
+              </div>
+
             </div>
         </div>
     </section>
@@ -165,52 +170,65 @@ document.querySelector(".booking-form").addEventListener("submit", function(even
 </script> -->
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const entrada = document.getElementById("fechaEntrada");
-  const salida = document.getElementById("fechaSalida");
+document.addEventListener("DOMContentLoaded", () => {
+  const fechaEntrada = document.getElementById("fechaEntrada");
+  const fechaSalida = document.getElementById("fechaSalida");
+  const form = document.querySelector(".booking-card");
 
-  // ⏰ Establecer fecha y hora mínima (actual)
-  const ahora = new Date();
-  const formatoLocal = ahora.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
-  entrada.min = formatoLocal;
+  // Poner la fecha mínima en la hora actual
+  const now = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  const localNow = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  fechaEntrada.min = localNow;
+  fechaSalida.min = localNow;
 
-  // 🎯 Cuando se seleccione una fecha de entrada:
-  entrada.addEventListener("change", function () {
-    if (entrada.value) {
-      salida.disabled = false;
+  form.addEventListener("submit", (e) => {
+    const entrada = new Date(fechaEntrada.value);
+    const salida = new Date(fechaSalida.value);
 
-      // Bloquear fechas anteriores a la de entrada
-      salida.min = entrada.value;
-    } else {
-      salida.disabled = true;
-      salida.value = "";
+    if (!fechaEntrada.value || !fechaSalida.value) {
+      alert("⚠️ Debes seleccionar ambas fechas.");
+      e.preventDefault();
+      return;
+    }
+
+    if (entrada >= salida) {
+      alert("⚠️ La fecha de entrada debe ser antes que la fecha de salida.");
+      e.preventDefault();
+      return;
     }
   });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.querySelector(".booking-card");
+  const fechaEntrada = document.getElementById("fechaEntrada");
+  const fechaSalida = document.getElementById("fechaSalida");
 
-  // 🧾 Validación al enviar formulario
-  document.querySelector(".booking-form").addEventListener("submit", function (event) {
-    const entradaVal = entrada.value.trim();
-    const salidaVal = salida.value.trim();
+  form.addEventListener("submit", (e) => {
+    const now = new Date();
+    const entrada = new Date(fechaEntrada.value);
+    const salida = new Date(fechaSalida.value);
 
-    if (!entradaVal || !salidaVal) {
-      event.preventDefault();
-      alert("⚠️ Debes completar ambas fechas antes de buscar.");
+    if (!fechaEntrada.value || !fechaSalida.value) {
+      alert("⚠️ Debes seleccionar ambas fechas.");
+      e.preventDefault();
       return;
     }
 
-    const fechaEntrada = new Date(entradaVal);
-    const fechaSalida = new Date(salidaVal);
-    const ahora = new Date();
-
-    if (fechaEntrada < ahora) {
-      event.preventDefault();
-      alert("⚠️ La fecha de entrada no puede ser anterior a la fecha actual.");
+    // Validar que la entrada sea después de la hora actual
+    if (entrada < now) {
+      alert("⚠️ La fecha de entrada debe ser posterior a la fecha y hora actuales.");
+      e.preventDefault();
       return;
     }
 
-    if (fechaSalida <= fechaEntrada) {
-      event.preventDefault();
-      alert("⚠️ La fecha de salida debe ser posterior a la de entrada.");
+    // Validar que la salida sea posterior a la entrada
+    if (entrada >= salida) {
+      alert("⚠️ La fecha de entrada debe ser antes que la fecha de salida.");
+      e.preventDefault();
+      return;
     }
   });
 });

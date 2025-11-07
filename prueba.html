@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reserva dinámica hotel</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #eef1f6;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .open-btn {
+      background: #0078ff;
+      color: #fff;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+    .open-btn:hover { background: #005ecc; }
+
+    .popup {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    .popup.active { display: flex; }
+
+    .popup-content {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      width: 360px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      animation: fadeIn .3s ease;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    h3 { margin-bottom: 1rem; }
+    input {
+      width: 100%;
+      padding: .6rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 1rem;
+      font-size: .95rem;
+    }
+    .btn-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .btn-row button {
+      flex: 1;
+      padding: .6rem;
+      border-radius: 8px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .next-btn { background: #0078ff; color: #fff; }
+    .back-btn { background: #ddd; color: #333; }
+    .summary {
+      background: #f9f9f9;
+      padding: .75rem;
+      border-radius: 8px;
+      text-align: left;
+      margin-bottom: 1rem;
+      font-size: .9rem;
+      
+    }
+    
+  </style>
+</head>
+<body>
+  <button class="open-btn" id="abrirPopup">Seleccionar fechas</button>
+
+  <div class="popup" id="popupReserva">
+    <div class="popup-content" id="popupContent"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script>
+    const popup = document.getElementById('popupReserva');
+    const content = document.getElementById('popupContent');
+    const abrir = document.getElementById('abrirPopup');
+
+    let fechaEntrada = null;
+    let horaEntrada = null;
+    let fechaSalida = null;
+    let horaSalida = null;
+
+    abrir.addEventListener('click', () => {
+      popup.classList.add('active');
+      paso1();
+    });
+
+    // Paso 1: fecha entrada
+    function paso1() {
+      content.innerHTML = `
+        <h3>Selecciona fecha de entrada</h3>
+        <input id="fechaEntrada" placeholder="Elegir fecha">
+        <div class="btn-row">
+          <button class="next-btn" id="btnNext">Siguiente</button>
+        </div>
+      `;
+      flatpickr("#fechaEntrada", {
+        minDate: "today",
+        maxDate: new Date(new Date().getFullYear(), 11, 31),
+        defaultDate: new Date()
+      });
+      document.getElementById('btnNext').onclick = () => {
+        const val = document.getElementById('fechaEntrada').value;
+        if (!val) return;
+        fechaEntrada = val;
+        paso2();
+      };
+    }
+
+    // Paso 2: hora entrada
+    function paso2() {
+      content.innerHTML = `
+        <h3>Selecciona hora de entrada</h3>
+        <input id="horaEntrada" placeholder="Seleccionar hora">
+        <div class="btn-row">
+          <button class="back-btn" id="btnBack">Atrás</button>
+          <button class="next-btn" id="btnNext">Siguiente</button>
+        </div>
+      `;
+    const pickerEntrada = flatpickr("#horaEntrada", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true,
+        minuteIncrement: 60,
+        allowInput: false, // 👈 evita escribir manualmente
+        defaultHour: new Date().getHours() + 1
+        }); 
+
+      document.getElementById('btnBack').onclick = paso1;
+      document.getElementById('btnNext').onclick = () => {
+        const val = document.getElementById('horaEntrada').value;
+        if (!val) return;
+        horaEntrada = val;
+        paso3();
+      };
+    }
+
+    // Paso 3: fecha salida
+    function paso3() {
+      content.innerHTML = `
+        <h3>Selecciona fecha de salida</h3>
+        <input id="fechaSalida" placeholder="Elegir fecha">
+        <div class="btn-row">
+          <button class="back-btn" id="btnBack">Atrás</button>
+          <button class="next-btn" id="btnNext">Siguiente</button>
+        </div>
+      `;
+      flatpickr("#fechaSalida", {
+        minDate: fechaEntrada,
+        maxDate: new Date(new Date().getFullYear(), 11, 31),
+        defaultDate: fechaEntrada
+      });
+      document.getElementById('btnBack').onclick = paso2;
+      document.getElementById('btnNext').onclick = () => {
+        const val = document.getElementById('fechaSalida').value;
+        if (!val) return;
+        fechaSalida = val;
+        paso4();
+      };
+    }
+
+    // Paso 4: hora salida
+    function paso4() {
+      content.innerHTML = `
+        <h3>Selecciona hora de salida</h3>
+        <input id="horaSalida" placeholder="Seleccionar hora">
+        <div class="btn-row">
+          <button class="back-btn" id="btnBack">Atrás</button>
+          <button class="next-btn" id="btnNext">Confirmar</button>
+        </div>
+      `;
+      const entradaHour = parseInt(horaEntrada.split(":")[0]);
+      const sameDay = fechaEntrada === fechaSalida;
+      flatpickr("#horaSalida", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true,
+        minuteIncrement: 60,
+        allowInput: false, // 👈 evita escribir manualmente
+        defaultHour: sameDay ? entradaHour + 1 : 12,
+        minTime: sameDay ? `${String(entradaHour + 1).padStart(2, "0")}:00` : "00:00"
+        });
+      document.getElementById('btnBack').onclick = paso3;
+      document.getElementById('btnNext').onclick = () => {
+        const val = document.getElementById('horaSalida').value;
+        if (!val) return;
+        horaSalida = val;
+        pasoFinal();
+      };
+    }
+
+    // Resumen
+    function pasoFinal() {
+      content.innerHTML = `
+        <h3>Resumen de reserva</h3>
+        <div class="summary">
+          <strong>Entrada:</strong> ${fechaEntrada} ${horaEntrada}<br>
+          <strong>Salida:</strong> ${fechaSalida} ${horaSalida}
+        </div>
+        <div class="btn-row">
+          <button class="back-btn" id="btnBack">Atrás</button>
+          <button class="next-btn" id="btnConfirmar">Confirmar</button>
+        </div>
+      `;
+      document.getElementById('btnBack').onclick = paso4;
+      document.getElementById('btnConfirmar').onclick = () => {
+        popup.classList.remove('active');
+        alert(`✅ Reserva confirmada:\nEntrada: ${fechaEntrada} ${horaEntrada}\nSalida: ${fechaSalida} ${horaSalida}`);
+      };
+    }
+
+    popup.addEventListener('click', e => {
+      if (e.target === popup) popup.classList.remove('active');
+    });
+  </script>
+</body>
+</html>

@@ -1,38 +1,40 @@
 document.addEventListener('DOMContentLoaded', function() {
-    initBookingForm();
+    // initBookingForm();
     initSmoothScroll();
     initAnimations();
 });
 
 
-function initBookingForm() {
-    const bookingBtn = document.querySelector('.booking-btn');
-    const searchBtn = document.querySelector('.search-btn');
-    const dateInputs = document.querySelectorAll('.date-input input');
+// function initBookingForm() {
+//     const bookingBtn = document.querySelector('.booking-btn');
+//     const searchBtn = document.querySelector('.search-btn');
+//     const dateInputs = document.querySelectorAll('.date-input input');
     
-    // Configurar fechas por defecto
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date(tomorrow);
-    dayAfter.setDate(dayAfter.getDate() + 3);
+//     // Configurar fechas por defecto
+//     const today = new Date();
+//     const tomorrow = new Date(today);
+//     tomorrow.setDate(tomorrow.getDate() + 1);
+//     const dayAfter = new Date(tomorrow);
+//     dayAfter.setDate(dayAfter.getDate() + 3);
     
-    dateInputs[0].value = tomorrow.toISOString().split('T')[0];
-    dateInputs[1].value = dayAfter.toISOString().split('T')[0];
+//     dateInputs[0].value = tomorrow.toISOString().split('T')[0];
+//     dateInputs[1].value = dayAfter.toISOString().split('T')[0];
     
     
-    // Event listener para el botón de reserva
-    if (bookingBtn) {
-        bookingBtn.addEventListener('click', function() {
-            RoomFlow.showNotification('Iniciando proceso de reserva...', 'info');
-            // Aquí podrías redirigir a la página de reservas
-            setTimeout(() => {
-                // window.location.href = 'pages/reservas.html';
-                console.log('Iniciando proceso de reserva');
-            }, 1000);
-        });
-    }
-}
+//     // Event listener para el botón de reserva
+//     if (bookingBtn) {
+//         bookingBtn.addEventListener('click', function() {
+//             RoomFlow.showNotification('Iniciando proceso de reserva...', 'info');
+//             // Aquí podrías redirigir a la página de reservas
+//             setTimeout(() => {
+//                 // window.location.href = 'pages/reservas.html';
+//                 console.log('Iniciando proceso de reserva');
+//             }, 1000);
+//         });
+//     }
+// }
+
+
 
 // Scroll suave para enlaces internos
 function initSmoothScroll() {
