@@ -11,6 +11,20 @@ const downloadLink = document.getElementById("download_comprobante_link") || doc
 const openNewTabBtn = document.getElementById("open_comprobante_newtab");
 const comprobanteStatus = document.getElementById("comprobante_status");
 const volverHome = document.getElementById("volver_home");
+const correoComprobanteInput = document.getElementById("correo_comprobante");
+const enviarComprobanteBtn = document.getElementById("enviar_comprobante_correo");
+const comprobanteEmailStatus = document.getElementById("comprobante_email_status");
+
+let ultimaReservaId = null;
+
+const setEmailStatus = (type, message) => {
+  if (!comprobanteEmailStatus) return;
+  comprobanteEmailStatus.textContent = message || "";
+  comprobanteEmailStatus.classList.remove("success", "error");
+  if (type === "success" || type === "error") {
+    comprobanteEmailStatus.classList.add(type);
+  }
+};
 
 
 // Si el usuario cambia el método de pago, ocultar/mostrar formularios
@@ -273,6 +287,8 @@ if (finalizarReservaBtn) {
       const pdfUrl = URL.createObjectURL(pdfBlob);
       const filename = `Comprobante_${reservaId}.pdf`;
 
+      ultimaReservaId = reservaId;
+
       const downloadLink = document.getElementById("download_comprobante_link");
       const openTabBtn = document.getElementById("open_comprobante_newtab");
 
@@ -289,6 +305,10 @@ if (finalizarReservaBtn) {
 
       if (comprobanteStatus) comprobanteStatus.textContent = "Comprobante generado correctamente.";
       console.log("[FINALIZAR] Comprobante disponible:", filename);
+
+      if (window.bookingTimer && typeof window.bookingTimer.stop === 'function') {
+        window.bookingTimer.stop(true);
+      }
 
       // ✅ Todo salió bien: mostrar mensaje de éxito en el modal
       loader.style.display = "none";
@@ -310,5 +330,59 @@ if (finalizarReservaBtn) {
     console.groupEnd();
   });
 }
+
+
+volverHome?.addEventListener("click", () => {
+  if (window.bookingTimer && typeof window.bookingTimer.stop === 'function') {
+    window.bookingTimer.stop(true);
+  }
+});
+
+
+enviarComprobanteBtn?.addEventListener("click", async () => {
+  if (!ultimaReservaId) {
+    alert("Aún no se ha generado un comprobante para esta reserva.");
+    return;
+  }
+
+  const correo = correoComprobanteInput?.value.trim();
+  if (!correo) {
+    setEmailStatus("error", "Ingresa un correo electrónico válido.");
+    correoComprobanteInput?.focus();
+    return;
+  }
+
+  const correoValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+  if (!correoValido) {
+    setEmailStatus("error", "El formato del correo no es válido.");
+    correoComprobanteInput?.focus();
+    return;
+  }
+
+  setEmailStatus(null, "Enviando comprobante...");
+  enviarComprobanteBtn.disabled = true;
+
+  try {
+    const resp = await fetch(`/Rutas/enviar_comprobante/${encodeURIComponent(ultimaReservaId)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: correo })
+    });
+
+    const result = await resp.json().catch(() => ({ success: false, message: "Respuesta inesperada del servidor." }));
+
+    if (resp.ok && result?.success) {
+      setEmailStatus("success", result.message || "Comprobante enviado correctamente.");
+    } else {
+      const mensaje = result?.message || "No se pudo enviar el comprobante por correo.";
+      setEmailStatus("error", mensaje);
+    }
+  } catch (error) {
+    console.error("[COMPROBANTE] Error enviando correo:", error);
+    setEmailStatus("error", "Ocurrió un error al enviar el comprobante. Intenta nuevamente.");
+  } finally {
+    enviarComprobanteBtn.disabled = false;
+  }
+});
 
 

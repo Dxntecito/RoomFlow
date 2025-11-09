@@ -90,6 +90,10 @@
         <span class="booking-badge"><i class="fas fa-calendar-alt"></i> Reserva fácil</span>
         <h2 class="booking_tittle">Reserva de habitaciones</h2>
         <p class="booking-subtitle">Selecciona tus fechas y encuentra la habitación perfecta para tu estadía en Hostal Bolívar.</p>
+        <div class="booking-timer booking-timer--hidden" id="booking_timer_container">
+          <i class="fas fa-hourglass-half"></i>
+          <span>Tiempo restante: <strong id="booking_timer_display">10:00</strong></span>
+        </div>
       </div>
 
       <form method="GET" action="{{ url_for('bookingroom.BookingRoom') }}" class="booking-card">
@@ -398,11 +402,33 @@
     <p id="comprobante_status" style="margin:0 0 0 8px;color:#333;"></p>
   </div>
 
+  <div class="comprobante-email" style="margin-top:20px;">
+    <label for="correo_comprobante">¿Quieres recibirlo en tu correo?</label>
+    <div class="comprobante-email__input">
+      <input type="email" id="correo_comprobante" placeholder="tu.correo@ejemplo.com" autocomplete="email">
+      <button type="button" id="enviar_comprobante_correo">Enviar comprobante</button>
+    </div>
+    <p id="comprobante_email_status" class="comprobante-email__status"></p>
+  </div>
+
     <div style="margin-top:16px;">
     <button id="volver_home">Volver al Inicio</button>
   </div>
   </div>
 </div>
+
+<div id="booking_timer_modal" class="booking-timer-modal">
+  <div class="booking-timer-modal__content">
+    <i class="fas fa-hourglass-end"></i>
+    <h3>Tiempo de reserva agotado</h3>
+    <p>Lo sentimos, los 10 minutos para completar tu reserva han finalizado. Serás redirigido al inicio.</p>
+  </div>
+</div>
+
+<script>
+  window.BOOKING_HOME_URL = "{{ url_for('Index') }}";
+</script>
+<script src="{{ url_for('static', filename='JS/Booking_timer.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking_payment.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking_functions.js') }}"></script>
