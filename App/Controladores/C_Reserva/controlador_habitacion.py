@@ -125,10 +125,17 @@ def get_available_rooms(start_dt=None, end_dt=None, limit=20, offset=0):
                 """
                 cursor.execute(sql, (limit, offset))
 
-            rooms = cursor.fetchall()
-            print("Rooms fetched (count):", len(rooms))
-            # imprime primero filas si necesitas debug
-            # print("Rooms fetched:", rooms)
+            rows = cursor.fetchall()
+            print("Rooms fetched (count):", len(rows))
+            columns = [
+                "id",
+                "numero",
+                "estado",
+                "piso_id",
+                "categoria_id",
+                "precio"
+            ]
+            rooms = [dict(zip(columns, row)) for row in rows]
     finally:
         connection.close()
     return rooms

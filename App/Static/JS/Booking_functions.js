@@ -30,6 +30,9 @@ const paisSelect = document.getElementById("pais_select");
 const startDateInput = document.getElementById("Start_booking_date");
 const endDateInput = document.getElementById("End_booking_date");
 const tipo_doc_natural_select = document.getElementById("tipo_doc_natural");
+const servicesContainer = document.getElementById("selected_services_container");
+const serviceCheckboxes = document.querySelectorAll(".service-checkbox");
+const travelMotiveInput = document.getElementById("motivo_viaje");
 // inputs juridicos
 const numDocJuridico = document.getElementById("num_doc_juridico");
 const paisjuridica = document.getElementById("pais_select_j");
@@ -45,9 +48,12 @@ const telefonoInput = document.getElementById("telefono_natural");
 
 let tipo_validacion;
 // --- Variables de estado ---
+let roomsTotal = 0;
+let servicesTotal = 0;
 let total = 0;
 let selectedRooms = [];
 let clientData = {};
+let selectedServices = [];
 // const tipoEmpresa = document.getElementById("tipo_empresa");
 // correo (opcional/global)
 const correoCliente = document.getElementById("correo_cliente");
@@ -86,8 +92,52 @@ div.querySelector(".remove_room").addEventListener("click", () => {
 }
 //ACTUALIZAR TOTAL DEL PRECIO A PAGAR POR HABITACIONES ACUMULADAS EN DIV DE RESUMEN
 function updateTotalDisplay() {
+total = roomsTotal + servicesTotal;
 totalDisplay.textContent = "Total: S/. " + total.toFixed(2);
 }
+
+function toggleServicesSection() {
+  if (!servicesContainer) return;
+  if (selectedRooms.length > 0) {
+    servicesContainer.classList.remove("hidden");
+  } else {
+    servicesContainer.classList.add("hidden");
+  }
+}
+
+function resetServicesSelection() {
+  selectedServices = [];
+  servicesTotal = 0;
+  serviceCheckboxes.forEach(cb => {
+    cb.checked = false;
+    cb.closest(".service-card")?.classList.remove("selected");
+  });
+}
+
+serviceCheckboxes.forEach(cb => {
+  cb.addEventListener("change", function () {
+    if (selectedRooms.length === 0) {
+      this.checked = false;
+      return;
+    }
+    const serviceId = this.value;
+    const price = parseFloat(servicePrices[serviceId]) || 0;
+    const card = this.closest(".service-card");
+
+    if (this.checked) {
+      if (!selectedServices.includes(serviceId)) selectedServices.push(serviceId);
+      servicesTotal += price;
+      card?.classList.add("selected");
+    } else {
+      selectedServices = selectedServices.filter(id => id !== serviceId);
+      servicesTotal -= price;
+      card?.classList.remove("selected");
+    }
+
+    if (servicesTotal < 0) servicesTotal = 0;
+    updateTotalDisplay();
+  });
+});
 //SELECCION DE HABITACION Y ADDICCION AL DIV DE RESUMEN
 document.querySelectorAll('.checkbox_booking').forEach(cb => {
 cb.addEventListener('change', function() {
@@ -97,7 +147,7 @@ cb.addEventListener('change', function() {
     
     if (this.checked) {
     selectedRooms.push(roomId);
-    total += price;
+    roomsTotal += price;
 
     const div = document.createElement("div");
     div.className = "room_selected_style";
@@ -114,11 +164,16 @@ cb.addEventListener('change', function() {
     });
     } else {
     selectedRooms = selectedRooms.filter(id => id !== roomId);
-    total -= price;
+    roomsTotal -= price;
     document.getElementById("room_selected_" + roomId)?.remove();
     }
 
-    totalDisplay.textContent = "Total: S/. " + total.toFixed(2);
+    updateTotalDisplay();
+    toggleServicesSection();
+    if (selectedRooms.length === 0) {
+      resetServicesSelection();
+      updateTotalDisplay();
+    }
 });
 });
 // Si tu tabla se actualiza dinámicamente (por ejemplo por AJAX) necesitas re-run bindCheckboxEvents()
@@ -133,16 +188,21 @@ document.querySelectorAll('.checkbox_booking').forEach(cb => {
 
     if (this.checked) {
         if (!selectedRooms.includes(roomId)) selectedRooms.push(roomId);
-        total += price;
+        roomsTotal += price;
         createSelectedRoomDiv(roomId);
     } else {
         selectedRooms = selectedRooms.filter(id => id !== roomId);
-        total -= price;
-        if (total < 0) total = 0;
+        roomsTotal -= price;
         const el = document.getElementById("room_selected_" + roomId);
         if (el) el.remove();
     }
+    if (roomsTotal < 0) roomsTotal = 0;
     updateTotalDisplay();
+    toggleServicesSection();
+    if (selectedRooms.length === 0) {
+      resetServicesSelection();
+      updateTotalDisplay();
+    }
     });
 });
 }
@@ -372,6 +432,14 @@ const habitaciones = selectedRooms.map(roomId => {
 });
 
 
+  const motivoViaje = travelMotiveInput ? travelMotiveInput.value.trim() : null;
+  const servicios = selectedServices.map(serviceId => ({
+    servicio_id: serviceId,
+    nombre: serviceNames[serviceId],
+    precio_unitario: parseFloat(servicePrices[serviceId]) || 0,
+    cantidad: 1
+  }));
+
   return {
     cliente: clientData,
     habitaciones: habitaciones,
@@ -381,6 +449,8 @@ const habitaciones = selectedRooms.map(roomId => {
     hora_ingreso: hora_ingreso,
     fecha_salida: fecha_salida,
     hora_salida: hora_salida,
+    motivo_viaje: motivoViaje || null,
+    servicios: servicios,
     bandera: banderita,
     usuario_id: usuarioId
 };
@@ -408,9 +478,24 @@ function populatePaymentSummary() {
     paymentItemsDiv.appendChild(item);
   });
 
+  if (Array.isArray(selectedServices) && selectedServices.length > 0) {
+    selectedServices.forEach(id => {
+      const price = parseFloat(servicePrices[id]) || 0;
+      localTotal += price;
+      const item = document.createElement("div");
+      item.className = "payment_item";
+      item.innerHTML = `<span>Servicio ${serviceNames[id] || id}</span> <span>S/. ${price.toFixed(2)}</span>`;
+      paymentItemsDiv.appendChild(item);
+    });
+  }
+
   // si la variable global total existe, preferimos usarla (por si hay descuentos o cálculo adicional)
   const finalTotal = (typeof total !== 'undefined' && !isNaN(total)) ? parseFloat(total) : localTotal;
   paymentTotalAmount.textContent = finalTotal.toFixed(2);
+
+  if (typeof window.__updateQrPayment === "function") {
+    window.__updateQrPayment();
+  }
 }
 // Helper: calcular total desde selectedRooms/roomPrices si `total` no existe
 function computeFinalTotal() {
@@ -419,6 +504,12 @@ let sum = 0;
 if (Array.isArray(selectedRooms)) {
     selectedRooms.forEach(id => {
     const p = (roomPrices && roomPrices[id]) ? parseFloat(roomPrices[id]) : 0;
+    sum += (isNaN(p) ? 0 : p);
+    });
+}
+if (Array.isArray(selectedServices)) {
+    selectedServices.forEach(id => {
+    const p = (servicePrices && servicePrices[id]) ? parseFloat(servicePrices[id]) : 0;
     sum += (isNaN(p) ? 0 : p);
     });
 }

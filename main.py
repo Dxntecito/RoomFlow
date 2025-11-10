@@ -20,6 +20,7 @@ from App.Rutas.crear_comprobante import crear_comprobante_bp
 from App.Rutas.R_transaccion import transaccion_bp
 from App.Rutas.R_Promocion import promocion_bp
 from App.Rutas.R_Modulos import modulos_bp
+from App.Rutas.R_Facturacion import facturaciones_bp
 
 
 app = Flask(__name__, template_folder="./App/Rutas/TEMPLATES", static_folder="./App/Static")
@@ -50,6 +51,7 @@ app.register_blueprint(transaccion_bp)
 app.register_blueprint(promocion_bp)
 app.register_blueprint(cliente_bp)
 app.register_blueprint(modulos_bp)
+app.register_blueprint(facturaciones_bp)
 
 @app.route("/")
 @app.route("/RoomFlow")

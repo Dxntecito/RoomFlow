@@ -196,6 +196,11 @@ def SearchPisos():
 
 ###########    INCIO MODULO FACTURACION    ###########
 
+@modulos_bp.route('/modulos/Facturacion', methods=['GET'])
+@login_required
+def facturacion():
+    return redirect(url_for('facturacion.Facturacion'))
+
 ###########    FIN MODULO FACTURACION    ###########
 
 

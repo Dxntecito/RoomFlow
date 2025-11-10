@@ -14,8 +14,12 @@ const volverHome = document.getElementById("volver_home");
 const correoComprobanteInput = document.getElementById("correo_comprobante");
 const enviarComprobanteBtn = document.getElementById("enviar_comprobante_correo");
 const comprobanteEmailStatus = document.getElementById("comprobante_email_status");
+const qrSection = document.getElementById("qr_payment_section");
+const qrImage = document.getElementById("qr_payment_image");
+const transferSection = document.getElementById("transfer_payment_section");
 
 let ultimaReservaId = null;
+let confettiTimeout = null;
 
 const setEmailStatus = (type, message) => {
   if (!comprobanteEmailStatus) return;
@@ -26,28 +30,134 @@ const setEmailStatus = (type, message) => {
   }
 };
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Si el usuario cambia el método de pago, ocultar/mostrar formularios
+function launchConfetti() {
+  if (typeof confetti !== "function") return;
+  if (confettiTimeout) {
+    clearInterval(confettiTimeout);
+    confettiTimeout = null;
+  }
+
+  const duration = 15 * 1000;
+  const animationEnd = Date.now() + duration;
+  const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+  function randomInRange(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  confettiTimeout = setInterval(() => {
+    const timeLeft = animationEnd - Date.now();
+    if (timeLeft <= 0) {
+      clearInterval(confettiTimeout);
+      confettiTimeout = null;
+      return;
+    }
+
+    const particleCount = 50 * (timeLeft / duration);
+    confetti(Object.assign({}, defaults, {
+      particleCount,
+      origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+    }));
+    confetti(Object.assign({}, defaults, {
+      particleCount,
+      origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+    }));
+  }, 250);
+}
+
+async function waitForReservationValidation(reservaId, statusLabel) {
+  if (!reservaId) return false;
+  let attempt = 0;
+  let countdownInterval = null;
+  const MAX_ATTEMPTS = 20;
+  const POLL_DELAY_MS = 10_000;
+  const WARN_THRESHOLD = Math.floor(MAX_ATTEMPTS * 0.75);
+
+  const stopCountdown = () => {
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+  };
+
+  while (true) {
+    if (attempt >= MAX_ATTEMPTS) {
+      stopCountdown();
+      if (statusLabel) statusLabel.textContent = "No fue posible validar el pago. Cancelando la reserva…";
+      try {
+        await fetch(`/Rutas/TEMPLATES/reserva/${encodeURIComponent(reservaId)}`, { method: "DELETE" });
+      } catch (err) {
+        console.error("[PAGO] Error cancelando reserva tras tiempo agotado:", err);
+      }
+      return false;
+    }
+    attempt += 1;
+    let secondsLeft = POLL_DELAY_MS / 1000;
+    const updateLabel = () => {
+      if (!statusLabel) return;
+      const extra = attempt >= WARN_THRESHOLD ? " (seguimos insistiendo…)" : "";
+      statusLabel.textContent = `Esperando validación del pago... (verificación ${attempt}/${MAX_ATTEMPTS} | reintento en ${secondsLeft}s)${extra}`;
+    };
+    updateLabel();
+    stopCountdown();
+    countdownInterval = setInterval(() => {
+      secondsLeft -= 1;
+      if (secondsLeft <= 0) {
+        stopCountdown();
+        return;
+      }
+      updateLabel();
+    }, 1000);
+    try {
+      const resp = await fetch(`/Rutas/TEMPLATES/reserva/${encodeURIComponent(reservaId)}/estado`, { cache: "no-store" });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && String(data.validado).trim() === "1") {
+          stopCountdown();
+          if (statusLabel) statusLabel.textContent = "Pago validado. Continuando con el proceso…";
+          launchConfetti();
+          return true;
+        }
+      } else if (resp.status === 404) {
+        console.warn("[PAGO] Reserva no encontrada durante validación.");
+        stopCountdown();
+        return false;
+      }
+    } catch (err) {
+      console.error("[PAGO] Error consultando validación:", err);
+    }
+    await sleep(POLL_DELAY_MS);
+  }
+}
+
+function togglePaymentMethodUI(methodValue) {
+  const value = methodValue || document.querySelector('input[name="payment_method"]:checked')?.value || "2";
+  if (cardForm) cardForm.style.display = value === "2" ? "block" : "none";
+  if (qrSection) qrSection.classList.toggle("hidden", value !== "4");
+  if (transferSection) transferSection.classList.toggle("hidden", value !== "5");
+  if (value === "4") {
+    generateQrForAmount();
+  }
+}
+
+function generateQrForAmount() {
+  if (!qrImage) return;
+  const total = computeFinalTotal();
+  const payload = encodeURIComponent(`YAPE|952225506|${total.toFixed(2)}|${Date.now()}`);
+  qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${payload}`;
+}
+
+window.__updateQrPayment = generateQrForAmount;
+
 Array.from(paymentMethodInputs).forEach(r => {
   r.addEventListener("change", () => {
-    const method = document.querySelector('input[name="payment_method"]:checked')?.value;
-    if (method === "card") {
-      cardForm.style.display = "block";
-    } else {
-      // por ahora no implementado -> ocultar formulario de tarjeta
-      cardForm.style.display = "none";
-    }
+    togglePaymentMethodUI(r.value);
   });
 });
 
-// UI: cambio de método de pago (muestra/oculta form tarjeta)
-Array.from(document.getElementsByName("payment_method") || []).forEach(r => {
-r.addEventListener("change", () => {
-    const method = document.querySelector('input[name="payment_method"]:checked')?.value;
-    const cardForm = document.getElementById("card_form");
-    if (cardForm) cardForm.style.display = (method === "card") ? "block" : "none";
-});
-});
+togglePaymentMethodUI();
 
 document.getElementById("payment_phase")?.addEventListener("click", (e) => {
   e.preventDefault();
@@ -112,10 +222,10 @@ function agregarIdTemporal(elemento) {
 // --- processPaymentBtn: valida tarjeta (si aplica), prepara dataReserva y habilita finalizar ---
 processPaymentBtn?.addEventListener("click", async () => {
 console.group("%c[PAGO] Iniciando validación y pre-procesamiento", "color: teal; font-weight: bold;");
-const method = document.querySelector('input[name="payment_method"]:checked')?.value || 'card';
+const method = document.querySelector('input[name="payment_method"]:checked')?.value || '2';
 
 // Validaciones de tarjeta si método card
-if (method === 'card') {
+if (method === '2') {
     const holder = document.getElementById("card_holder")?.value.trim();
     const number = (document.getElementById("card_number")?.value || "").replace(/\s+/g, '');
     const exp = document.getElementById("card_exp")?.value.trim();
@@ -213,6 +323,23 @@ if (finalizarReservaBtn) {
       return;
     }
 
+    ultimaReservaId = reservaId;
+
+    // Esperar validación externa
+    status.textContent = "Esperando validación del pago...";
+    const validado = await waitForReservationValidation(reservaId, status);
+    if (!validado) {
+      loader.style.display = "none";
+      status.textContent = "No fue posible validar el pago automáticamente. Redirigiendo al inicio…";
+      finalizarReservaBtn.disabled = false;
+      finalizarReservaBtn.textContent = "Finalizar Reserva";
+      setTimeout(() => {
+        window.location.href = window.BOOKING_HOME_URL || "/";
+      }, 3000);
+      console.groupEnd();
+      return;
+    }
+
     // === 2) Guardar transacción ===
     const selectedPaymentRadio = document.querySelector('input[name="payment_method"]:checked');
     if (!selectedPaymentRadio) {
@@ -253,8 +380,7 @@ if (finalizarReservaBtn) {
       }
 
       if (!(resp.ok && transResult && (transResult.transaccion_id || transResult.success))) {
-        console.warn("[FINALIZAR] Error en la creación de transacción:", transResult);
-        alert("Advertencia: No se pudo guardar la transacción correctamente.");
+        console.warn("[FINALIZAR] Advertencia: no se pudo guardar la transacción correctamente.", transResult);
       } else {
         console.log("[FINALIZAR] Transacción registrada OK:", transResult);
       }

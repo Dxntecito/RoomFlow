@@ -1,0 +1,249 @@
+{% extends "Master.html" %}
+
+{% block stiles %}
+<style>
+  .facturacion-wrapper {
+    max-width: 1100px;
+    margin: 120px auto 60px;
+    padding: 0 24px;
+    font-family: "Inter", Arial, sans-serif;
+  }
+
+  .facturacion-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 22px 45px rgba(15, 25, 40, 0.08);
+    border: 1px solid rgba(42, 124, 72, 0.12);
+    padding: 28px;
+  }
+
+  .facturacion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .facturacion-header h2 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: #123524;
+  }
+
+  .facturacion-header span {
+    font-size: 0.95rem;
+    color: #4c5f55;
+  }
+
+  table.facturacion-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+  }
+
+  table.facturacion-table thead {
+    background: linear-gradient(90deg, #123524, #1f8656);
+    color: #fff;
+  }
+
+  table.facturacion-table thead th {
+    padding: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-size: 0.85rem;
+  }
+
+  table.facturacion-table tbody td {
+    padding: 14px;
+    border-bottom: 1px solid #eef1f4;
+    font-size: 0.95rem;
+    color: #2b3a35;
+  }
+
+  table.facturacion-table tbody tr:nth-child(odd) {
+    background: #f7faf8;
+  }
+
+  table.facturacion-table tbody tr:hover {
+    background: rgba(31, 134, 86, 0.08);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: rgba(31, 134, 86, 0.16);
+    color: #1f8656;
+  }
+
+  .btn-validar {
+    padding: 8px 18px;
+    border-radius: 18px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(120deg, #1f8656, #32a46e);
+    color: #fff;
+    font-weight: 600;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .btn-validar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(31, 134, 86, 0.26);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 10px;
+    color: #6b7a73;
+  }
+
+  @media (max-width: 820px) {
+    table.facturacion-table thead {
+      display: none;
+    }
+
+    table.facturacion-table tr {
+      display: grid;
+      gap: 8px;
+      padding: 14px 0;
+    }
+
+    table.facturacion-table td {
+      border: none;
+      padding: 0 14px;
+    }
+
+    table.facturacion-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6b7a73;
+      margin-bottom: 4px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="facturacion-wrapper">
+  <div class="facturacion-card">
+    <div class="facturacion-header">
+      <h2>Validación de reservas</h2>
+      <span id="facturacion_counter">Pendientes: 0</span>
+    </div>
+
+    <div id="facturacion_table_container">
+      <p class="empty-state">Cargando reservas pendientes...</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const pendientesUrl = "{{ url_for('facturacion.obtener_pendientes') }}";
+  const validarUrl = (id) => "{{ url_for('facturacion.validar_reserva', reserva_id=0) }}".replace("0", String(id));
+
+  function formatCurrency(value) {
+    return "S/. " + Number(value || 0).toFixed(2);
+  }
+
+  function renderPendientes(data) {
+    const container = document.getElementById("facturacion_table_container");
+    const counter = document.getElementById("facturacion_counter");
+
+    if (!Array.isArray(data) || data.length === 0) {
+      container.innerHTML = '<p class="empty-state">No hay reservas pendientes de validación. ¡Buen trabajo!</p>';
+      if (counter) counter.textContent = "Pendientes: 0";
+      return;
+    }
+
+    if (counter) counter.textContent = `Pendientes: ${data.length}`;
+
+    let rows = "";
+    data.forEach(item => {
+      rows += `
+        <tr data-id="${item.reserva_id}">
+          <td data-label="Reserva">#${item.reserva_id}</td>
+          <td data-label="Cliente">${item.cliente || "Sin nombre"}</td>
+          <td data-label="Documento">${item.documento || "-"}</td>
+          <td data-label="Fecha registro">${item.fecha_registro || "-"}</td>
+          <td data-label="Ingreso">${item.fecha_ingreso || "-"}</td>
+          <td data-label="Salida">${item.fecha_salida || "-"}</td>
+          <td data-label="Total">${formatCurrency(item.monto_total)}</td>
+          <td data-label="Estado"><span class="badge">En revisión</span></td>
+          <td data-label="Acción"><button class="btn-validar" data-action="validar" data-id="${item.reserva_id}">Validar</button></td>
+        </tr>
+      `;
+    });
+
+    container.innerHTML = `
+      <div class="table-responsive">
+        <table class="facturacion-table">
+          <thead>
+            <tr>
+              <th>Reserva</th>
+              <th>Cliente</th>
+              <th>Documento</th>
+              <th>Fecha registro</th>
+              <th>Ingreso</th>
+              <th>Salida</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  async function fetchPendientes() {
+    try {
+      const resp = await fetch(`${pendientesUrl}?t=${Date.now()}`, { cache: "no-store" });
+      if (!resp.ok) throw new Error("Error cargando pendientes");
+      const data = await resp.json();
+      renderPendientes(data?.data || []);
+    } catch (err) {
+      console.error("Error obteniendo pendientes:", err);
+      const container = document.getElementById("facturacion_table_container");
+      if (container) container.innerHTML = '<p class="empty-state">No se pudo cargar la información. Intenta nuevamente.</p>';
+    }
+  }
+
+  async function validarReserva(id) {
+    if (!id) return;
+    if (!confirm("¿Deseas marcar esta reserva como validada?")) return;
+
+    try {
+      const resp = await fetch(validarUrl(id), { method: "POST" });
+      if (!resp.ok) throw new Error("No se pudo validar la reserva");
+      await fetchPendientes();
+    } catch (err) {
+      console.error("Error validando reserva:", err);
+      alert("Ocurrió un problema al validar la reserva.");
+    }
+  }
+
+  document.addEventListener("click", (event) => {
+    const btn = event.target.closest("button[data-action='validar']");
+    if (btn) {
+      const id = btn.dataset.id;
+      validarReserva(id);
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", fetchPendientes);
+</script>
+{% endblock %}
+

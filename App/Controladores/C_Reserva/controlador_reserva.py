@@ -1,5 +1,5 @@
 # controllers/controlador_reserva.py
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta
 from bd import get_connection
 from flask import jsonify, request
 import traceback
@@ -32,6 +32,8 @@ def guardar_reserva_s_usuario(data):
             fecha_salida = data.get('fecha_salida')
             hora_salida = data.get('hora_salida')
             total = data.get('total', 0)
+            motivo_viaje = (data.get('motivo_viaje') or '').strip() or "Sin especificar"
+            servicios = data.get('servicios', [])
 
             print(f"📦 Cliente recibido: {cliente}")
             print(f"📦 Habitaciones recibidas: {len(habitaciones)}")
@@ -88,9 +90,9 @@ def guardar_reserva_s_usuario(data):
             cursor.execute("""
                 INSERT INTO RESERVA (
                     fecha_registro, hora_registro, cliente_id, monto_total, estado,
-                    fecha_ingreso, hora_ingreso, fecha_salida, hora_salida, tipo_reserva
-                ) VALUES (CURDATE(), CURTIME(), %s, %s, 1, %s, %s, %s, %s, 'H')
-            """, (cliente_id, total_val, fecha_ingreso, hora_ingreso, fecha_salida, hora_salida))
+                    fecha_ingreso, hora_ingreso, fecha_salida, hora_salida, tipo_reserva, motivo
+                ) VALUES (CURDATE(), CURTIME(), %s, %s, 1, %s, %s, %s, %s, 'H', %s)
+            """, (cliente_id, total_val, fecha_ingreso, hora_ingreso, fecha_salida, hora_salida, motivo_viaje))
 
             reserva_id = cursor.lastrowid  # 👈 obtenemos el ID de la reserva
             print(f"✅ RESERVA insertada con ID: {reserva_id}")
@@ -119,6 +121,29 @@ def guardar_reserva_s_usuario(data):
                         VALUES (%s, %s, %s, %s, %s, %s)
                     """, (doc, nombre, ape_pat, ape_mat, cliente_id, reserva_hab_id))
                     print(f"    -> HUESPED insertado para hab {habitacion_id}")
+
+            for servicio in servicios:
+                servicio_id = servicio.get('servicio_id') or servicio.get('id')
+                if not servicio_id:
+                    continue
+                cantidad = servicio.get('cantidad') or 1
+                try:
+                    cantidad = int(cantidad)
+                except Exception:
+                    cantidad = 1
+                precio_unitario = servicio.get('precio_unitario') or servicio.get('precio') or 0
+                try:
+                    precio_unitario = float(precio_unitario)
+                except Exception:
+                    precio_unitario = 0.0
+                cursor.execute(
+                    """
+                    INSERT INTO RESERVA_SERVICIO (reserva_id, servicio_id, cantidad, precio_unitario)
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    (reserva_id, servicio_id, cantidad, precio_unitario)
+                )
+                print(f"  -> SERVICIO agregado ID={servicio_id}")
 
             # --- Guardar cambios ---
             connection.commit()
@@ -163,6 +188,8 @@ def guardar_reserva_c_usuario(data):
             fecha_salida = data.get('fecha_salida')
             hora_salida = data.get('hora_salida')
             total = data.get('total', 0)
+            motivo_viaje = (data.get('motivo_viaje') or '').strip() or "Sin especificar"
+            servicios = data.get('servicios', [])
             print(f"📦 Habitaciones recibidas: {len(habitaciones)}")
 
             cliente_id = controller_client.buscar_cliente_por_idusuario(usuario_id)
@@ -172,9 +199,9 @@ def guardar_reserva_c_usuario(data):
             cursor.execute("""
                 INSERT INTO RESERVA (
                     fecha_registro, hora_registro, cliente_id, monto_total, estado,
-                    fecha_ingreso, hora_ingreso, fecha_salida, hora_salida, tipo_reserva
-                ) VALUES (CURDATE(), CURTIME(), %s, %s, 1, %s, %s, %s, %s, 'H')
-            """, (cliente_id, total_val, fecha_ingreso, hora_ingreso, fecha_salida, hora_salida))
+                    fecha_ingreso, hora_ingreso, fecha_salida, hora_salida, tipo_reserva, motivo
+                ) VALUES (CURDATE(), CURTIME(), %s, %s, 1, %s, %s, %s, %s, 'H', %s)
+            """, (cliente_id, total_val, fecha_ingreso, hora_ingreso, fecha_salida, hora_salida, motivo_viaje))
 
             reserva_id = cursor.lastrowid  # 👈 obtenemos el ID de la reserva
             print(f"✅ RESERVA insertada con ID: {reserva_id}")
@@ -204,6 +231,29 @@ def guardar_reserva_c_usuario(data):
                     """, (doc, nombre, ape_pat, ape_mat, cliente_id, reserva_hab_id))
                     print(f"    -> HUESPED insertado para hab {habitacion_id}")
 
+            for servicio in servicios:
+                servicio_id = servicio.get('servicio_id') or servicio.get('id')
+                if not servicio_id:
+                    continue
+                cantidad = servicio.get('cantidad') or 1
+                try:
+                    cantidad = int(cantidad)
+                except Exception:
+                    cantidad = 1
+                precio_unitario = servicio.get('precio_unitario') or servicio.get('precio') or 0
+                try:
+                    precio_unitario = float(precio_unitario)
+                except Exception:
+                    precio_unitario = 0.0
+                cursor.execute(
+                    """
+                    INSERT INTO RESERVA_SERVICIO (reserva_id, servicio_id, cantidad, precio_unitario)
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    (reserva_id, servicio_id, cantidad, precio_unitario)
+                )
+                print(f"  -> SERVICIO agregado ID={servicio_id}")
+
             # --- Guardar cambios ---
             connection.commit()
             print("💾 Cambios confirmados correctamente")
@@ -220,4 +270,142 @@ def guardar_reserva_c_usuario(data):
         if connection:
             connection.close()
             print("🔚 Conexión cerrada correctamente")
+
+
+def obtener_estado_validado(reserva_id):
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT validado FROM RESERVA WHERE reserva_id = %s",
+                (reserva_id,)
+            )
+            row = cursor.fetchone()
+            if row:
+                return str(row[0]).strip() if row[0] is not None else None
+            return None
+    finally:
+        if connection:
+            connection.close()
+
+
+def listar_reservas_pendientes_validacion():
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    r.reserva_id,
+                    r.fecha_registro,
+                    r.hora_registro,
+                    r.monto_total,
+                    r.fecha_ingreso,
+                    r.fecha_salida,
+                    r.validado,
+                    c.nombres,
+                    c.ape_paterno,
+                    c.ape_materno,
+                    c.num_doc
+                FROM RESERVA r
+                LEFT JOIN CLIENTE c ON c.cliente_id = r.cliente_id
+                WHERE r.validado = '0' OR r.validado IS NULL
+                ORDER BY r.fecha_registro DESC, r.hora_registro DESC
+            """)
+            rows = cursor.fetchall()
+            pendientes = []
+            for row in rows:
+                fecha_registro = _format_date(row[1])
+                hora_registro = _format_time(row[2])
+                fecha_ingreso = _format_date(row[4])
+                fecha_salida = _format_date(row[5])
+                pendientes.append({
+                    "reserva_id": row[0],
+                    "fecha_registro": fecha_registro,
+                    "hora_registro": hora_registro,
+                    "monto_total": float(row[3]) if row[3] is not None else 0.0,
+                    "fecha_ingreso": fecha_ingreso,
+                    "fecha_salida": fecha_salida,
+                    "validado": str(row[6]).strip() if row[6] is not None else "0",
+                    "cliente": " ".join(filter(None, [row[7], row[8], row[9]])).strip() or "Sin nombre",
+                    "documento": row[10]
+                })
+            return pendientes
+    finally:
+        if connection:
+            connection.close()
+
+
+def actualizar_validado_reserva(reserva_id, valor="1"):
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE RESERVA SET validado = %s WHERE reserva_id = %s",
+                (valor, reserva_id)
+            )
+        connection.commit()
+        return True
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        print(f"❌ Error actualizando validado reserva {reserva_id}: {e}")
+        return False
+    finally:
+        if connection:
+            connection.close()
+
+
+def eliminar_reserva_completa(reserva_id):
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                DELETE FROM HUESPED
+                WHERE reserva_habitacion_id IN (
+                    SELECT reserva_habitacion_id FROM RESERVA_HABITACION WHERE reserva_id = %s
+                )
+            """, (reserva_id,))
+            cursor.execute("DELETE FROM RESERVA_HABITACION WHERE reserva_id = %s", (reserva_id,))
+            cursor.execute("DELETE FROM RESERVA_SERVICIO WHERE reserva_id = %s", (reserva_id,))
+            cursor.execute("DELETE FROM RESERVA WHERE reserva_id = %s", (reserva_id,))
+        connection.commit()
+        return True
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        print(f"❌ Error eliminando reserva {reserva_id}: {e}")
+        return False
+    finally:
+        if connection:
+            connection.close()
+
+
+def _format_date(value):
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.strftime("%Y-%m-%d")
+    if isinstance(value, date):
+        return value.strftime("%Y-%m-%d")
+    return str(value)
+
+
+def _format_time(value):
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.strftime("%H:%M:%S")
+    if isinstance(value, time):
+        return value.strftime("%H:%M:%S")
+    if isinstance(value, timedelta):
+        total_seconds = int(value.total_seconds())
+        hours = (total_seconds // 3600) % 24
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    return str(value)
 

@@ -1,9 +1,6 @@
 (function () {
   const TIMER_DURATION_MS = 10 * 60 * 1000; // 10 minutos
   const STORAGE_KEY = 'bookingTimerExpiration';
-  const BLOCK_KEY = 'bookingTimerBlocked';
-
-  const homeUrl = window.BOOKING_HOME_URL || '/';
   const storage = (() => {
     try {
       const testKey = '__booking_timer__';
@@ -77,18 +74,7 @@
     }
 
     if (success) {
-      try {
-        storage.removeItem(BLOCK_KEY);
-      } catch (error) {
-        console.warn('[BookingTimer] No se pudo limpiar la marca de bloqueo.', error);
-      }
       hideModal();
-    } else {
-      try {
-        storage.setItem(BLOCK_KEY, 'true');
-      } catch (error) {
-        console.warn('[BookingTimer] No se pudo marcar el bloqueo.', error);
-      }
     }
   }
 
@@ -97,7 +83,8 @@
     showModal();
 
     redirectTimeoutId = setTimeout(() => {
-      window.location.replace(homeUrl);
+      hideModal();
+      startTimer(true);
     }, 2500);
   }
 
@@ -112,17 +99,11 @@
     updateDisplay(remaining);
   }
 
-  function startTimer() {
+  function startTimer(forceNew = false) {
     const container = getContainer();
     const display = getDisplay();
 
     if (!container || !display) {
-      return;
-    }
-
-    const blocked = storage.getItem(BLOCK_KEY) === 'true';
-    if (blocked) {
-      window.location.replace(homeUrl);
       return;
     }
 
@@ -131,7 +112,7 @@
     const storedExpiration = parseInt(storage.getItem(STORAGE_KEY), 10);
     const now = Date.now();
 
-    if (!Number.isNaN(storedExpiration) && storedExpiration > now) {
+    if (!forceNew && !Number.isNaN(storedExpiration) && storedExpiration > now) {
       expirationTimestamp = storedExpiration;
     } else {
       expirationTimestamp = now + TIMER_DURATION_MS;
@@ -152,13 +133,6 @@
   window.bookingTimer.getRemaining = () => {
     if (!expirationTimestamp) return 0;
     return Math.max(0, expirationTimestamp - Date.now());
-  };
-  window.bookingTimer.resetBlock = () => {
-    try {
-      storage.removeItem(BLOCK_KEY);
-    } catch (error) {
-      console.warn('[BookingTimer] No se pudo quitar la marca de bloqueo.', error);
-    }
   };
 
   document.addEventListener('DOMContentLoaded', startTimer);

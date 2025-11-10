@@ -7,6 +7,7 @@ import App.Controladores.C_Reserva.controlador_reserva as controller_reserva
 import App.Controladores.C_Reserva.controlador_pais as controller_pais
 import App.Controladores.C_Cliente.controlador_tipo_doc as controller_type_doc
 import App.Controladores.C_Cliente.controlador_tipo_emp as controller_type_emp
+import App.Controladores.C_Reserva.controlador_servicio as controller_service
 bookingroom_bp = Blueprint('bookingroom',__name__,template_folder='TEMPLATES',url_prefix='/Rutas/TEMPLATES')
 
 @bookingroom_bp.route('/', methods=['GET'])
@@ -30,6 +31,9 @@ def BookingRoom():
     
     categories = controller_category.get_categories()
     floors = controller_floor.get_floors()
+    categories_map = {category["id"]: category for category in categories}
+    floors_map = {floor[0]: floor[1] for floor in floors}
+    services = controller_service.get_services()
     countries = controller_pais.get_countries()
     types_doc = controller_type_doc.get_types_doc()
     types_emp = controller_type_emp.get_types_emp()
@@ -38,7 +42,36 @@ def BookingRoom():
     print("start_dt:", start_dt)
     print("end_dt:", end_dt)
 
-    return render_template("Booking.html", rooms=rooms, categories=categories, floors=floors ,start_dt =start_dt, end_dt=end_dt , countries=countries, types_doc=types_doc, types_emp=types_emp )
+    return render_template(
+        "Booking.html",
+        rooms=rooms,
+        categories=categories,
+        categories_map=categories_map,
+        floors=floors,
+        floors_map=floors_map,
+        services=services,
+        start_dt=start_dt,
+        end_dt=end_dt,
+        countries=countries,
+        types_doc=types_doc,
+        types_emp=types_emp
+    )
+
+
+@bookingroom_bp.route('/reserva/<int:reserva_id>/estado', methods=['GET'])
+def obtener_estado_reserva(reserva_id):
+    estado = controller_reserva.obtener_estado_validado(reserva_id)
+    if estado is None:
+        return jsonify({"success": False, "message": "Reserva no encontrada"}), 404
+    return jsonify({"success": True, "validado": estado})
+
+
+@bookingroom_bp.route('/reserva/<int:reserva_id>', methods=['DELETE'])
+def eliminar_reserva(reserva_id):
+    ok = controller_reserva.eliminar_reserva_completa(reserva_id)
+    if ok:
+        return jsonify({"success": True})
+    return jsonify({"success": False}), 400
 
 
 @bookingroom_bp.route('/guardar_reserva', methods=['POST'])
