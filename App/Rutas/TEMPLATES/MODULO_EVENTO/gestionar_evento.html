@@ -286,7 +286,7 @@
     </div>
 </div>
 
-<!-- Campo oculto para almacenar el ID a eliminar -->
+<!-- Campo oculto para almacenar el ID al dar de baja -->
 <script>
     let eventoIdBaja = null;
 
@@ -368,6 +368,9 @@
     }
 
 </script>
+
+<!-- Búsqueda de eventos por nombre de evento -->
+
 <script>
     document.addEventListener("DOMContentLoaded", () => {
 
@@ -375,7 +378,7 @@
         const tbody = document.getElementById("tabla-tipos-evento-body");
         let tiposEventoData = []; // almacenamiento local de resultados
 
-        // ✅ Cargar todos desde backend al inicio
+        // Cargar todos desde backend al inicio
         async function cargarTiposEventoInicial() {
             try {
                 const response = await fetch('/Cruds/SearchTiposEventos?query=');
@@ -498,6 +501,9 @@
         });
     });
 </script>
+
+<!-- Validaciones y pago -->
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // --- Cálculo automático de horas y precio ---

@@ -3,8 +3,6 @@
 {% block stiles %}
 <link rel="stylesheet" href="../../Static/CSS/Events.css">
 <link rel="stylesheet" href="../../Static/Fonts/Arimo/static/Arimo-Medium.ttf">
-<link rel="stylesheet" href="../../Static/CSS/style.css">
-<link rel="stylesheet" href="../../Static/CSS/home.css">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 {% endblock %}
 
@@ -76,14 +74,32 @@
                     </div>
 
                     <div class="form-group">
+                        <label>Capacidad</label>
+                        <input type="number" name="capacidad" class="form-control"
+                            pattern="">
+
+                    </div>
+                </div>
+                <div class="form-row">
+                    
+
+                    <div class="form-group">
                         <label>Nombre de evento</label>
-                        <input type="text" name="nombre_evento" class="form-control">
+                        <input type="text" name="nombre_evento" class="form-control"
+                            pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9&.,'° ]+$">
 
                     </div>
                 </div>
 
 
-                <h2 class="section-title-events">DATOS DEL CLIENTE</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <button id="btn-abrir-modal" type="button" class="btn-abrir">Agregar servicios</button>
+                    </div>
+                </div>
+
+
+                <h3 class="section-title-events">DATOS DEL CLIENTE</h3>
 
                 <!-- Toggle para cambiar tipo de cliente -->
                 <div class="switch-container">
@@ -123,7 +139,7 @@
 
                         <div class="form-group">
                             <label>País</label>
-                            <select id="pais_select" name="pais_id">
+                            <select id="pais_select_cliente" name="pais_id">
                                 <option value="">-- Seleccione país --</option>
                                 {% for country in countries %}
                                 <option value="{{ country[0] }}">{{ country[1] }}</option>
@@ -137,7 +153,8 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Teléfono</label>
-                            <input type="tel" name="telefono" pattern="^9[0-9]{8}$" maxlength="9">
+                            <input type="tel" name="telefono" pattern="^9[0-9]{8}$" maxlength="9"
+                                oninput="validarTelefono(this)">
                             <small class="error-message"></small>
                         </div>
                         <div class="form-group">
@@ -179,12 +196,13 @@
 
                         <div class="form-group">
                             <label>Teléfono</label>
-                            <input type="tel" name="telefono" pattern="^9[0-9]{8}$" maxlength="9">
+                            <input type="tel" name="telefono" pattern="^9[0-9]{8}$" maxlength="9"
+                                oninput="validarTelefono(this)">
                             <small class="error-message"></small>
                         </div>
                         <div class="form-group">
                             <label>País</label>
-                            <select id="pais_select" name="pais_id">
+                            <select id="pais_select_reserva" name="pais_id" disabled>
                                 <option value="">-- Seleccione país --</option>
                                 {% for country in countries %}
                                 <option value="{{ country[0] }}">{{ country[1] }}</option>
@@ -202,7 +220,7 @@
                     </div>
 
                 </div>
-                <h3 class="section-title-events">Métodos de Pago</h3>
+                <h3 class="section-title-events">MÉTODOS DE PAGO</h3>
 
                 <!-- Radios de selección de método -->
                 <div class="radio-group" style="margin-bottom: 20px;">
@@ -243,7 +261,7 @@
                     <div class="form-group">
                         <label>Número de teléfono</label>
                         <input type="text" name="telefono_monedero" maxlength="9" placeholder="987654321"
-                            pattern="^9[0-9]{8}$" class="form-control">
+                            oninput="validarTelefono(this)" pattern="^9[0-9]{8}$" class="form-control">
                     </div>
                     <div class="form-group">
                         <label>Clave del monedero</label>
@@ -269,9 +287,18 @@
                     <span id="resumen-fecha" style="font-weight: 500; color: #328336;">—</span>
                 </div>
 
+
+
+
+
+
                 <div class="summary-row">
                     <span style="color: #666;">Nro. Horas</span>
                     <span id="resumen-horas">—</span>
+                </div>
+
+                <div id="lista-servicios-seleccionados" class="summary-row">
+                    <small>No se han agregado servicios</small>
                 </div>
 
                 <div class="summary-row total">
@@ -279,17 +306,20 @@
                     <span id="resumen-total">S/ 0</span>
                 </div>
 
-                <label>
-                    <input type="radio" name="tipo_comprobante" value="B" checked>
-                    Boleta
-                </label>
-                <label for="" style="margin-left: 15px;"></label>
-                <label>
-                    <input type="radio" name="tipo_comprobante" value="F">
-                    Factura
-                </label>
+                <div>
+                    <label>
+                        <input type="radio" name="tipo_comprobante" value="B" checked>
+                        Boleta
+                    </label>
+                    <label for="" style="margin-left: 15px;"></label>
+                    <label>
+                        <input type="radio" name="tipo_comprobante" value="F">
+                        Factura
+                    </label>
+                </div>
 
-                <button class="pay-button" id="btn-pagar" type="button">Pagar</button>
+                <button class="pay-button" id="btn-pagar" type="button" disabled>Pagar</button>
+
 
                 <div id="flash-message"></div>
                 <!-- Modal de procesamiento -->
@@ -300,8 +330,6 @@
                     </div>
                 </div>
 
-
-
             </div>
 
         </form>
@@ -310,405 +338,45 @@
     <div class="separar_final"></div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const radios = document.querySelectorAll('input[name="metodo_pago_id"]');
-        const tarjetaFields = document.getElementById('tarjeta-fields');
-        const efectivoFields = document.getElementById('efectivo-fields');
-        const monederoFields = document.getElementById('monedero-fields');
 
-        function mostrarCampos(nombreMetodo) {
-            // Ocultamos todos los campos
-            tarjetaFields.classList.add('hidden');
-            efectivoFields.classList.add('hidden');
-            monederoFields.classList.add('hidden');
+<div id="modal-servicios" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Seleccionar servicios</h2>
+            <button class="close-modal">&times;</button>
+        </div>
 
-            // Mostramos el que corresponde
-            if (nombreMetodo === 'tarjeta') tarjetaFields.classList.remove('hidden');
-            else if (nombreMetodo === 'efectivo') efectivoFields.classList.remove('hidden');
-            else if (nombreMetodo === 'yape' || nombreMetodo === 'monedero virtual') monederoFields.classList.remove('hidden');
-        }
+        <div class="modal-body">
 
-        // Escuchamos los cambios
-        radios.forEach(radio => {
-            radio.addEventListener('change', () => {
-                const nombre = radio.dataset.nombre;
-                mostrarCampos(nombre);
-            });
-        });
+            <!-- ACORDEÓN -->
+            <div class="accordion">
 
-        // Si ya hay uno marcado por defecto
-        const checked = document.querySelector('input[name="metodo_pago_id"]:checked');
-        if (checked) mostrarCampos(checked.dataset.nombre);
-    });
+            </div>
+        </div>
 
-    (function () {
-        const btn = document.getElementById("search-button");
-        const fechaInput = document.getElementById("search-fecha");
-        const entradaInput = document.getElementById("search-hora-entrada");
-        const salidaInput = document.getElementById("search-hora-salida");
-
-        const eventoFecha = document.getElementById("evento-fecha");
-        const eventoEntrada = document.getElementById("evento-hora-entrada");
-        const eventoSalida = document.getElementById("evento-hora-salida");
-
-        const errorBox = document.getElementById("search-error");
-
-        function showError(msg) {
-            errorBox.textContent = msg;
-            errorBox.style.display = "block";
-        }
-        function hideError() {
-            errorBox.textContent = "";
-            errorBox.style.display = "none";
-        }
-
-        function limpiarSearch() {
-            fechaInput.value = "";
-            entradaInput.value = "";
-            salidaInput.value = "";
-        }
-        function limpiarEvento() {
-            if (eventoFecha) eventoFecha.value = "";
-            if (eventoEntrada) eventoEntrada.value = "";
-            if (eventoSalida) eventoSalida.value = "";
-        }
-
-        btn.addEventListener("click", function (e) {
-            e.preventDefault(); // evita comportamiento por defecto
-
-            hideError(); // cerrar errores previos
-
-            const fecha = fechaInput.value;
-            const horaEntrada = entradaInput.value;
-            const horaSalida = salidaInput.value;
-
-            // Campos obligatorios
-            if (!fecha || !horaEntrada || !horaSalida) {
-                showError("Por favor completa todos los campos de fecha y hora.");
-                limpiarSearch();
-                limpiarEvento();
-                return;
-            }
-
-            // Construimos fechas completas
-            const fechaReserva = new Date(`${fecha}T${horaEntrada}`);
-            const fechaSalida = new Date(`${fecha}T${horaSalida}`);
-
-            // Normalizar hoy (sin horas)
-            const hoy = new Date();
-            hoy.setHours(0, 0, 0, 0);
-            const fechaSeleccionada = new Date(fecha);
-            fechaSeleccionada.setHours(0, 0, 0, 0);
-
-            // 1) Fecha no puede ser anterior a hoy
-            if (fechaSeleccionada < hoy) {
-                showError("No puedes seleccionar una fecha anterior al día de hoy.");
-                limpiarSearch();
-                limpiarEvento();
-                return;
-            }
-
-            // 2) Hora de salida debe ser posterior a la de entrada (si quieres permitir overnight, 
-            // cambiar la lógica; aquí asumimos mismo día)
-            if (fechaSalida <= fechaReserva) {
-                showError("La hora de salida debe ser posterior a la hora de entrada.");
-                limpiarSearch();
-                limpiarEvento();
-                return;
-            }
-
-            // 3) Reserva mínimo 3 horas antes
-            const ahora = new Date();
-            const tresHorasAntes = new Date(fechaReserva.getTime() - 3 * 60 * 60 * 1000);
-            if (ahora > tresHorasAntes) {
-                showError("Las reservas deben realizarse con al menos 3 horas de anticipación.");
-                limpiarSearch();
-                limpiarEvento();
-                return;
-            }
-
-            // Si llegamos aquí, todo está OK -> copiamos los valores en el formulario del evento
-            hideError();
-            if (eventoFecha) eventoFecha.value = fecha;
-            if (eventoEntrada) eventoEntrada.value = horaEntrada;
-            if (eventoSalida) eventoSalida.value = horaSalida;
-
-            // Si quieres, puedes también deshabilitar los inputs search para evitar cambios hasta confirmar
-            // fechaInput.disabled = true; entradaInput.disabled = true; salidaInput.disabled = true;
-
-        }, { once: false });
-    })();
-</script><script>
-    document.addEventListener('DOMContentLoaded', function () {
-
-        // Mapa de precios por tipo de evento
-        const tiposEventos = {
-            {% for t in tipos_evento1 %}
-            {{ t[0] }}: {{ t[2] if t[2] is not none else 0 }},
-            {% endfor %}
-        };
-
-        console.log("Tipos de eventos cargados:", tiposEventos); // ✅ Debug
-
-        let horas = 0;
-        let total = 0;
-
-        function calcularHoras(entrada, salida) {
-            if (!entrada || !salida) return 0;
-            const [h1, m1] = entrada.split(":").map(Number);
-            const [h2, m2] = salida.split(":").map(Number);
-
-            let diff = (h2 + m2 / 60) - (h1 + m1 / 60);
-            if (diff < 0) diff += 24;
-            return diff;
-        }
-
-        function actualizarResumen() {
-            const fecha = document.getElementById("evento-fecha").value;
-            const entrada = document.getElementById("evento-hora-entrada").value;
-            const salida = document.getElementById("evento-hora-salida").value;
-            const tipoEventoSelect = document.querySelector('select[name="tipo_evento_id"]');
-            const tipoEventoId = tipoEventoSelect ? tipoEventoSelect.value : null;
-
-            console.log("Tipo evento seleccionado:", tipoEventoId); // ✅ Debug
-
-            horas = calcularHoras(entrada, salida);
-            const precioBase = tiposEventos[tipoEventoId] || 0;
-            total = horas * precioBase;
-
-            console.log("Horas:", horas, "Precio base:", precioBase, "Total:", total); // ✅ Debug
-
-            // Actualizar resumen visual
-            document.getElementById("resumen-fecha").textContent = fecha || "—";
-            document.getElementById("resumen-horas").textContent =
-                horas > 0 ? `${horas.toFixed(1)} × S/ ${precioBase.toFixed(2)}` : "—";
-            document.getElementById("resumen-total").textContent =
-                horas > 0 ? `S/ ${total.toFixed(2)}` : "S/ 0";
-
-            // Exponer variables globales para el botón pagar
-            window.horas = horas;
-            window.total = total;
-        }
-
-        // Escuchar cambios en todos los campos relevantes
-        document.getElementById("evento-fecha")?.addEventListener("change", actualizarResumen);
-        document.getElementById("evento-hora-entrada")?.addEventListener("change", actualizarResumen);
-        document.getElementById("evento-hora-salida")?.addEventListener("change", actualizarResumen);
-        document.querySelector('select[name="tipo_evento_id"]')?.addEventListener("change", actualizarResumen);
-
-        actualizarResumen(); // inicializar al cargar
-    });
-</script>
-
+        <div class="modal-footer">
+            <button class="btn-cancelar">Cancelar</button>
+            <button class="btn-confirmar">Confirmar selección</button>
+        </div>
+    </div>
+</div>
 
 <script>
-    //ERROR
+    function validarTelefono(input) {
+        // Elimina todo lo que no sea número
+        input.value = input.value.replace(/\D/g, '');
 
-    function showFieldError(input, message) {
-        const errorMsg = input.parentElement.querySelector(".error-message");
-        if (errorMsg) {
-            errorMsg.textContent = message;
-            errorMsg.style.display = "block";
+        // Si es el primer dígito y no es 9, lo borra
+        if (input.value.length === 1 && input.value !== '9') {
+            input.value = '';
         }
-        input.classList.add("error");
+
+        // Si tiene más de 9 dígitos, corta el resto
+        if (input.value.length > 9) {
+            input.value = input.value.slice(0, 9);
+        }
     }
 
-    function clearFieldErrors(form) {
-        form.querySelectorAll(".error-message").forEach(msg => {
-            msg.textContent = "";
-            msg.style.display = "none";
-        });
-        form.querySelectorAll(".error").forEach(input => {
-            input.classList.remove("error");
-        });
-    }
-
-
-    function showFlash(msg) {
-        const flash = document.getElementById("flash-message");
-        flash.textContent = msg;
-        flash.style.display = "block";
-        setTimeout(() => flash.style.display = "none", 3500);
-    }
-
-
-    // Al enviar el formulario
-    document.addEventListener("DOMContentLoaded", () => {
-        const btnPagar = document.getElementById("btn-pagar");
-        const form = document.getElementById("form-pago");
-        const modal = document.getElementById("modal-pago");
-        const anim = document.getElementById("animacion-pago");
-        const texto = document.getElementById("texto-pago");
-
-        // Listener del botón de pago
-        btnPagar.addEventListener("click", async (e) => {
-            e.preventDefault();
-            console.log("🔹 Click detectado en Pagar");
-
-            // --- Validación general ---
-            const camposRequeridos = ["evento-fecha", "evento-hora-entrada", "evento-hora-salida"];
-            for (const id of camposRequeridos) {
-                const campo = document.getElementById(id);
-                if (!campo || !campo.value) {
-                    showFlash("Completa todos los datos del evento antes de pagar.");
-                    return;
-                }
-            }
-
-            clearFieldErrors(form);
-
-            // --- Validar tipo de evento y nombre ---
-            const tipoEvento = form.querySelector('select[name="tipo_evento_id"]').value;
-            const nombreEvento = form.querySelector('input[name="nombre_evento"]').value.trim();
-            if (!tipoEvento || !nombreEvento) {
-                showFlash("Completa el tipo y nombre del evento.");
-                return;
-            }
-
-            // --- Validar datos del cliente ---
-            const tipoCliente = document.getElementById("tipo_cliente").value;
-
-            if (tipoCliente === "N") {
-                const campos = ["ape_paterno", "ape_materno", "nombres", "pais_id", "telefono", "tipo_doc_id", "nro_doc"];
-                for (const name of campos) {
-                    const input = form.querySelector(`[name="${name}"]`);
-                    if (!input || !input.value.trim()) {
-                        showFieldError(input, "Campo obligatorio");
-                        return;
-                    }
-                    const pattern = input.getAttribute("pattern");
-                    if (pattern && !new RegExp(pattern).test(input.value.trim())) {
-                        showFieldError(input, "Formato inválido");
-                        return;
-                    }
-                }
-            } else {
-                const campos = ["ruc", "razon_social", "telefono", "pais_id", "direccion"];
-                for (const name of campos) {
-                    const input = form.querySelector(`[name="${name}"]`);
-                    if (!input || !input.value.trim()) {
-                        showFieldError(input, "Campo obligatorio");
-                        return;
-                    }
-                    const pattern = input.getAttribute("pattern");
-                    if (pattern && !new RegExp(pattern).test(input.value.trim())) {
-                        showFieldError(input, "Formato inválido");
-                        return;
-                    }
-                }
-            }
-
-            // --- Validar método de pago ---
-            const metodo = form.querySelector('input[name="metodo_pago_id"]:checked');
-            if (!metodo) {
-                showFlash("Selecciona un método de pago.");
-                return;
-            }
-
-            const metodoNombre = metodo.dataset.nombre.toLowerCase();
-            if (metodoNombre.includes("tarjeta")) {
-                const num = form.querySelector('[name="num_tarjeta"]').value.trim();
-                const cvv = form.querySelector('[name="codigo_seguridad"]').value.trim();
-                if (!num || !cvv) {
-                    showFlash("Completa los datos de la tarjeta.");
-                    return;
-                }
-            } else if (metodoNombre.includes("efectivo")) {
-                const monto = form.querySelector('[name="monto_efectivo"]').value.trim();
-                if (!monto) {
-                    showFlash("Ingresa el monto entregado.");
-                    return;
-                }
-            } else if (metodoNombre.includes("monedero")) {
-                const tel = form.querySelector('[name="telefono_monedero"]').value.trim();
-                const clave = form.querySelector('[name="clave_monedero"]').value.trim();
-                if (!tel || !clave) {
-                    showFlash("Completa los datos del monedero virtual.");
-                    return;
-                }
-            }
-
-            // --- Mostrar modal de procesamiento ---
-            modal.style.display = "flex";
-            anim.className = "animacion-pago";
-            texto.textContent = "Procesando pago...";
-
-            // --- Preparar datos para enviar ---
-            const formData = new FormData(form);
-            formData.append("numero_horas", horas);
-            formData.append("precio_final", total);
-
-            // --- Enviar al backend ---
-            try {
-                const response = await fetch("/Eventos/procesar_pago", {
-                    method: "POST",
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    // ✅ Éxito: mostrar animación y redirigir
-                    anim.className = "check-success";
-                    texto.textContent = "¡Pago exitoso!";
-
-                    console.log("✅ Pago exitoso, redirigiendo...");
-
-                    setTimeout(() => {
-                        window.location.href = data.redirect_url;
-                    }, 1500); // Espera 1.5s para mostrar el éxito
-
-                } else {
-                    // ❌ Error: mostrar mensaje
-                    showFlash(data.message || data.error || "Error desconocido al procesar el pago.");
-                    anim.className = "check-error";
-                    texto.textContent = "Error al procesar el pago.";
-
-                    setTimeout(() => {
-                        modal.style.display = "none";
-                    }, 2000);
-                }
-
-            } catch (err) {
-                // ❌ Error de red o del servidor
-                console.error("❌ Error en fetch:", err);
-                showFlash("Error de conexión. Intenta nuevamente.");
-                anim.className = "check-error";
-                texto.textContent = "Error de conexión.";
-
-                setTimeout(() => {
-                    modal.style.display = "none";
-                }, 2000);
-            }
-        });
-    });
-</script>
-<script>
-    const toggle = document.getElementById('toggleCliente');
-    const formNatural = document.getElementById('formNatural');
-    const formJuridico = document.getElementById('formJuridico');
-    const tipoTexto = document.getElementById('tipoTexto');
-    const tipoClienteInput = document.getElementById('tipo_cliente');
-
-
-    toggle.addEventListener('change', function () {
-        if (this.checked) {
-            // Cliente jurídico
-            formNatural.classList.add('hidden');
-            formJuridico.classList.remove('hidden');
-            tipoTexto.textContent = 'Jurídico';
-            tipoClienteInput.value = 'J';
-        } else {
-            // Cliente natural
-            formNatural.classList.remove('hidden');
-            formJuridico.classList.add('hidden');
-            tipoTexto.textContent = 'Natural';
-            tipoClienteInput.value = 'N';
-        }
-    });
-</script>
-<script>
     document.querySelectorAll("input[pattern]").forEach(input => {
         const pattern = input.getAttribute("pattern");
 
@@ -732,6 +400,20 @@
         // Limita a 19 caracteres (16 dígitos + 3 guiones)
         input.value = value.slice(0, 19);
     }
-
 </script>
+
+<script>
+    const tiposEventos = {{ tipos_evento1_raw | tojson }};
+</script>
+
+
+<script src="../../Static/JS/Evento_cliente.js"></script>
+
+<script src="../../Static/JS/Evento_reserva.js"></script>
+
+<script src="../../Static/JS/Evento_metodo_pago.js"></script>
+
+<script src="../../Static/JS/Evento_pago.js"></script>
+
+<script src="../../Static/JS/Evento_servicios.js"></script>
 {% endblock %}

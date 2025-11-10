@@ -740,8 +740,9 @@ def UpdateTipoEvento():
         tipo_evento_id = request.form['tipo_evento_id']
         nombre_tipo_evento = request.form['nombre_tipo_evento']
         estado = request.form['estado']
+        precio_por_hora = request.form['precio_por_hora']
 
-        controlador_evento.update_tipo_evento(nombre_tipo_evento, estado, tipo_evento_id)
+        controlador_evento.update_tipo_evento(nombre_tipo_evento, estado,precio_por_hora, tipo_evento_id)
         flash("Tipo de evento actualizado correctamente", "success")
     except Exception as e:
         flash(f"Error al actualizar el tipo de evento: {str(e)}", "error")

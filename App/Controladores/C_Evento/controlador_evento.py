@@ -661,3 +661,16 @@ def baja_evento(evento_id, motivo_cancelacion):
         raise e
     finally:
         connection.close()
+
+
+
+def obtener_evento(fecha):
+    conexion = get_connection()
+    with conexion.cursor() as cursor:
+        cursor.execute("""
+            SELECT hora_inicio, hora_fin
+            FROM EVENTO
+            WHERE fecha = %s AND estado = 1
+        """, (fecha,))
+        reservas = cursor.fetchall()
+    return reservas
