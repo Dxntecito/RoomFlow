@@ -458,45 +458,128 @@ const habitaciones = selectedRooms.map(roomId => {
 
 }
 // Rellena el resumen con las habitaciones seleccionadas y el total
-function populatePaymentSummary() {
+// Mostrar resumen de pago con habitaciones + servicios
+
+// Mostrar resumen de pago (habitaciones + servicios)
+function obtenerServiciosSeleccionados() {
+  // Asegúrate de que esta función esté definida en tu script
+  const serviciosSeleccionadosDOM = document.querySelectorAll('.service-card.selected');
+  const serviciosArray = [];
+
+  serviciosSeleccionadosDOM.forEach(serviceCard => {
+    // Es más eficiente y seguro usar los data-attributes del input checkbox si existen
+    const checkbox = serviceCard.querySelector('.service-checkbox');
+    if (checkbox) {
+      const nombre = checkbox.dataset.name || 'Servicio sin nombre';
+      // Los precios están en formato '%.2f' en el HTML, pero aquí los parseamos a float
+      const precio = parseFloat(checkbox.dataset.price); 
+      
+      if (!isNaN(precio)) {
+        serviciosArray.push({
+          nombre: nombre,
+          precioNumero: precio
+        });
+      }
+    } else {
+      // Alternativa si no usas los data-attributes del checkbox
+      const nombreElemento = serviceCard.querySelector('.service-card__name');
+      const precioElemento = serviceCard.querySelector('.service-card__price');
+
+      if (nombreElemento && precioElemento) {
+        const nombre = nombreElemento.textContent.trim();
+        const precioTexto = precioElemento.textContent.trim();
+        const precioNumerico = parseFloat(precioTexto.replace('S/.', '').trim());
+
+        if (!isNaN(precioNumerico)) {
+            serviciosArray.push({
+                nombre: nombre,
+                precioNumero: precioNumerico
+            });
+        }
+      }
+    }
+  });
+
+  return serviciosArray;
+}
+
+// --- Tu Función Modificada ---
+
+function populatePaymentSummary_new() {
   paymentItemsDiv.innerHTML = "";
   let localTotal = 0;
 
-  if (!selectedRooms || selectedRooms.length === 0) {
-    paymentItemsDiv.innerHTML = "<p>No hay habitaciones seleccionadas.</p>";
-    paymentTotalAmount.textContent = "0.00";
-    return;
+  // Si no hay habitaciones, no mostramos nada
+  if (!Array.isArray(selectedRooms) || selectedRooms.length === 0) {
+    // Añadimos una comprobación para servicios si no hay habitaciones
+    const servicios = obtenerServiciosSeleccionados();
+    if (servicios.length === 0) {
+        paymentItemsDiv.innerHTML = "<p>No hay habitaciones ni servicios seleccionados.</p>";
+        paymentTotalAmount.textContent = "0.00";
+        return;
+    }
   }
 
+  // 🛏️ Habitaciones
+  // --- Lógica de habitaciones (se mantiene) ---
   selectedRooms.forEach(id => {
-    const name = (typeof roomNames !== 'undefined' && roomNames[id]) ? roomNames[id] : id;
-    const price = (typeof roomPrices !== 'undefined' && roomPrices[id]) ? parseFloat(roomPrices[id]) : 0;
-    localTotal += price;
+    const name  = (typeof roomNames  !== "undefined" && roomNames[id])  ? roomNames[id]  : id;
+    const price = (typeof roomPrices !== "undefined" && roomPrices[id]) ? parseFloat(roomPrices[id]) : 0;
+    const safePrice = isNaN(price) ? 0 : price;
+
+    localTotal += safePrice;
+
     const item = document.createElement("div");
     item.className = "payment_item";
-    item.innerHTML = `<span>Habitación ${name}</span> <span>S/. ${price.toFixed(2)}</span>`;
+    item.innerHTML = `<span>Habitación ${name}</span> <span>S/. ${safePrice.toFixed(2)}</span>`;
     paymentItemsDiv.appendChild(item);
   });
+  // ---------------------------------------------
 
-  if (Array.isArray(selectedServices) && selectedServices.length > 0) {
-    selectedServices.forEach(id => {
-      const price = parseFloat(servicePrices[id]) || 0;
-      localTotal += price;
+
+  // ✨ Servicios Adicionales
+  // Obtener los servicios seleccionados y agregarlos a la lista
+  const serviciosSeleccionados = obtenerServiciosSeleccionados();
+
+  if (serviciosSeleccionados.length > 0) {
+    const header = document.createElement("h3");
+    header.textContent = "Servicios Adicionales:";
+    // Pequeño estilo para separarlo visualmente de las habitaciones
+    header.style.marginTop = "10px"; 
+    header.style.fontSize = "1em";
+    paymentItemsDiv.appendChild(header);
+
+    serviciosSeleccionados.forEach(servicio => {
+      localTotal += servicio.precioNumero; // Sumar el precio al total
+
       const item = document.createElement("div");
-      item.className = "payment_item";
-      item.innerHTML = `<span>Servicio ${serviceNames[id] || id}</span> <span>S/. ${price.toFixed(2)}</span>`;
+      item.className = "payment_item service_item"; // Clase adicional para servicios
+      item.innerHTML = `<span>${servicio.nombre}</span> <span>S/. ${servicio.precioNumero.toFixed(2)}</span>`;
       paymentItemsDiv.appendChild(item);
     });
   }
+  // ---------------------------------------------
 
-  // si la variable global total existe, preferimos usarla (por si hay descuentos o cálculo adicional)
-  const finalTotal = (typeof total !== 'undefined' && !isNaN(total)) ? parseFloat(total) : localTotal;
-  paymentTotalAmount.textContent = finalTotal.toFixed(2);
 
+  // 🔢 Total final (usa computeFinalTotal/total si existen)
+  let finalTotal = localTotal;
+  if (typeof computeFinalTotal === "function") {
+    // Si computeFinalTotal existe, asegúrate de que tiene en cuenta localTotal si es necesario,
+    // o simplemente úsalo si es la fuente final de la verdad.
+    finalTotal = computeFinalTotal(); 
+  } else if (typeof total !== "undefined" && !isNaN(total)) {
+    finalTotal = parseFloat(total);
+  }
+
+  paymentTotalAmount.textContent = Number(finalTotal || 0).toFixed(2);
+
+  // Actualizar QR si lo usas
   if (typeof window.__updateQrPayment === "function") {
     window.__updateQrPayment();
   }
 }
+
+
 // Helper: calcular total desde selectedRooms/roomPrices si `total` no existe
 function computeFinalTotal() {
 if (typeof total !== 'undefined' && !isNaN(total)) return parseFloat(total);
@@ -527,26 +610,7 @@ a.remove();
 URL.revokeObjectURL(url);
 }
 // Mostrar resumen de pago (llenado sencillo)
-function populatePaymentSummary() {
-paymentItemsDiv.innerHTML = "";
-let localTotal = 0;
-if (!Array.isArray(selectedRooms) || selectedRooms.length === 0) {
-    paymentItemsDiv.innerHTML = "<p>No hay habitaciones seleccionadas.</p>";
-    paymentTotalAmount.textContent = "0.00";
-    return;
-}
-selectedRooms.forEach(id => {
-    const name = (typeof roomNames !== 'undefined' && roomNames[id]) ? roomNames[id] : id;
-    const price = (typeof roomPrices !== 'undefined' && roomPrices[id]) ? parseFloat(roomPrices[id]) : 0;
-    localTotal += isNaN(price) ? 0 : price;
-    const item = document.createElement("div");
-    item.className = "payment_item";
-    item.innerHTML = `<span>Habitación ${name}</span> <span>S/. ${ (isNaN(price) ? 0 : price).toFixed(2) }</span>`;
-    paymentItemsDiv.appendChild(item);
-});
-const final = computeFinalTotal();
-paymentTotalAmount.textContent = Number(final || localTotal).toFixed(2);
-}
+
 //BOTON BUSCAR CLIENTE NATURAL
 document.addEventListener("DOMContentLoaded", () => {
   const tipoDoc = document.getElementById("tipo_doc_natural");
@@ -706,3 +770,41 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+function obtenerServiciosSeleccionados() {
+  // 1. Selecciona todos los elementos <label> que tienen ambas clases: 'service-card' y 'selected'
+  const serviciosSeleccionadosDOM = document.querySelectorAll('.service-card.selected');
+
+  // 2. Inicializa un array vacío para guardar los resultados
+  const serviciosArray = [];
+
+  // 3. Itera sobre la lista de elementos DOM encontrados
+  serviciosSeleccionadosDOM.forEach(serviceCard => {
+    // 4. Busca el nombre del servicio dentro del elemento actual
+    const nombreElemento = serviceCard.querySelector('.service-card__name');
+    // 5. Busca el precio del servicio dentro del elemento actual
+    const precioElemento = serviceCard.querySelector('.service-card__price');
+
+    // 6. Verifica que ambos elementos existen antes de intentar obtener su contenido
+    if (nombreElemento && precioElemento) {
+      // Obtener el texto del nombre
+      const nombre = nombreElemento.textContent.trim();
+
+      // Obtener el texto del precio (ej: "S/. 50.00")
+      const precioTexto = precioElemento.textContent.trim();
+      
+      // Opcional: Extraer solo el número del precio para operaciones futuras
+      // Esto elimina el "S/." y convierte el resto a un número flotante.
+      const precioNumerico = parseFloat(precioTexto.replace('S/.', '').trim());
+
+      // 7. Crea un objeto con los datos y lo añade al array
+      serviciosArray.push({
+        nombre: nombre,
+        precio: precioTexto, // Guarda el texto completo (ej: S/. 50.00)
+        precioNumero: precioNumerico // Guarda el valor numérico (ej: 50.00)
+      });
+    }
+  });
+
+  // 8. Devuelve el array con todos los servicios seleccionados
+  return serviciosArray;
+}

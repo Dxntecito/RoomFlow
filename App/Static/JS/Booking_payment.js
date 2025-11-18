@@ -206,7 +206,7 @@ document.getElementById("payment_phase")?.addEventListener("click", (e) => {
   // Si pasa todas las validaciones, continuar al siguiente paso
   if (step3El) step3El.style.display = "none";
   if (step4El) {
-    populatePaymentSummary();
+    populatePaymentSummary_new();
     step4El.style.display = "block";
   }
 });
@@ -243,7 +243,7 @@ if (method === '2') {
 }
 
 // Mostrar resumen actualizado
-populatePaymentSummary();
+populatePaymentSummary_new();
 finalizarReservaBtn.click();
 
 console.groupEnd();
