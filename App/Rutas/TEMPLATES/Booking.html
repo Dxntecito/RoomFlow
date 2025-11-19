@@ -1319,45 +1319,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-function obtenerServiciosSeleccionados() {
-  // 1. Selecciona todos los elementos <label> que tienen ambas clases: 'service-card' y 'selected'
-  const serviciosSeleccionadosDOM = document.querySelectorAll('.service-card.selected');
 
-  // 2. Inicializa un array vacío para guardar los resultados
-  const serviciosArray = [];
-
-  // 3. Itera sobre la lista de elementos DOM encontrados
-  serviciosSeleccionadosDOM.forEach(serviceCard => {
-    // 4. Busca el nombre del servicio dentro del elemento actual
-    const nombreElemento = serviceCard.querySelector('.service-card__name');
-    // 5. Busca el precio del servicio dentro del elemento actual
-    const precioElemento = serviceCard.querySelector('.service-card__price');
-
-    // 6. Verifica que ambos elementos existen antes de intentar obtener su contenido
-    if (nombreElemento && precioElemento) {
-      // Obtener el texto del nombre
-      const nombre = nombreElemento.textContent.trim();
-
-      // Obtener el texto del precio (ej: "S/. 50.00")
-      const precioTexto = precioElemento.textContent.trim();
-      
-      // Opcional: Extraer solo el número del precio para operaciones futuras
-      // Esto elimina el "S/." y convierte el resto a un número flotante.
-      const precioNumerico = parseFloat(precioTexto.replace('S/.', '').trim());
-
-      // 7. Crea un objeto con los datos y lo añade al array
-      serviciosArray.push({
-        nombre: nombre,
-        precio: precioTexto, // Guarda el texto completo (ej: S/. 50.00)
-        precioNumero: precioNumerico // Guarda el valor numérico (ej: 50.00)
-      });
-    }
-  });
-
-  // 8. Devuelve el array con todos los servicios seleccionados
-  return serviciosArray;
-}
-</script>
 
 <script>
 // Interceptar botón atrás, recarga y cierre de página

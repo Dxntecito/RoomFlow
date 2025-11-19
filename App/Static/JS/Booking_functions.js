@@ -722,98 +722,87 @@ const habitaciones = selectedRooms.map(roomId => {
 // Mostrar resumen de pago (habitaciones + servicios)
 function obtenerServiciosSeleccionados() {
   const serviciosArray = [];
-  
+
   console.log("🔍 obtenerServiciosSeleccionados - Inicio");
   console.log("🔍 serviceQuantities:", serviceQuantities);
-  console.log("🔍 serviceNames:", typeof serviceNames !== 'undefined' ? serviceNames : 'no definido');
-  console.log("🔍 servicePrices:", typeof servicePrices !== 'undefined' ? servicePrices : 'no definido');
-  
-  // Primero intentar desde serviceQuantities (fuente principal)
-  if (typeof serviceQuantities !== 'undefined' && serviceQuantities && Object.keys(serviceQuantities).length > 0) {
-    console.log("✅ serviceQuantities tiene datos, procesando...");
-    
+
+  let usarServiceQuantities = false;
+
+  // Validar si serviceQuantities tiene AL MENOS un valor > 0
+  if (typeof serviceQuantities !== "undefined" && serviceQuantities) {
+    usarServiceQuantities = Object.values(serviceQuantities)
+      .some(q => parseInt(q || 0) > 0);
+  }
+
+  // 🟦 CASO 1: Usar serviceQuantities si tiene valores > 0
+  if (usarServiceQuantities) {
+    console.log("✅ Se usarán serviceQuantities (cantidades > 0)");
+
     Object.keys(serviceQuantities).forEach(serviceId => {
-      const cantidad = serviceQuantities[serviceId] || 0;
-      console.log(`🔍 Procesando serviceId: ${serviceId}, cantidad: ${cantidad}`);
-      
+      const cantidad = parseInt(serviceQuantities[serviceId] || 0);
+
       if (cantidad > 0) {
-        // Convertir serviceId a string para comparación
-        const serviceIdStr = String(serviceId);
-        
-        // Buscar el card en el DOM para obtener nombre y precio
-        const card = document.querySelector(`.service-card-horizontal[data-service-id="${serviceIdStr}"]`);
-        
+
+        const card = document.querySelector(
+          `.service-card-horizontal[data-service-id="${serviceId}"]`
+        );
+
         let nombre, precioUnitario;
-        
+
         if (card) {
-          console.log(`✅ Card encontrado en DOM para serviceId: ${serviceIdStr}`);
-          nombre = card.dataset.name || 'Servicio sin nombre';
+          nombre = card.dataset.name || "Servicio sin nombre";
           precioUnitario = parseFloat(card.dataset.price) || 0;
         } else {
-          console.log(`⚠️ Card NO encontrado en DOM para serviceId: ${serviceIdStr}, usando serviceNames/servicePrices`);
-          // Si no se encuentra el card, usar serviceNames y servicePrices
-          nombre = (typeof serviceNames !== 'undefined' && serviceNames[serviceIdStr]) 
-            ? serviceNames[serviceIdStr] 
-            : (typeof serviceNames !== 'undefined' && serviceNames[serviceId]) 
-              ? serviceNames[serviceId] 
-              : 'Servicio sin nombre';
-          
-          precioUnitario = (typeof servicePrices !== 'undefined' && servicePrices[serviceIdStr]) 
-            ? parseFloat(servicePrices[serviceIdStr]) 
-            : (typeof servicePrices !== 'undefined' && servicePrices[serviceId]) 
-              ? parseFloat(servicePrices[serviceId]) 
-              : 0;
-          
-          console.log(`📝 Nombre obtenido: ${nombre}, Precio: ${precioUnitario}`);
+          nombre = serviceNames?.[serviceId] || "Servicio sin nombre";
+          precioUnitario = parseFloat(servicePrices?.[serviceId] || 0);
         }
-        
-        const precioTotal = precioUnitario * cantidad;
-        
-        const servicioObj = {
-          nombre: nombre,
-          precioNumero: precioTotal,
-          cantidad: cantidad,
-          precioUnitario: precioUnitario
-        };
-        
-        console.log(`✅ Agregando servicio:`, servicioObj);
-        serviciosArray.push(servicioObj);
-      }
-    });
-  } else {
-    console.log("⚠️ serviceQuantities está vacío o no definido, intentando leer desde DOM...");
-    
-    // Si no hay servicios en serviceQuantities, intentar leer desde el DOM directamente
-    document.querySelectorAll('.service-card-horizontal').forEach(card => {
-      const serviceId = card.dataset.serviceId;
-      if (!serviceId) return;
-      
-      const quantityDisplay = card.querySelector('.quantity-display');
-      const cantidad = parseInt(quantityDisplay?.textContent || '0') || 0;
-      
-      if (cantidad > 0) {
-        const nombre = card.dataset.name || 'Servicio sin nombre';
-        const precioUnitario = parseFloat(card.dataset.price) || 0;
-        const precioTotal = precioUnitario * cantidad;
-        
-        // Actualizar serviceQuantities para mantener sincronización
-        if (typeof serviceQuantities !== 'undefined') {
-          serviceQuantities[serviceId] = cantidad;
-        }
-        
+
         serviciosArray.push({
-          nombre: nombre,
-          precioNumero: precioTotal,
-          cantidad: cantidad,
-          precioUnitario: precioUnitario
+          nombre,
+          cantidad,
+          precioUnitario,
+          precioNumero: precioUnitario * cantidad
         });
       }
     });
+
+    console.log("🔍 Fin. Servicios encontrados:", serviciosArray.length);
+    return serviciosArray;
   }
 
-  console.log("🔍 obtenerServiciosSeleccionados - Fin. Servicios encontrados:", serviciosArray.length);
+  // 🟥 CASO 2: Leer cantidades desde el DOM
+  console.log("⚠️ No hay cantidades > 0 en serviceQuantities, leyendo desde el DOM…");
+
+  document.querySelectorAll(".service-card-horizontal").forEach(card => {
+    const serviceId = card.dataset.serviceId;
+    const quantityDisplay = card.querySelector(".quantity-display");
+
+    const cantidad = parseInt(quantityDisplay?.textContent || "0") || 0;
+
+    if (cantidad > 0) {
+      const nombre = card.dataset.name || "Servicio sin nombre";
+      const precioUnitario = parseFloat(card.dataset.price) || 0;
+
+      // sincronizar con serviceQuantities
+      if (typeof serviceQuantities !== "undefined") {
+        serviceQuantities[serviceId] = cantidad;
+      }
+
+      serviciosArray.push({
+        nombre,
+        cantidad,
+        precioUnitario,
+        precioNumero: precioUnitario * cantidad
+      });
+
+      console.log("➕ Servicio DOM:", nombre, cantidad);
+    }
+  });
+
+  console.log("🔍 Fin. Servicios encontrados:", serviciosArray.length);
   return serviciosArray;
 }
+
 
 // --- Tu Función Modificada ---
 
@@ -1105,41 +1094,3 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-function obtenerServiciosSeleccionados() {
-  // 1. Selecciona todos los elementos <label> que tienen ambas clases: 'service-card' y 'selected'
-  const serviciosSeleccionadosDOM = document.querySelectorAll('.service-card.selected');
-
-  // 2. Inicializa un array vacío para guardar los resultados
-  const serviciosArray = [];
-
-  // 3. Itera sobre la lista de elementos DOM encontrados
-  serviciosSeleccionadosDOM.forEach(serviceCard => {
-    // 4. Busca el nombre del servicio dentro del elemento actual
-    const nombreElemento = serviceCard.querySelector('.service-card__name');
-    // 5. Busca el precio del servicio dentro del elemento actual
-    const precioElemento = serviceCard.querySelector('.service-card__price');
-
-    // 6. Verifica que ambos elementos existen antes de intentar obtener su contenido
-    if (nombreElemento && precioElemento) {
-      // Obtener el texto del nombre
-      const nombre = nombreElemento.textContent.trim();
-
-      // Obtener el texto del precio (ej: "S/. 50.00")
-      const precioTexto = precioElemento.textContent.trim();
-      
-      // Opcional: Extraer solo el número del precio para operaciones futuras
-      // Esto elimina el "S/." y convierte el resto a un número flotante.
-      const precioNumerico = parseFloat(precioTexto.replace('S/.', '').trim());
-
-      // 7. Crea un objeto con los datos y lo añade al array
-      serviciosArray.push({
-        nombre: nombre,
-        precio: precioTexto, // Guarda el texto completo (ej: S/. 50.00)
-        precioNumero: precioNumerico // Guarda el valor numérico (ej: 50.00)
-      });
-    }
-  });
-
-  // 8. Devuelve el array con todos los servicios seleccionados
-  return serviciosArray;
-}
