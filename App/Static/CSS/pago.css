@@ -1,13 +1,45 @@
 /* === Estilo general === */
 #step4 {
-  max-width: 480px;
-  margin: 3rem auto;
+  max-width: 100%;
+  margin: 2rem auto;
   background: #fff;
   padding: 2rem;
   border-radius: 1rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   font-family: 'Arial', sans-serif;
   transition: all 0.3s ease;
+}
+
+/* Layout de 2 columnas para pago */
+.payment-layout {
+  display: grid;
+  grid-template-columns: 60% 40%;
+  gap: 24px;
+  margin-top: 24px;
+  align-items: start;
+}
+
+.payment-methods-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.payment-summary-column {
+  position: sticky;
+  top: 100px;
+  align-self: start;
+}
+
+/* Responsive: En pantallas pequeñas, una columna */
+@media (max-width: 1024px) {
+  .payment-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .payment-summary-column {
+    position: static;
+  }
 }
 
 #step4 h2 {
@@ -85,9 +117,10 @@
 /* === Resumen de pago === */
 #payment_summary {
   background-color: #f9fafc;
-  padding: 1.2rem;
+  padding: 1.5rem;
   border-radius: 0.8rem;
   border: 1px solid #eee;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 #payment_total {

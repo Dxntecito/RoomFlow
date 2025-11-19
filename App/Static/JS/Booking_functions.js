@@ -54,6 +54,8 @@ let total = 0;
 let selectedRooms = [];
 let clientData = {};
 let selectedServices = [];
+// Objeto para almacenar cantidades de servicios: { serviceId: cantidad }
+let serviceQuantities = {};
 // const tipoEmpresa = document.getElementById("tipo_empresa");
 // correo (opcional/global)
 const correoCliente = document.getElementById("correo_cliente");
@@ -107,35 +109,122 @@ function toggleServicesSection() {
 
 function resetServicesSelection() {
   selectedServices = [];
+  serviceQuantities = {};
   servicesTotal = 0;
-  serviceCheckboxes.forEach(cb => {
-    cb.checked = false;
-    cb.closest(".service-card")?.classList.remove("selected");
+  // Resetear todos los servicios a cantidad 0
+  document.querySelectorAll('.service-card-horizontal').forEach(card => {
+    const serviceId = card.dataset.serviceId;
+    const quantityDisplay = card.querySelector('.quantity-display');
+    const totalDisplay = card.querySelector('.service-price-total');
+    if (quantityDisplay) quantityDisplay.textContent = '0';
+    if (totalDisplay) totalDisplay.textContent = '0.00';
+    card.classList.remove('selected');
   });
 }
 
-serviceCheckboxes.forEach(cb => {
-  cb.addEventListener("change", function () {
-    if (selectedRooms.length === 0) {
-      this.checked = false;
-      return;
+// Manejo de servicios con cantidad (botones + y -)
+document.addEventListener('DOMContentLoaded', () => {
+  // Event listeners para botones de cantidad de servicios
+  document.querySelectorAll('.quantity-btn--plus').forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (selectedRooms.length === 0) {
+        alert('Por favor, selecciona al menos una habitación primero.');
+        return;
+      }
+      const serviceId = this.dataset.service;
+      const card = document.querySelector(`.service-card-horizontal[data-service-id="${serviceId}"]`);
+      if (!card) return;
+      
+      const quantityDisplay = card.querySelector('.quantity-display');
+      const totalDisplay = card.querySelector('.service-price-total');
+      const priceUnit = parseFloat(card.dataset.price) || 0;
+      
+      let currentQty = parseInt(quantityDisplay.textContent) || 0;
+      currentQty++;
+      
+      quantityDisplay.textContent = currentQty;
+      const totalPrice = currentQty * priceUnit;
+      totalDisplay.textContent = totalPrice.toFixed(2);
+      
+      // Actualizar estado del botón menos
+      const minusBtn = card.querySelector('.quantity-btn--minus');
+      if (minusBtn) minusBtn.disabled = false;
+      
+      // Actualizar arrays y totales
+      if (!selectedServices.includes(serviceId)) {
+        selectedServices.push(serviceId);
+      }
+      serviceQuantities[serviceId] = currentQty;
+      
+      // Recalcular total de servicios
+      servicesTotal = 0;
+      Object.keys(serviceQuantities).forEach(sid => {
+        const qty = serviceQuantities[sid] || 0;
+        const price = parseFloat(document.querySelector(`.service-card-horizontal[data-service-id="${sid}"]`)?.dataset.price || 0);
+        servicesTotal += qty * price;
+      });
+      
+      card.classList.add('selected');
+      updateTotalDisplay();
+      if (typeof populatePaymentSummary_new === 'function') {
+        populatePaymentSummary_new();
+      }
+    });
+  });
+  
+  document.querySelectorAll('.quantity-btn--minus').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const serviceId = this.dataset.service;
+      const card = document.querySelector(`.service-card-horizontal[data-service-id="${serviceId}"]`);
+      if (!card) return;
+      
+      const quantityDisplay = card.querySelector('.quantity-display');
+      const totalDisplay = card.querySelector('.service-price-total');
+      const priceUnit = parseFloat(card.dataset.price) || 0;
+      
+      let currentQty = parseInt(quantityDisplay.textContent) || 0;
+      if (currentQty > 0) {
+        currentQty--;
+        quantityDisplay.textContent = currentQty;
+        const totalPrice = currentQty * priceUnit;
+        totalDisplay.textContent = totalPrice.toFixed(2);
+        
+        // Actualizar estado del botón menos
+        this.disabled = currentQty === 0;
+        
+        if (currentQty === 0) {
+          selectedServices = selectedServices.filter(id => id !== serviceId);
+          delete serviceQuantities[serviceId];
+          card.classList.remove('selected');
+        } else {
+          serviceQuantities[serviceId] = currentQty;
+        }
+        
+        // Recalcular total de servicios
+        servicesTotal = 0;
+        Object.keys(serviceQuantities).forEach(sid => {
+          const qty = serviceQuantities[sid] || 0;
+          const price = parseFloat(document.querySelector(`.service-card-horizontal[data-service-id="${sid}"]`)?.dataset.price || 0);
+          servicesTotal += qty * price;
+        });
+        
+        updateTotalDisplay();
+        if (typeof populatePaymentSummary_new === 'function') {
+          populatePaymentSummary_new();
+        }
+      }
+    });
+  });
+  
+  // Inicializar estado de botones menos (deshabilitados si cantidad es 0)
+  document.querySelectorAll('.quantity-btn--minus').forEach(btn => {
+    const serviceId = btn.dataset.service;
+    const card = document.querySelector(`.service-card-horizontal[data-service-id="${serviceId}"]`);
+    if (card) {
+      const quantityDisplay = card.querySelector('.quantity-display');
+      const currentQty = parseInt(quantityDisplay.textContent) || 0;
+      btn.disabled = currentQty === 0;
     }
-    const serviceId = this.value;
-    const price = parseFloat(servicePrices[serviceId]) || 0;
-    const card = this.closest(".service-card");
-
-    if (this.checked) {
-      if (!selectedServices.includes(serviceId)) selectedServices.push(serviceId);
-      servicesTotal += price;
-      card?.classList.add("selected");
-    } else {
-      selectedServices = selectedServices.filter(id => id !== serviceId);
-      servicesTotal -= price;
-      card?.classList.remove("selected");
-    }
-
-    if (servicesTotal < 0) servicesTotal = 0;
-    updateTotalDisplay();
   });
 });
 //SELECCION DE HABITACION Y ADDICCION AL DIV DE RESUMEN
@@ -607,7 +696,7 @@ const habitaciones = selectedRooms.map(roomId => {
     servicio_id: serviceId,
     nombre: serviceNames[serviceId],
     precio_unitario: parseFloat(servicePrices[serviceId]) || 0,
-    cantidad: 1
+    cantidad: serviceQuantities[serviceId] || 1
   }));
 
   return {
@@ -632,101 +721,175 @@ const habitaciones = selectedRooms.map(roomId => {
 
 // Mostrar resumen de pago (habitaciones + servicios)
 function obtenerServiciosSeleccionados() {
-  // Asegúrate de que esta función esté definida en tu script
-  const serviciosSeleccionadosDOM = document.querySelectorAll('.service-card.selected');
   const serviciosArray = [];
-
-  serviciosSeleccionadosDOM.forEach(serviceCard => {
-    // Es más eficiente y seguro usar los data-attributes del input checkbox si existen
-    const checkbox = serviceCard.querySelector('.service-checkbox');
-    if (checkbox) {
-      const nombre = checkbox.dataset.name || 'Servicio sin nombre';
-      // Los precios están en formato '%.2f' en el HTML, pero aquí los parseamos a float
-      const precio = parseFloat(checkbox.dataset.price); 
+  
+  console.log("🔍 obtenerServiciosSeleccionados - Inicio");
+  console.log("🔍 serviceQuantities:", serviceQuantities);
+  console.log("🔍 serviceNames:", typeof serviceNames !== 'undefined' ? serviceNames : 'no definido');
+  console.log("🔍 servicePrices:", typeof servicePrices !== 'undefined' ? servicePrices : 'no definido');
+  
+  // Primero intentar desde serviceQuantities (fuente principal)
+  if (typeof serviceQuantities !== 'undefined' && serviceQuantities && Object.keys(serviceQuantities).length > 0) {
+    console.log("✅ serviceQuantities tiene datos, procesando...");
+    
+    Object.keys(serviceQuantities).forEach(serviceId => {
+      const cantidad = serviceQuantities[serviceId] || 0;
+      console.log(`🔍 Procesando serviceId: ${serviceId}, cantidad: ${cantidad}`);
       
-      if (!isNaN(precio)) {
+      if (cantidad > 0) {
+        // Convertir serviceId a string para comparación
+        const serviceIdStr = String(serviceId);
+        
+        // Buscar el card en el DOM para obtener nombre y precio
+        const card = document.querySelector(`.service-card-horizontal[data-service-id="${serviceIdStr}"]`);
+        
+        let nombre, precioUnitario;
+        
+        if (card) {
+          console.log(`✅ Card encontrado en DOM para serviceId: ${serviceIdStr}`);
+          nombre = card.dataset.name || 'Servicio sin nombre';
+          precioUnitario = parseFloat(card.dataset.price) || 0;
+        } else {
+          console.log(`⚠️ Card NO encontrado en DOM para serviceId: ${serviceIdStr}, usando serviceNames/servicePrices`);
+          // Si no se encuentra el card, usar serviceNames y servicePrices
+          nombre = (typeof serviceNames !== 'undefined' && serviceNames[serviceIdStr]) 
+            ? serviceNames[serviceIdStr] 
+            : (typeof serviceNames !== 'undefined' && serviceNames[serviceId]) 
+              ? serviceNames[serviceId] 
+              : 'Servicio sin nombre';
+          
+          precioUnitario = (typeof servicePrices !== 'undefined' && servicePrices[serviceIdStr]) 
+            ? parseFloat(servicePrices[serviceIdStr]) 
+            : (typeof servicePrices !== 'undefined' && servicePrices[serviceId]) 
+              ? parseFloat(servicePrices[serviceId]) 
+              : 0;
+          
+          console.log(`📝 Nombre obtenido: ${nombre}, Precio: ${precioUnitario}`);
+        }
+        
+        const precioTotal = precioUnitario * cantidad;
+        
+        const servicioObj = {
+          nombre: nombre,
+          precioNumero: precioTotal,
+          cantidad: cantidad,
+          precioUnitario: precioUnitario
+        };
+        
+        console.log(`✅ Agregando servicio:`, servicioObj);
+        serviciosArray.push(servicioObj);
+      }
+    });
+  } else {
+    console.log("⚠️ serviceQuantities está vacío o no definido, intentando leer desde DOM...");
+    
+    // Si no hay servicios en serviceQuantities, intentar leer desde el DOM directamente
+    document.querySelectorAll('.service-card-horizontal').forEach(card => {
+      const serviceId = card.dataset.serviceId;
+      if (!serviceId) return;
+      
+      const quantityDisplay = card.querySelector('.quantity-display');
+      const cantidad = parseInt(quantityDisplay?.textContent || '0') || 0;
+      
+      if (cantidad > 0) {
+        const nombre = card.dataset.name || 'Servicio sin nombre';
+        const precioUnitario = parseFloat(card.dataset.price) || 0;
+        const precioTotal = precioUnitario * cantidad;
+        
+        // Actualizar serviceQuantities para mantener sincronización
+        if (typeof serviceQuantities !== 'undefined') {
+          serviceQuantities[serviceId] = cantidad;
+        }
+        
         serviciosArray.push({
           nombre: nombre,
-          precioNumero: precio
+          precioNumero: precioTotal,
+          cantidad: cantidad,
+          precioUnitario: precioUnitario
         });
       }
-    } else {
-      // Alternativa si no usas los data-attributes del checkbox
-      const nombreElemento = serviceCard.querySelector('.service-card__name');
-      const precioElemento = serviceCard.querySelector('.service-card__price');
+    });
+  }
 
-      if (nombreElemento && precioElemento) {
-        const nombre = nombreElemento.textContent.trim();
-        const precioTexto = precioElemento.textContent.trim();
-        const precioNumerico = parseFloat(precioTexto.replace('S/.', '').trim());
-
-        if (!isNaN(precioNumerico)) {
-            serviciosArray.push({
-                nombre: nombre,
-                precioNumero: precioNumerico
-            });
-        }
-      }
-    }
-  });
-
+  console.log("🔍 obtenerServiciosSeleccionados - Fin. Servicios encontrados:", serviciosArray.length);
   return serviciosArray;
 }
 
 // --- Tu Función Modificada ---
 
 function populatePaymentSummary_new() {
+  // Obtener los elementos del DOM directamente
+  const paymentItemsDiv = document.getElementById("payment_items");
+  const paymentTotalAmount = document.getElementById("payment_total_amount");
+  
+  if (!paymentItemsDiv) {
+    console.error("❌ paymentItemsDiv no encontrado en el DOM");
+    return;
+  }
+  
+  if (!paymentTotalAmount) {
+    console.error("❌ paymentTotalAmount no encontrado en el DOM");
+  }
+  
   paymentItemsDiv.innerHTML = "";
   let localTotal = 0;
 
-  // Si no hay habitaciones, no mostramos nada
-  if (!Array.isArray(selectedRooms) || selectedRooms.length === 0) {
-    // Añadimos una comprobación para servicios si no hay habitaciones
-    const servicios = obtenerServiciosSeleccionados();
-    if (servicios.length === 0) {
-        paymentItemsDiv.innerHTML = "<p>No hay habitaciones ni servicios seleccionados.</p>";
-        paymentTotalAmount.textContent = "0.00";
-        return;
-    }
-  }
-
   // 🛏️ Habitaciones
   // --- Lógica de habitaciones (se mantiene) ---
-  selectedRooms.forEach(id => {
-    const name  = (typeof roomNames  !== "undefined" && roomNames[id])  ? roomNames[id]  : id;
-    const price = (typeof roomPrices !== "undefined" && roomPrices[id]) ? parseFloat(roomPrices[id]) : 0;
-    const safePrice = isNaN(price) ? 0 : price;
+  if (Array.isArray(selectedRooms) && selectedRooms.length > 0) {
+    selectedRooms.forEach(id => {
+      const name  = (typeof roomNames  !== "undefined" && roomNames[id])  ? roomNames[id]  : id;
+      const price = (typeof roomPrices !== "undefined" && roomPrices[id]) ? parseFloat(roomPrices[id]) : 0;
+      const safePrice = isNaN(price) ? 0 : price;
 
-    localTotal += safePrice;
+      localTotal += safePrice;
 
-    const item = document.createElement("div");
-    item.className = "payment_item";
-    item.innerHTML = `<span>Habitación ${name}</span> <span>S/. ${safePrice.toFixed(2)}</span>`;
-    paymentItemsDiv.appendChild(item);
-  });
+      const item = document.createElement("div");
+      item.className = "payment_item";
+      item.innerHTML = `<span>Habitación ${name}</span> <span>S/. ${safePrice.toFixed(2)}</span>`;
+      paymentItemsDiv.appendChild(item);
+    });
+  }
   // ---------------------------------------------
-
 
   // ✨ Servicios Adicionales
   // Obtener los servicios seleccionados y agregarlos a la lista
   const serviciosSeleccionados = obtenerServiciosSeleccionados();
+  
+  // Debug logs
+  console.log("🔍 Debug - Servicios seleccionados:", serviciosSeleccionados);
+  console.log("🔍 Debug - serviceQuantities:", typeof serviceQuantities !== 'undefined' ? serviceQuantities : 'no definido');
+  console.log("🔍 Debug - serviceNames:", typeof serviceNames !== 'undefined' ? serviceNames : 'no definido');
+  console.log("🔍 Debug - servicePrices:", typeof servicePrices !== 'undefined' ? servicePrices : 'no definido');
+  console.log("🔍 Debug - paymentItemsDiv:", paymentItemsDiv);
 
-  if (serviciosSeleccionados.length > 0) {
+  if (serviciosSeleccionados && serviciosSeleccionados.length > 0) {
+    console.log("✅ Agregando", serviciosSeleccionados.length, "servicios al resumen");
+    
     const header = document.createElement("h3");
     header.textContent = "Servicios Adicionales:";
     // Pequeño estilo para separarlo visualmente de las habitaciones
     header.style.marginTop = "10px"; 
     header.style.fontSize = "1em";
+    header.style.marginBottom = "8px";
     paymentItemsDiv.appendChild(header);
 
-    serviciosSeleccionados.forEach(servicio => {
+    serviciosSeleccionados.forEach((servicio, index) => {
+      console.log(`✅ Agregando servicio ${index + 1}:`, servicio);
       localTotal += servicio.precioNumero; // Sumar el precio al total
 
       const item = document.createElement("div");
       item.className = "payment_item service_item"; // Clase adicional para servicios
-      item.innerHTML = `<span>${servicio.nombre}</span> <span>S/. ${servicio.precioNumero.toFixed(2)}</span>`;
+      // Mostrar siempre la cantidad, incluso si es 1
+      const cantidad = servicio.cantidad || 1;
+      const precioUnitario = servicio.precioUnitario || (servicio.precioNumero / cantidad);
+      // Formato: "Nombre del servicio (Cantidad: X) - Precio unitario: S/. X.XX"
+      item.innerHTML = `<span>${servicio.nombre} (Cantidad: ${cantidad}) - Precio unitario: S/. ${precioUnitario.toFixed(2)}</span> <span>S/. ${servicio.precioNumero.toFixed(2)}</span>`;
       paymentItemsDiv.appendChild(item);
+      console.log("✅ Item agregado al DOM:", item);
     });
+  } else {
+    console.log("⚠️ No hay servicios seleccionados para agregar");
   }
   // ---------------------------------------------
 
@@ -741,7 +904,9 @@ function populatePaymentSummary_new() {
     finalTotal = parseFloat(total);
   }
 
-  paymentTotalAmount.textContent = Number(finalTotal || 0).toFixed(2);
+  if (paymentTotalAmount) {
+    paymentTotalAmount.textContent = Number(finalTotal || 0).toFixed(2);
+  }
 
   // Actualizar QR si lo usas
   if (typeof window.__updateQrPayment === "function") {

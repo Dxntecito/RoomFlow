@@ -169,7 +169,8 @@
 
       <!-- Contenido principal: Tabla de habitaciones -->
       <div class="booking-content-main">
-        <table id="booking_room_available" class="booking_label" border="1">
+        <div class="rooms-table-wrapper">
+          <table id="booking_room_available" class="booking_label" border="1">
   <thead>
     <tr>
       <th>Habitación</th>
@@ -178,7 +179,7 @@
       <th>Reservar</th>
     </tr>
   </thead>
-  <tbody>
+  <tbody id="rooms_table_body">
     {% if rooms|length == 0 %}
     <tr>
       <td colspan="6" style="text-align: center; padding: 40px; color: #999;"> 
@@ -222,6 +223,17 @@
     {% endif %}
   </tbody>
 </table>
+          <!-- Paginación de habitaciones -->
+          <div class="rooms-pagination" id="rooms_pagination" style="display: none;">
+            <button type="button" class="pagination-btn" id="rooms_prev_btn" disabled>
+              <i class="fas fa-chevron-left"></i> Anterior
+            </button>
+            <span class="pagination-info" id="rooms_pagination_info">Página 1 de 1</span>
+            <button type="button" class="pagination-btn" id="rooms_next_btn" disabled>
+              Siguiente <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -243,23 +255,27 @@
           <p class="services-summary__helper">Potencia tu experiencia añadiendo servicios exclusivos.</p>
           <div class="services-grid">
             {% for service in services %}
-            <label class="service-card">
-              <input type="checkbox"
-                     class="service-checkbox"
-                     value="{{ service.id }}"
-                     data-price="{{ '%.2f'|format(service.precio) }}"
-                     data-name="{{ service.nombre }}">
-              <div class="service-card__image">
+            <div class="service-card-horizontal" data-service-id="{{ service.id }}" data-price="{{ '%.2f'|format(service.precio) }}" data-name="{{ service.nombre }}">
+              <div class="service-card-horizontal__image">
                 <img src="{{ url_for('static', filename='Img/' ~ service.imagen) }}"
                      alt="{{ service.nombre }}">
               </div>
-              <div class="service-card__body">
-                <span class="service-card__name">{{ service.nombre }}</span>
-                <p class="service-card__description">{{ service.descripcion }}</p>
-                <span class="service-card__price">S/. {{ '%.2f'|format(service.precio) }}</span>
+              <div class="service-card-horizontal__content">
+                <div class="service-card-horizontal__info">
+                  <span class="service-card-horizontal__name">{{ service.nombre }}</span>
+                  <p class="service-card-horizontal__description">{{ service.descripcion }}</p>
+                </div>
+                <div class="service-card-horizontal__controls">
+                  <div class="service-quantity-controls">
+                    <button type="button" class="quantity-btn quantity-btn--minus" data-service="{{ service.id }}">-</button>
+                    <span class="quantity-display" data-service="{{ service.id }}">0</span>
+                    <button type="button" class="quantity-btn quantity-btn--plus" data-service="{{ service.id }}">+</button>
+                  </div>
+                  <span class="service-card-horizontal__price">S/. <span class="service-price-unit">{{ '%.2f'|format(service.precio) }}</span></span>
+                  <span class="service-card-horizontal__total">Total: S/. <span class="service-price-total" data-service="{{ service.id }}">0.00</span></span>
+                </div>
               </div>
-              <span class="service-card__check"><i class="fas fa-check"></i></span>
-            </label>
+            </div>
             {% endfor %}
           </div>
         </div>
@@ -425,6 +441,9 @@
     </div>
     <h2>Facturación y pago</h2>
 
+    <div class="payment-layout">
+      <!-- Columna izquierda: Métodos de pago (60%) -->
+      <div class="payment-methods-column">
   <section id="payment_method_section">
     <label class="booking_label">Método de pago:</label>
     <div>
@@ -497,12 +516,17 @@
     </div>
     <p class="payment-hint">Un asesor validará la operación antes de cerrar la reserva.</p>
   </section>
+      </div>
 
+      <!-- Columna derecha: Resumen de pago (40%) -->
+      <div class="payment-summary-column">
   <section id="payment_summary">
     <h3>Resumen de pago</h3>
     <div id="payment_items"></div>
     <p id="payment_total"><strong>Total:</strong> S/. <span id="payment_total_amount">0.00</span></p>
   </section>
+      </div>
+    </div>
 
   <div class="button_group">
     <button type="button" id="back_to_step3">← Volver</button>
@@ -761,8 +785,78 @@ const servicePrices = {
 const categorySelect = document.getElementById("room_category");
 
 // Escuchar cambios en selects
-floorSelect.addEventListener('change', filterRows);
-categorySelect.addEventListener('change', filterRows);
+floorSelect.addEventListener('change', () => {
+  filterRows();
+  updateRoomsPagination();
+});
+categorySelect.addEventListener('change', () => {
+  filterRows();
+  updateRoomsPagination();
+});
+
+// Paginación de habitaciones (5 por página)
+let currentRoomsPage = 1;
+const ROOMS_PER_PAGE = 5;
+
+function updateRoomsPagination() {
+  const visibleRows = Array.from(document.querySelectorAll('.room-row')).filter(row => 
+    row.style.display !== 'none'
+  );
+  const totalPages = Math.ceil(visibleRows.length / ROOMS_PER_PAGE);
+  const pagination = document.getElementById('rooms_pagination');
+  const prevBtn = document.getElementById('rooms_prev_btn');
+  const nextBtn = document.getElementById('rooms_next_btn');
+  const infoSpan = document.getElementById('rooms_pagination_info');
+  
+  if (totalPages <= 1) {
+    if (pagination) pagination.style.display = 'none';
+    return;
+  }
+  
+  if (pagination) pagination.style.display = 'flex';
+  if (prevBtn) prevBtn.disabled = currentRoomsPage === 1;
+  if (nextBtn) nextBtn.disabled = currentRoomsPage >= totalPages;
+  if (infoSpan) infoSpan.textContent = `Página ${currentRoomsPage} de ${totalPages}`;
+  
+  // Mostrar solo las filas de la página actual
+  const startIndex = (currentRoomsPage - 1) * ROOMS_PER_PAGE;
+  const endIndex = startIndex + ROOMS_PER_PAGE;
+  
+  visibleRows.forEach((row, index) => {
+    if (index >= startIndex && index < endIndex) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+
+// Event listeners para paginación
+document.getElementById('rooms_prev_btn')?.addEventListener('click', () => {
+  if (currentRoomsPage > 1) {
+    currentRoomsPage--;
+    updateRoomsPagination();
+  }
+});
+
+document.getElementById('rooms_next_btn')?.addEventListener('click', () => {
+  const visibleRows = Array.from(document.querySelectorAll('.room-row')).filter(row => 
+    row.style.display !== 'none'
+  );
+  const totalPages = Math.ceil(visibleRows.length / ROOMS_PER_PAGE);
+  if (currentRoomsPage < totalPages) {
+    currentRoomsPage++;
+    updateRoomsPagination();
+  }
+});
+
+// Inicializar paginación al cargar
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    filterRows();
+    updateRoomsPagination();
+  }, 100);
+});
 
 // Función para verificar si hay habitaciones y deshabilitar filtros
 function updateFiltersState() {
