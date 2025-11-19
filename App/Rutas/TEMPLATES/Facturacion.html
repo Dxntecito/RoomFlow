@@ -26,6 +26,44 @@
     margin-bottom: 18px;
   }
 
+  .facturacion-filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: #f7faf8;
+    border-radius: 12px;
+  }
+
+  .facturacion-filters label {
+    font-weight: 600;
+    color: #2b3a35;
+    font-size: 0.9rem;
+  }
+
+  .facturacion-filters select {
+    padding: 8px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    color: #2b3a35;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .facturacion-filters select:focus {
+    outline: none;
+    border-color: #1f8656;
+    box-shadow: 0 0 0 3px rgba(31, 134, 86, 0.1);
+  }
+
+  .badge-validado {
+    background: rgba(34, 197, 94, 0.16);
+    color: #16a34a;
+  }
+
   .facturacion-header h2 {
     margin: 0;
     font-size: 1.6rem;
@@ -141,6 +179,15 @@
       <span id="facturacion_counter">Pendientes: 0</span>
     </div>
 
+    <div class="facturacion-filters">
+      <label for="filtro-estado">Filtrar por estado:</label>
+      <select id="filtro-estado" onchange="aplicarFiltro()">
+        <option value="">Todas las reservas</option>
+        <option value="0">En revisión</option>
+        <option value="1">Validadas</option>
+      </select>
+    </div>
+
     <div id="facturacion_table_container">
       <p class="empty-state">Cargando reservas pendientes...</p>
     </div>
@@ -160,17 +207,43 @@
   function renderPendientes(data) {
     const container = document.getElementById("facturacion_table_container");
     const counter = document.getElementById("facturacion_counter");
+    const filtroEstado = document.getElementById("filtro-estado")?.value || "";
 
     if (!Array.isArray(data) || data.length === 0) {
-      container.innerHTML = '<p class="empty-state">No hay reservas pendientes de validación. ¡Buen trabajo!</p>';
-      if (counter) counter.textContent = "Pendientes: 0";
+      const mensaje = filtroEstado === "1" 
+        ? "No hay reservas validadas."
+        : filtroEstado === "0"
+        ? "No hay reservas en revisión. ¡Buen trabajo!"
+        : "No hay reservas.";
+      container.innerHTML = `<p class="empty-state">${mensaje}</p>`;
+      if (counter) counter.textContent = "Total: 0";
       return;
     }
 
-    if (counter) counter.textContent = `Pendientes: ${data.length}`;
+    // Contar por estado
+    const enRevision = data.filter(r => r.validado === "0" || !r.validado).length;
+    const validadas = data.filter(r => r.validado === "1").length;
+    
+    if (counter) {
+      if (filtroEstado === "") {
+        counter.textContent = `Total: ${data.length} (${enRevision} en revisión, ${validadas} validadas)`;
+      } else if (filtroEstado === "0") {
+        counter.textContent = `En revisión: ${data.length}`;
+      } else {
+        counter.textContent = `Validadas: ${data.length}`;
+      }
+    }
 
     let rows = "";
     data.forEach(item => {
+      const estaValidado = item.validado === "1";
+      const estadoBadge = estaValidado 
+        ? '<span class="badge badge-validado">✓ Validado</span>'
+        : '<span class="badge">En revisión</span>';
+      const botonAccion = estaValidado
+        ? '<span style="color: #16a34a; font-weight: 600;">Ya validada</span>'
+        : `<button class="btn-validar" data-action="validar" data-id="${item.reserva_id}">Validar</button>`;
+      
       rows += `
         <tr data-id="${item.reserva_id}">
           <td data-label="Reserva">#${item.reserva_id}</td>
@@ -180,8 +253,8 @@
           <td data-label="Ingreso">${item.fecha_ingreso || "-"}</td>
           <td data-label="Salida">${item.fecha_salida || "-"}</td>
           <td data-label="Total">${formatCurrency(item.monto_total)}</td>
-          <td data-label="Estado"><span class="badge">En revisión</span></td>
-          <td data-label="Acción"><button class="btn-validar" data-action="validar" data-id="${item.reserva_id}">Validar</button></td>
+          <td data-label="Estado">${estadoBadge}</td>
+          <td data-label="Acción">${botonAccion}</td>
         </tr>
       `;
     });
@@ -210,7 +283,12 @@
 
   async function fetchPendientes() {
     try {
-      const resp = await fetch(`${pendientesUrl}?t=${Date.now()}`, { cache: "no-store" });
+      const filtroEstado = document.getElementById("filtro-estado")?.value || "";
+      const url = filtroEstado 
+        ? `${pendientesUrl}?estado=${filtroEstado}&t=${Date.now()}`
+        : `${pendientesUrl}?t=${Date.now()}`;
+      
+      const resp = await fetch(url, { cache: "no-store" });
       if (!resp.ok) throw new Error("Error cargando pendientes");
       const data = await resp.json();
       renderPendientes(data?.data || []);
@@ -219,6 +297,10 @@
       const container = document.getElementById("facturacion_table_container");
       if (container) container.innerHTML = '<p class="empty-state">No se pudo cargar la información. Intenta nuevamente.</p>';
     }
+  }
+
+  function aplicarFiltro() {
+    fetchPendientes();
   }
 
   async function validarReserva(id) {

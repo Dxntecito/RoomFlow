@@ -16,19 +16,31 @@
   grid-template-columns: 60% 40%;
   gap: 24px;
   margin-top: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .payment-methods-column {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-height: 100%;
 }
 
 .payment-summary-column {
   position: sticky;
   top: 100px;
   align-self: start;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#payment_summary {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
 }
 
 /* Responsive: En pantallas pequeñas, una columna */
@@ -68,6 +80,50 @@
   background-color: #fff;
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
   outline: none;
+}
+
+/* === Input de expiración mejorado === */
+.card-exp-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.card-exp-select {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 0.6rem;
+  font-size: 0.95rem;
+  color: #333;
+  background-color: #fafafa;
+  transition: 0.3s;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1em;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.card-exp-select:focus {
+  border-color: #007bff;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  outline: none;
+}
+
+.card-exp-select:hover {
+  background-color: #f0f0f0;
+}
+
+.card-exp-separator {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #666;
+  user-select: none;
 }
 
 /* === Sección de método de pago === */
@@ -123,11 +179,63 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-#payment_total {
-  font-size: 1.1rem;
-  text-align: right;
+#payment_items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+
+.payment_item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.payment_item:last-child {
+  border-bottom: none;
+}
+
+.payment_item__label {
+  flex: 1;
   color: #333;
-  margin-top: 1rem;
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.payment_item__price {
+  color: #1f7a3a;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-align: right;
+  white-space: nowrap;
+  margin-left: 16px;
+}
+
+.service_item {
+  padding-left: 12px;
+  border-left: 3px solid #328336;
+}
+
+#payment_summary h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  color: #184927;
+  font-weight: 600;
+}
+
+#payment_total {
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: right;
+  color: #1d5230;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 2px solid #328336;
 }
 
 /* === Botones === */

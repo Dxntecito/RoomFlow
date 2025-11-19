@@ -290,12 +290,17 @@ def obtener_estado_validado(reserva_id):
             connection.close()
 
 
-def listar_reservas_pendientes_validacion():
+def listar_reservas_pendientes_validacion(filtro_estado=None):
+    """
+    Lista reservas pendientes de validación
+    filtro_estado: None = todas, '0' = en revisión, '1' = validadas
+    """
     connection = None
     try:
         connection = get_connection()
         with connection.cursor() as cursor:
-            cursor.execute("""
+            # Construir query base
+            query = """
                 SELECT
                     r.reserva_id,
                     r.fecha_registro,
@@ -310,9 +315,22 @@ def listar_reservas_pendientes_validacion():
                     c.num_doc
                 FROM RESERVA r
                 LEFT JOIN CLIENTE c ON c.cliente_id = r.cliente_id
-                WHERE r.validado = '0' OR r.validado IS NULL
-                ORDER BY r.fecha_registro DESC, r.hora_registro DESC
-            """)
+                WHERE 1=1
+            """
+            params = []
+            
+            # Aplicar filtro de estado
+            if filtro_estado == '0':
+                query += " AND (r.validado = '0' OR r.validado IS NULL)"
+            elif filtro_estado == '1':
+                query += " AND r.validado = '1'"
+            else:
+                # Si no se especifica filtro, mostrar todas (en revisión y validadas)
+                query += " AND (r.validado = '0' OR r.validado IS NULL OR r.validado = '1')"
+            
+            query += " ORDER BY r.fecha_registro DESC, r.hora_registro DESC"
+            
+            cursor.execute(query, params)
             rows = cursor.fetchall()
             pendientes = []
             for row in rows:
@@ -422,6 +440,99 @@ def count_reservas():
         if connection:
             connection.close()
 
+
+def get_reservas_por_usuario(usuario_id, limit=10, offset=0, fecha_desde=None, fecha_hasta=None):
+    """
+    Obtiene las reservas de un usuario específico usando su usuario_id de la sesión
+    con paginación y filtros de fecha
+    """
+    connection = None
+    try:
+        if not usuario_id:
+            return {"reservas": [], "total": 0}
+        
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            # Construir query base - unir USUARIO con CLIENTE y luego con RESERVA
+            query = """
+                SELECT
+                    r.reserva_id,
+                    r.fecha_registro,
+                    r.hora_registro,
+                    r.fecha_ingreso,
+                    r.hora_ingreso,
+                    r.fecha_salida,
+                    r.hora_salida,
+                    r.monto_total,
+                    r.estado,
+                    r.motivo
+                FROM RESERVA r
+                INNER JOIN CLIENTE c ON c.cliente_id = r.cliente_id
+                INNER JOIN USUARIO u ON u.cliente_id = c.cliente_id
+                WHERE u.usuario_id = %s
+            """
+            params = [usuario_id]
+            
+            # Agregar filtros de fecha si existen
+            if fecha_desde:
+                query += " AND r.fecha_ingreso >= %s"
+                params.append(fecha_desde)
+            if fecha_hasta:
+                query += " AND r.fecha_ingreso <= %s"
+                params.append(fecha_hasta)
+            
+            # Ordenar y paginar
+            query += " ORDER BY r.fecha_registro DESC, r.hora_registro DESC LIMIT %s OFFSET %s"
+            params.extend([limit, offset])
+            
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+            reservas = []
+            for row in rows:
+                reservas.append({
+                    "id": row[0],
+                    "fecha_registro": _format_date(row[1]),
+                    "hora_registro": _format_time(row[2]),
+                    "fecha_ingreso": _format_date(row[3]),
+                    "hora_ingreso": _format_time(row[4]),
+                    "fecha_salida": _format_date(row[5]),
+                    "hora_salida": _format_time(row[6]),
+                    "monto_total": float(row[7]) if row[7] is not None else 0.0,
+                    "estado": row[8],
+                    "motivo": row[9] or "Sin motivo"
+                })
+            
+            # Obtener total de reservas para paginación
+            count_query = """
+                SELECT COUNT(*) 
+                FROM RESERVA r
+                INNER JOIN CLIENTE c ON c.cliente_id = r.cliente_id
+                INNER JOIN USUARIO u ON u.cliente_id = c.cliente_id
+                WHERE u.usuario_id = %s
+            """
+            count_params = [usuario_id]
+            if fecha_desde:
+                count_query += " AND r.fecha_ingreso >= %s"
+                count_params.append(fecha_desde)
+            if fecha_hasta:
+                count_query += " AND r.fecha_ingreso <= %s"
+                count_params.append(fecha_hasta)
+            
+            cursor.execute(count_query, count_params)
+            total = cursor.fetchone()[0]
+            
+            return {
+                "reservas": reservas,
+                "total": total
+            }
+    except Exception as e:
+        print(f"❌ [ERROR en get_reservas_por_usuario]: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"reservas": [], "total": 0}
+    finally:
+        if connection:
+            connection.close()
 
 def get_reservas(limit=20, offset=0):
     connection = None

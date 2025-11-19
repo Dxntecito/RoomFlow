@@ -11,7 +11,8 @@ def Facturacion():
 
 @facturaciones_bp.route('/pendientes', methods=['GET'])
 def obtener_pendientes():
-    data = controller_reserva.listar_reservas_pendientes_validacion()
+    filtro_estado = request.args.get('estado', None)  # '0' = en revisión, '1' = validadas
+    data = controller_reserva.listar_reservas_pendientes_validacion(filtro_estado=filtro_estado)
     return jsonify({"data": data})
 
 

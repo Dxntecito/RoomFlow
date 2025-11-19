@@ -326,6 +326,9 @@
   position: static;
   display: flex;
   flex-direction: column;
+  min-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Filtros deshabilitados cuando no hay habitaciones */

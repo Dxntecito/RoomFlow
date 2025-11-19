@@ -398,21 +398,26 @@
     }
 
     .search-button {
-        background: #28a745;
+        background: linear-gradient(135deg, #328336 0%, #64CC4F 100%);
         color: white;
         border: none;
-        border-radius: 50%;
-        width: 45px;
-        height: 45px;
-        display: flex;
+        border-radius: 8px;
+        padding: 10px 20px;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 8px;
         cursor: pointer;
-        transition: background-color 0.3s ease;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        font-weight: 600;
+        min-width: auto;
+        height: auto;
     }
 
     .search-button:hover {
-        background: #218838;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(50, 131, 54, 0.4);
     }
 
     .filters-section {
@@ -1089,6 +1094,122 @@
     }
     /* === FIN: Código para arreglar anchos de tabla === */
 
+    /* Estilos para Mis Reservas */
+    .reserva-card {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .reserva-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .reserva-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .reserva-id {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .reserva-estado {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .reserva-estado.activo {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .reserva-estado.pasado {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        color: white;
+    }
+
+    .reserva-estado.cancelado {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+
+    .reserva-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .reserva-info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .reserva-info-label {
+        font-size: 0.85rem;
+        color: #666;
+        font-weight: 500;
+    }
+
+    .reserva-info-value {
+        font-size: 1rem;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .reserva-monto {
+        font-size: 1.3rem;
+        color: #328336;
+        font-weight: 700;
+    }
+
+    .reserva-motivo {
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #328336;
+        font-size: 0.9rem;
+        color: #555;
+    }
+
+    .no-reservas {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+
+    .no-reservas i {
+        font-size: 4rem;
+        color: #ddd;
+        margin-bottom: 20px;
+    }
+
+    .no-reservas h3 {
+        color: #999;
+        margin-bottom: 10px;
+    }
+
+    .no-reservas p {
+        color: #aaa;
+    }
+
     </style>
 
 {% endblock %}
@@ -1112,6 +1233,12 @@
                     <button class="menu-btn" data-section="incidencias">
                         <i class="fas fa-exclamation-triangle"></i>
                         <span>Gestionar Incidencias</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="menu-btn" data-section="mis-reservas">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Mis Reservas</span>
                     </button>
                 </li>
                 <li>
@@ -1483,6 +1610,56 @@
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- Sección: Mis Reservas -->
+            <div class="section-content" id="mis-reservas">
+                <h2 class="section-title">Mis Reservas</h2>
+                
+                <!-- Filtros de fecha -->
+                <div class="search-filters-section" style="margin-bottom: 25px;">
+                    <div class="filters-section" style="display: flex; gap: 15px; align-items: flex-end;">
+                        <div class="filter-form" style="flex: 1;">
+                            <label for="fecha-desde" class="filter-label">Fecha desde</label>
+                            <input type="date" id="fecha-desde" class="rol-select" style="width: 100%;">
+                        </div>
+                        <div class="filter-form" style="flex: 1;">
+                            <label for="fecha-hasta" class="filter-label">Fecha hasta</label>
+                            <input type="date" id="fecha-hasta" class="rol-select" style="width: 100%;">
+                        </div>
+                        <div class="actions-section">
+                            <button class="search-button" onclick="filtrarReservas()">
+                                <i class="fas fa-filter"></i> Filtrar
+                            </button>
+                            <button class="search-button" onclick="limpiarFiltrosReservas()" style="background: #6c757d;">
+                                <i class="fas fa-eraser"></i> Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contenedor de reservas -->
+                <div id="reservas-container">
+                    <div style="text-align: center; padding: 40px;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #328336;"></i>
+                        <p>Cargando reservas...</p>
+                    </div>
+                </div>
+                
+                <!-- Paginación -->
+                <div id="reservas-pagination" style="display: none; margin-top: 25px; padding-top: 25px; border-top: 2px solid #e0e0e0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div id="reservas-pagination-info" style="color: #666; font-size: 0.9rem;"></div>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="reservas-prev-btn" class="btn btn-secondary" onclick="cambiarPaginaReservas(-1)" disabled>
+                                <i class="fas fa-chevron-left"></i> Anterior
+                            </button>
+                            <button id="reservas-next-btn" class="btn btn-secondary" onclick="cambiarPaginaReservas(1)">
+                                Siguiente <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1935,6 +2112,11 @@
     
     // Detectar si el usuario es empleado o cliente
     const esEmpleado = '{{ perfil.tipo_perfil }}' === 'empleado';
+    
+    // Variables para Mis Reservas
+    let currentReservasPage = 1;
+    let reservasTotalPages = 1;
+    let reservasLimit = 10;
 
     // Cambiar de sección
     menuButtons.forEach(button => {
@@ -1950,6 +2132,11 @@
                 section.classList.remove('active');
                 if (section.id === sectionId) {
                     section.classList.add('active');
+                    
+                    // Inicializar reservas si es la sección de mis-reservas
+                    if (sectionId === 'mis-reservas') {
+                        cargarReservas();
+                    }
 
                     // Inicializar empleados si es la sección de empleados
                     if (sectionId === 'empleados') {
@@ -3829,6 +4016,169 @@
          }
      }
 
+    // ### INICIO DE CÓDIGO: Lógica para Mis Reservas ###
+    function cargarReservas() {
+        const container = document.getElementById('reservas-container');
+        if (!container) return;
+        
+        const fechaDesde = document.getElementById('fecha-desde')?.value || '';
+        const fechaHasta = document.getElementById('fecha-hasta')?.value || '';
+        
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #328336;"></i>
+                <p>Cargando reservas...</p>
+            </div>
+        `;
+
+        const params = new URLSearchParams({
+            page: currentReservasPage,
+            limit: reservasLimit
+        });
+        
+        if (fechaDesde) params.append('fecha_desde', fechaDesde);
+        if (fechaHasta) params.append('fecha_hasta', fechaHasta);
+
+        fetch(`/auth/mis-reservas?${params.toString()}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Datos recibidos:', data);
+                if (data.success) {
+                    mostrarReservas(data.reservas, data.total, data.page, data.total_pages);
+                } else {
+                    container.innerHTML = `
+                        <div class="no-reservas">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <h3>Error al cargar reservas</h3>
+                            <p>${data.message || 'Intenta recargar la página'}</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar reservas:', error);
+                container.innerHTML = `
+                    <div class="no-reservas">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Error al cargar reservas</h3>
+                        <p>Ocurrió un error inesperado: ${error.message}</p>
+                        <p style="font-size: 0.85rem; color: #999; margin-top: 10px;">Intenta recargar la página.</p>
+                    </div>
+                `;
+            });
+    }
+
+    function mostrarReservas(reservas, total, page, totalPages) {
+        const container = document.getElementById('reservas-container');
+        if (!container) return;
+        
+        reservasTotalPages = totalPages;
+        currentReservasPage = page;
+
+        if (reservas.length === 0) {
+            container.innerHTML = `
+                <div class="no-reservas">
+                    <i class="fas fa-calendar-times"></i>
+                    <h3>No hay reservas realizadas</h3>
+                    <p>Cuando realices una reserva, aparecerá aquí.</p>
+                </div>
+            `;
+            const pagination = document.getElementById('reservas-pagination');
+            if (pagination) pagination.style.display = 'none';
+            return;
+        }
+
+        let html = '';
+        reservas.forEach(reserva => {
+            const estadoClass = reserva.estado === 1 ? 'activo' : 
+                               reserva.estado === 2 ? 'pasado' : 'cancelado';
+            const estadoText = reserva.estado === 1 ? 'Activo' : 
+                              reserva.estado === 2 ? 'Pasado' : 'Cancelado';
+
+            html += `
+                <div class="reserva-card">
+                    <div class="reserva-header">
+                        <div class="reserva-id">Reserva #${reserva.id}</div>
+                        <div class="reserva-estado ${estadoClass}">${estadoText}</div>
+                    </div>
+                    <div class="reserva-info">
+                        <div class="reserva-info-item">
+                            <span class="reserva-info-label">Fecha de Registro</span>
+                            <span class="reserva-info-value">${reserva.fecha_registro} ${reserva.hora_registro}</span>
+                        </div>
+                        <div class="reserva-info-item">
+                            <span class="reserva-info-label">Fecha de Ingreso</span>
+                            <span class="reserva-info-value">${reserva.fecha_ingreso} ${reserva.hora_ingreso}</span>
+                        </div>
+                        <div class="reserva-info-item">
+                            <span class="reserva-info-label">Fecha de Salida</span>
+                            <span class="reserva-info-value">${reserva.fecha_salida} ${reserva.hora_salida}</span>
+                        </div>
+                        <div class="reserva-info-item">
+                            <span class="reserva-info-label">Monto Total</span>
+                            <span class="reserva-info-value reserva-monto">S/. ${reserva.monto_total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    ${reserva.motivo ? `
+                        <div class="reserva-motivo">
+                            <strong>Motivo:</strong> ${reserva.motivo}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+
+        // Actualizar paginación
+        const pagination = document.getElementById('reservas-pagination');
+        const paginationInfo = document.getElementById('reservas-pagination-info');
+        const prevBtn = document.getElementById('reservas-prev-btn');
+        const nextBtn = document.getElementById('reservas-next-btn');
+
+        if (pagination && totalPages > 1) {
+            pagination.style.display = 'block';
+            const start = (page - 1) * reservasLimit + 1;
+            const end = Math.min(page * reservasLimit, total);
+            if (paginationInfo) {
+                paginationInfo.textContent = `Mostrando ${start}-${end} de ${total} reservas`;
+            }
+            
+            if (prevBtn) prevBtn.disabled = page === 1;
+            if (nextBtn) nextBtn.disabled = page === totalPages;
+        } else if (pagination) {
+            pagination.style.display = 'none';
+        }
+    }
+
+    function cambiarPaginaReservas(direction) {
+        const newPage = currentReservasPage + direction;
+        if (newPage >= 1 && newPage <= reservasTotalPages) {
+            currentReservasPage = newPage;
+            cargarReservas();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    function filtrarReservas() {
+        currentReservasPage = 1;
+        cargarReservas();
+    }
+
+    function limpiarFiltrosReservas() {
+        const fechaDesde = document.getElementById('fecha-desde');
+        const fechaHasta = document.getElementById('fecha-hasta');
+        if (fechaDesde) fechaDesde.value = '';
+        if (fechaHasta) fechaHasta.value = '';
+        currentReservasPage = 1;
+        cargarReservas();
+    }
+    // ### FIN DE CÓDIGO: Lógica para Mis Reservas ###
 
 </script>
 {% endblock %}

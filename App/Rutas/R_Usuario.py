@@ -363,6 +363,56 @@ def Perfil():
     
     return render_template('Perfil.html', perfil=perfil, tipos_documento=tipos_documento)
 
+@usuarios_bp.route('/mis-reservas', methods=['GET'])
+@login_required
+def MisReservas():
+    """
+    Endpoint para obtener las reservas del usuario actual usando su usuario_id de la sesión
+    """
+    try:
+        import App.Controladores.C_Reserva.controlador_reserva as controller_reserva
+        
+        usuario_id = session.get('usuario_id')
+        
+        if not usuario_id:
+            return jsonify({
+                'success': False,
+                'message': 'Usuario no autenticado'
+            }), 401
+        
+        # Parámetros de paginación
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 10))
+        offset = (page - 1) * limit
+        
+        # Filtros de fecha
+        fecha_desde = request.args.get('fecha_desde')
+        fecha_hasta = request.args.get('fecha_hasta')
+        
+        resultado = controller_reserva.get_reservas_por_usuario(
+            usuario_id=usuario_id,
+            limit=limit,
+            offset=offset,
+            fecha_desde=fecha_desde,
+            fecha_hasta=fecha_hasta
+        )
+        
+        return jsonify({
+            'success': True,
+            'reservas': resultado['reservas'],
+            'total': resultado['total'],
+            'page': page,
+            'limit': limit,
+            'total_pages': (resultado['total'] + limit - 1) // limit if resultado['total'] > 0 else 0
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Error al obtener reservas: {str(e)}'
+        }), 500
+
 @usuarios_bp.route('/perfil/actualizar', methods=['POST'])
 @login_required
 def ActualizarPerfil():

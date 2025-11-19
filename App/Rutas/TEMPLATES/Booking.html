@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='CSS/Booking_huespedes.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='CSS/pago.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/Booking_modals.css') }}">
 <style>
   .progress-container {
   position: relative;
@@ -483,7 +484,28 @@
     <div style="display:flex; gap:10px;">
       <div style="flex:1;">
         <label class="booking_label">Expiración (MM/AA)</label>
-        <input type="month" id="card_exp" required>
+        <div class="card-exp-wrapper">
+          <select id="card_exp_month" class="card-exp-select" required>
+            <option value="">MM</option>
+            <option value="01">01</option>
+            <option value="02">02</option>
+            <option value="03">03</option>
+            <option value="04">04</option>
+            <option value="05">05</option>
+            <option value="06">06</option>
+            <option value="07">07</option>
+            <option value="08">08</option>
+            <option value="09">09</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+          </select>
+          <span class="card-exp-separator">/</span>
+          <select id="card_exp_year" class="card-exp-select" required>
+            <option value="">AA</option>
+          </select>
+          <input type="hidden" id="card_exp" required>
+        </div>
       </div>
       <div style="width:120px;">
         <label class="booking_label">CVV</label>
@@ -583,6 +605,7 @@
 <script>
   window.BOOKING_HOME_URL = "{{ url_for('Index') }}";
 </script>
+<script src="{{ url_for('static', filename='JS/Booking_modals.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking_timer.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking_payment.js') }}"></script>
@@ -651,27 +674,27 @@ document.addEventListener("DOMContentLoaded", () => {
     const salida = new Date(fechaSalida.value);
 
     if (!fechaEntrada.value || !fechaSalida.value) {
-      alert("⚠️ Debes seleccionar ambas fechas.");
+      showBookingAlert("⚠️ Debes seleccionar ambas fechas.", "warning");
       e.preventDefault();
       return;
     }
 
     // Validar que la entrada sea después de la hora actual
     if (entrada < now) {
-      alert("⚠️ La fecha de entrada debe ser posterior a la fecha y hora actuales.");
+      showBookingAlert("⚠️ La fecha de entrada debe ser posterior a la fecha y hora actuales.", "warning");
       e.preventDefault();
       return;
     }
 
     if (entrada >= salida) {
-      alert("⚠️ La fecha de salida debe ser posterior a la fecha de entrada.");
+      showBookingAlert("⚠️ La fecha de salida debe ser posterior a la fecha de entrada.", "warning");
       e.preventDefault();
       return;
     }
 
     const diffMs = salida.getTime() - entrada.getTime();
     if (diffMs < ONE_HOUR_MS) {
-      alert("⚠️ La fecha de salida debe ser al menos una hora después de la fecha de entrada.");
+      showBookingAlert("⚠️ La fecha de salida debe ser al menos una hora después de la fecha de entrada.", "warning");
       e.preventDefault();
       return;
     }
@@ -879,20 +902,31 @@ function updateFiltersState() {
 
 // Función para sincronizar altura del aside con la tabla
 function syncSidebarHeight() {
-  const filtersSidebar = document.getElementById('Booking_Filters');
+  const sidebar = document.getElementById('Booking_Filters');
+  const tableWrapper = document.querySelector('.rooms-table-wrapper');
   const table = document.getElementById('booking_room_available');
-  const contentMain = document.querySelector('.booking-content-main');
   
-  if (filtersSidebar && table && contentMain) {
-    // Resetear altura para obtener la altura natural
-    filtersSidebar.style.height = 'auto';
-    const tableHeight = table.offsetHeight;
-    
-    // Si la tabla tiene altura, aplicar esa altura al aside
-    if (tableHeight > 0) {
-      filtersSidebar.style.height = tableHeight + 'px';
-    }
+  if (!sidebar) return;
+  
+  // Obtener altura de la tabla o del wrapper
+  let tableHeight = 0;
+  if (table) {
+    tableHeight = table.offsetHeight;
+  } else if (tableWrapper) {
+    tableHeight = tableWrapper.offsetHeight;
   }
+  
+  // Altura mínima para que los datos no se sobresalgan
+  const minHeight = 300;
+  
+  // Usar la altura de la tabla o la mínima, la que sea mayor
+  const finalHeight = Math.max(tableHeight, minHeight);
+  
+  // Aplicar altura fija al sidebar
+  sidebar.style.height = finalHeight + 'px';
+  sidebar.style.minHeight = finalHeight + 'px';
+  sidebar.style.maxHeight = finalHeight + 'px';
+  sidebar.style.overflowY = 'auto'; // Permitir scroll si el contenido es mayor
 }
 
 // Si quieres aplicar el filtro al cargar con valores por defecto:
@@ -1056,7 +1090,7 @@ function scrollToTop() {
 nextLink.addEventListener("click", e => {
   e.preventDefault();
   if (selectedRooms.length === 0) {
-    alert("Seleccione al menos una habitación antes de continuar.");
+    showBookingAlert("Seleccione al menos una habitación antes de continuar.", "warning");
     return;
   }
   if (usuarioId) {
@@ -1275,11 +1309,13 @@ if (nextToGuestsBtn) {
 </script>
 <script>
 document.getElementById("volver_home").addEventListener("click", () => {
-  if (confirm("¿Deseas salir y volver al inicio?")) {
-    const homeUrl = window.BOOKING_HOME_URL || "/";
-    window.location.replace(homeUrl);
-  }
-});
+  (async () => {
+    const confirmed = await showBookingConfirm("¿Deseas salir y volver al inicio?", "Confirmar salida");
+    if (confirmed) {
+      const homeUrl = window.BOOKING_HOME_URL || "/";
+      window.location.replace(homeUrl);
+    }
+  })();
 </script>
 
 <script>
@@ -1318,7 +1354,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
+</script>
 
 
 <script>
@@ -1335,12 +1371,37 @@ document.addEventListener("DOMContentLoaded", () => {
     const step4 = document.getElementById('step4');
     const step5 = document.getElementById('step5');
     
-    const isStep1Visible = step1 && step1.style.display !== 'none';
-    const isInFlow = !isStep1Visible || 
-                     (step2 && step2.style.display === 'block') ||
-                     (step3 && step3.style.display === 'block') ||
-                     (step4 && step4.style.display === 'block') ||
-                     (step5 && step5.style.display === 'block');
+    // Función auxiliar para verificar si un elemento está visible
+    function isElementVisible(el) {
+      if (!el) return false;
+      const style = window.getComputedStyle(el);
+      return style.display !== 'none' && style.visibility !== 'hidden';
+    }
+    
+    // Verificar si algún paso después del 1 está visible
+    const isStep2Visible = isElementVisible(step2);
+    const isStep3Visible = isElementVisible(step3);
+    const isStep4Visible = isElementVisible(step4);
+    const isStep5Visible = isElementVisible(step5);
+    
+    // Si SOLO el paso 5 está visible (comprobante), significa que el pago ya se completó
+    // En ese caso, NO estamos en el flujo activo de reserva
+    if (isStep5Visible && !isStep2Visible && !isStep3Visible && !isStep4Visible) {
+      return false; // Pago completado, permitir navegación libre
+    }
+    
+    // También verificar si hay habitaciones seleccionadas o datos guardados
+    const hasSelectedRooms = typeof selectedRooms !== 'undefined' && selectedRooms && selectedRooms.length > 0;
+    const hasClientData = typeof clientData !== 'undefined' && clientData && Object.keys(clientData).length > 0;
+    const hasBookingData = localStorage.getItem('booking_pending_data') !== null;
+    
+    // Estamos en el flujo si:
+    // 1. Algún paso 2, 3 o 4 está visible (pero NO solo el 5), O
+    // 2. Hay habitaciones seleccionadas, O
+    // 3. Hay datos de cliente guardados, O
+    // 4. Hay datos en localStorage
+    const isInFlow = isStep2Visible || isStep3Visible || isStep4Visible ||
+                     hasSelectedRooms || hasClientData || hasBookingData;
     
     return isInFlow;
   }
@@ -1377,10 +1438,24 @@ document.addEventListener("DOMContentLoaded", () => {
       cb.checked = false;
     });
     
-    // Limpiar checkboxes de servicios
+    // Limpiar checkboxes de servicios (sistema antiguo)
     document.querySelectorAll('.service-checkbox').forEach(cb => {
       cb.checked = false;
       cb.closest('.service-card')?.classList.remove('selected');
+    });
+    
+    // Limpiar cantidades de servicios (sistema nuevo)
+    if (typeof serviceQuantities !== 'undefined') {
+      serviceQuantities = {};
+    }
+    
+    // Resetear displays de cantidad de servicios
+    document.querySelectorAll('.service-card-horizontal').forEach(card => {
+      const quantityDisplay = card.querySelector('.quantity-display');
+      const totalDisplay = card.querySelector('.service-price-total');
+      if (quantityDisplay) quantityDisplay.textContent = '0';
+      if (totalDisplay) totalDisplay.textContent = '0.00';
+      card.classList.remove('selected');
     });
     
     // Limpiar contenedores de habitaciones seleccionadas
@@ -1406,10 +1481,25 @@ document.addEventListener("DOMContentLoaded", () => {
     navigateSafely("{{ url_for('Index') }}");
   }
   
+  // Función para verificar si estamos en el paso 5 (pago completado)
+  function isInStep5() {
+    const step5 = document.getElementById('step5');
+    if (!step5) return false;
+    const style = window.getComputedStyle(step5);
+    return style.display !== 'none' && style.visibility !== 'hidden';
+  }
+  
   // Interceptar botón atrás del navegador
   window.addEventListener('popstate', function(e) {
     // Si el timer expiró, permitir la redirección sin alert
     if (window.isTimerExpired) {
+      return;
+    }
+    
+    // Si estamos en el paso 5 (pago completado), redirigir al index sin alerta
+    if (isInStep5()) {
+      history.pushState(null, null, window.location.href);
+      goToHome();
       return;
     }
     
@@ -1421,9 +1511,16 @@ document.addEventListener("DOMContentLoaded", () => {
       // Prevenir la navegación hacia atrás
       history.pushState(null, null, window.location.href);
       
-      if (confirm('¿Estás seguro de que quieres salir? Si continúas, serás redirigido al inicio y se borrarán todos los datos ingresados.')) {
-        goToHome();
-      }
+      // Usar async/await para manejar la promesa correctamente
+      (async () => {
+        const confirmed = await showBookingConfirm('¿Estás seguro de que quieres salir? Si continúas, serás redirigido al inicio y se borrarán todos los datos ingresados.', 'Confirmar salida');
+        if (confirmed) {
+          goToHome();
+        } else {
+          // Si cancela, volver a agregar el estado al historial
+          history.pushState(null, null, window.location.href);
+        }
+      })();
     }
   });
   
@@ -1435,36 +1532,71 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     // F5 o Ctrl+R o Ctrl+F5
-    if (e.key === 'F5' || (e.ctrlKey && e.key === 'r') || (e.ctrlKey && e.key === 'R') || (e.ctrlKey && e.shiftKey && e.key === 'R')) {
-      if (isInBookingFlow() && !isNavigatingAway && !isReloading) {
+    const isReloadKey = e.key === 'F5' || 
+                        (e.ctrlKey && (e.key === 'r' || e.key === 'R')) || 
+                        (e.ctrlKey && e.shiftKey && (e.key === 'R' || e.key === 'r'));
+    
+    if (isReloadKey) {
+      // Si estamos en el paso 5 (pago completado), redirigir al index sin alerta
+      if (isInStep5()) {
         e.preventDefault();
         e.stopPropagation();
-        if (confirm('¿Estás seguro de que quieres recargar la página? Si continúas, se borrarán todos los datos ingresados.')) {
+        e.stopImmediatePropagation();
+        isReloading = true;
+        clearAllBookingData();
+        goToHome();
+        return false;
+      }
+      
+      // Verificar si estamos en el flujo de reserva
+      if (!isInBookingFlow() || isNavigatingAway || isReloading) {
+        return;
+      }
+      
+      // Prevenir el comportamiento por defecto
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      // Mostrar confirmación
+      (async () => {
+        const confirmed = await showBookingConfirm('¿Estás seguro de que quieres recargar la página? Si continúas, se borrarán todos los datos ingresados.', 'Confirmar recarga');
+        if (confirmed) {
           isReloading = true;
           clearAllBookingData();
-          window.location.reload();
+          // Usar location.replace para evitar que se active beforeunload
+          window.location.replace(window.location.href);
         }
-      }
+      })();
+      
+      return false;
     }
-  });
+  }, true); // Usar capture phase para interceptar antes que otros handlers
   
-  // Interceptar recarga y cierre de página
+  // También interceptar el evento beforeunload para recargas del navegador
   window.addEventListener('beforeunload', function(e) {
     // Si el timer expiró, permitir la redirección sin alert
     if (window.isTimerExpired) {
       return;
     }
     
-    if (isNavigatingAway || isReloading) {
-      return; // Permitir si ya confirmamos
+    // Si estamos en el paso 5 (pago completado), permitir navegación sin alerta
+    if (isInStep5()) {
+      return;
     }
     
+    // Si ya confirmamos la navegación o recarga, permitir
+    if (isNavigatingAway || isReloading) {
+      return;
+    }
+    
+    // Solo interceptar si estamos en el flujo de reserva
     if (isInBookingFlow()) {
       // Los navegadores modernos solo muestran su propio diálogo
       // No podemos personalizar el mensaje, pero podemos prevenir la salida
       e.preventDefault();
-      e.returnValue = ''; // Chrome requiere returnValue
-      return ''; // Algunos navegadores requieren return
+      e.returnValue = '¿Estás seguro de que quieres salir? Se perderán todos los datos ingresados.'; // Chrome requiere returnValue
+      return e.returnValue; // Algunos navegadores requieren return
     }
   });
   
@@ -1494,13 +1626,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
   
-  // Interceptar clics en nav y footer cuando hay un flujo activo
+  // Interceptar clics en nav, footer, header y logo cuando hay un flujo activo
   function attachNavigationGuards() {
     const selectors = [
       '.nav a',
       '.footer a',
       'header a',
-      '.logo a'
+      '.logo a',
+      'h1 a',
+      'header h1'
     ];
 
     const links = document.querySelectorAll(selectors.join(','));
@@ -1512,7 +1646,7 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
         
-        const targetUrl = this.href;
+        const targetUrl = this.href || "{{ url_for('Index') }}";
 
         if (!isInBookingFlow() || isNavigatingAway) {
           return;
@@ -1521,12 +1655,42 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         e.stopPropagation();
 
-        if (confirm('¿Estás seguro de que quieres salir? Si continúas, se cancelará tu reserva.')) {
-          const url = targetUrl || "{{ url_for('Index') }}";
-          navigateSafely(url);
-        }
+        (async () => {
+          const confirmed = await showBookingConfirm('¿Estás seguro de que quieres salir? Si continúas, se cancelará tu reserva.', 'Confirmar salida');
+          if (confirmed) {
+            navigateSafely(targetUrl);
+          }
+        })();
       });
     });
+    
+    // Interceptar clic en H1 logo (si no tiene enlace, redirigir al inicio)
+    const h1Logo = document.querySelector('header h1, h1.logo, .logo h1');
+    if (h1Logo && !h1Logo.querySelector('a')) {
+      h1Logo.style.cursor = 'pointer';
+      h1Logo.addEventListener('click', function(e) {
+        // Si el timer expiró, permitir la navegación sin alert
+        if (window.isTimerExpired) {
+          window.location.href = "{{ url_for('Index') }}";
+          return;
+        }
+        
+        if (!isInBookingFlow() || isNavigatingAway) {
+          window.location.href = "{{ url_for('Index') }}";
+          return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        (async () => {
+          const confirmed = await showBookingConfirm('¿Estás seguro de que quieres salir? Si continúas, se cancelará tu reserva.', 'Confirmar salida');
+          if (confirmed) {
+            goToHome();
+          }
+        })();
+      });
+    }
   }
 
   // Agregar un estado inicial al historial

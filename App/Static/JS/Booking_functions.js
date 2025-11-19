@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.quantity-btn--plus').forEach(btn => {
     btn.addEventListener('click', function() {
       if (selectedRooms.length === 0) {
-        alert('Por favor, selecciona al menos una habitación primero.');
+        showBookingAlert('Por favor, selecciona al menos una habitación primero.', 'warning');
         return;
       }
       const serviceId = this.dataset.service;
@@ -631,7 +631,7 @@ function validarDocumentoDuplicado(inputActual) {
             // Si encontramos un documento duplicado
             if (docOtro === docActual && docOtro.length > 0) {
                 // Mostrar popup
-                alert('⚠️ No se puede ingresar el mismo número de documento para dos huéspedes. El documento duplicado ha sido eliminado.');
+                showBookingAlert('⚠️ No se puede ingresar el mismo número de documento para dos huéspedes. El documento duplicado ha sido eliminado.', 'warning');
                 
                 // Borrar el documento del input actual
                 inputActual.value = '';
@@ -835,7 +835,7 @@ function populatePaymentSummary_new() {
 
       const item = document.createElement("div");
       item.className = "payment_item";
-      item.innerHTML = `<span>Habitación ${name}</span> <span>S/. ${safePrice.toFixed(2)}</span>`;
+      item.innerHTML = `<span class="payment_item__label">Habitación ${name}</span><span class="payment_item__price">S/. ${safePrice.toFixed(2)}</span>`;
       paymentItemsDiv.appendChild(item);
     });
   }
@@ -871,9 +871,8 @@ function populatePaymentSummary_new() {
       item.className = "payment_item service_item"; // Clase adicional para servicios
       // Mostrar siempre la cantidad, incluso si es 1
       const cantidad = servicio.cantidad || 1;
-      const precioUnitario = servicio.precioUnitario || (servicio.precioNumero / cantidad);
-      // Formato: "Nombre del servicio (Cantidad: X) - Precio unitario: S/. X.XX"
-      item.innerHTML = `<span>${servicio.nombre} (Cantidad: ${cantidad}) - Precio unitario: S/. ${precioUnitario.toFixed(2)}</span> <span>S/. ${servicio.precioNumero.toFixed(2)}</span>`;
+      // Formato simplificado: "Nombre del servicio (Cantidad: X)"
+      item.innerHTML = `<span class="payment_item__label">${servicio.nombre} (Cantidad: ${cantidad})</span><span class="payment_item__price">S/. ${servicio.precioNumero.toFixed(2)}</span>`;
       paymentItemsDiv.appendChild(item);
       console.log("✅ Item agregado al DOM:", item);
     });
@@ -972,11 +971,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const tipoVal = tipoDoc.value;
 
       if (!tipoVal || tipoVal === "-1") {
-        alert("Seleccione un tipo de documento.");
+        showBookingAlert("Seleccione un tipo de documento.", "warning");
         return;
       }
       if (!numDocVal) {
-        alert("Ingrese el número de documento.");
+        showBookingAlert("Ingrese el número de documento.", "warning");
         return;
       }
 
@@ -984,7 +983,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await fetch(`/Rutas/buscar_cliente_natural?num_doc=${encodeURIComponent(numDocVal)}`);
         if (!res.ok) {
           if (res.status === 404) {
-            alert("Cliente no encontrado. Complete los datos manualmente.");
+            showBookingAlert("Cliente no encontrado. Complete los datos manualmente.", "info");
             bloquearCampos(false);
             tipoDoc.disabled = true;
             numDoc.disabled = true;
@@ -1008,7 +1007,7 @@ document.addEventListener("DOMContentLoaded", () => {
         buscarBtn.textContent = "Borrar";
       } catch (err) {
         console.error("❌ Error en la búsqueda:", err);
-        alert("Hubo un problema al buscar el cliente.");
+        showBookingAlert("Hubo un problema al buscar el cliente.", "error");
       }
 
     } else if (modo === "Borrar") {
@@ -1047,11 +1046,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (modo === "Buscar") {
       if (!numDocVal) {
-        alert("Ingrese el número de RUC.");
+        showBookingAlert("Ingrese el número de RUC.", "warning");
         return;
       }
       if (numDocVal.length !== 11) {
-        alert("El RUC debe tener exactamente 11 dígitos.");
+        showBookingAlert("El RUC debe tener exactamente 11 dígitos.", "warning");
         return;
       }
 
@@ -1059,7 +1058,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await fetch(`/Rutas/buscar_cliente_juridico?num_doc=${encodeURIComponent(numDocVal)}`);
         if (!res.ok) {
           if (res.status === 404) {
-            alert("Cliente no encontrado. Complete los datos manualmente.");
+            showBookingAlert("Cliente no encontrado. Complete los datos manualmente.", "info");
             bloquearCampos(false);
             numDoc.disabled = true;
             buscarBtn.textContent = "Borrar";
@@ -1081,7 +1080,7 @@ document.addEventListener("DOMContentLoaded", () => {
         buscarBtn.textContent = "Borrar";
       } catch (err) {
         console.error("❌ Error en la búsqueda:", err);
-        alert("Hubo un problema al buscar el cliente jurídico.");
+        showBookingAlert("Hubo un problema al buscar el cliente jurídico.", "error");
       }
 
     } else if (modo === "Borrar") {

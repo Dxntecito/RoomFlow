@@ -8,6 +8,8 @@ const cardForm = document.getElementById("card_form");
 const cardHolderInput = document.getElementById("card_holder");
 const cardNumberInput = document.getElementById("card_number");
 const cardExpInput = document.getElementById("card_exp");
+const cardExpMonthSelect = document.getElementById("card_exp_month");
+const cardExpYearSelect = document.getElementById("card_exp_year");
 const cardCvvInput = document.getElementById("card_cvv");
 const finalizarReservaBtn = document.getElementById("finalizar_reserva");
 const step5El = document.getElementById("step5");
@@ -98,6 +100,46 @@ if (cardHolderInput) {
 }
 
 setCardExpMin();
+
+// Inicializar años para el select de expiración (próximos 10 años)
+if (cardExpYearSelect) {
+  const currentYear = new Date().getFullYear();
+  for (let i = 0; i < 10; i++) {
+    const year = currentYear + i;
+    const option = document.createElement("option");
+    option.value = String(year).slice(-2);
+    option.textContent = String(year).slice(-2);
+    cardExpYearSelect.appendChild(option);
+  }
+}
+
+// Sincronizar selects de mes/año con input hidden
+function updateCardExpHidden() {
+  if (!cardExpInput || !cardExpMonthSelect || !cardExpYearSelect) return;
+  
+  const month = cardExpMonthSelect.value;
+  const year = cardExpYearSelect.value;
+  
+  if (month && year) {
+    // Convertir año de 2 dígitos a 4 dígitos
+    const currentYear = new Date().getFullYear();
+    const currentCentury = Math.floor(currentYear / 100) * 100;
+    const fullYear = currentCentury + parseInt(year);
+    
+    // Formato: YYYY-MM
+    cardExpInput.value = `${fullYear}-${month.padStart(2, '0')}`;
+  } else {
+    cardExpInput.value = '';
+  }
+}
+
+if (cardExpMonthSelect) {
+  cardExpMonthSelect.addEventListener('change', updateCardExpHidden);
+}
+
+if (cardExpYearSelect) {
+  cardExpYearSelect.addEventListener('change', updateCardExpHidden);
+}
 
 function launchConfetti() {
   if (typeof confetti !== "function") return;
@@ -303,12 +345,12 @@ document.getElementById("payment_phase")?.addEventListener("click", (e) => {
         const roomName = typeof roomNames !== 'undefined' && roomNames[primeraHabitacionFaltante] 
           ? roomNames[primeraHabitacionFaltante] 
           : primeraHabitacionFaltante;
-        alert(`⚠️ Por favor, completa los datos del Huésped ${primerIndiceFaltante} de la Habitación ${roomName} antes de continuar.`);
+        showBookingAlert(`⚠️ Por favor, completa los datos del Huésped ${primerIndiceFaltante} de la Habitación ${roomName} antes de continuar.`, 'warning');
         return;
       }
     } else {
       // Fallback: mostrar mensaje genérico
-      alert('⚠️ Por favor, completa todos los datos de los huéspedes antes de continuar.');
+      showBookingAlert('⚠️ Por favor, completa todos los datos de los huéspedes antes de continuar.', 'warning');
       return;
     }
   }
@@ -343,32 +385,43 @@ if (method === '2') {
       cardHolderInput.value = holderValue;
     }
     const number = (cardNumberInput?.value || "").replace(/\s+/g, '');
-    const expRaw = cardExpInput?.value || "";
+    // Obtener valor del input hidden o construir desde selects
+    let expRaw = cardExpInput?.value || "";
+    if (!expRaw && cardExpMonthSelect && cardExpYearSelect) {
+      const month = cardExpMonthSelect.value;
+      const year = cardExpYearSelect.value;
+      if (month && year) {
+        const currentYear = new Date().getFullYear();
+        const currentCentury = Math.floor(currentYear / 100) * 100;
+        const fullYear = currentCentury + parseInt(year);
+        expRaw = `${fullYear}-${month.padStart(2, '0')}`;
+      }
+    }
     const cvv = (cardCvvInput?.value || "").trim();
 
     console.log("[PAGO] Método card seleccionado. Validando campos de tarjeta...");
     const holderValidation = validateCardHolder(holderValue);
     if (!holderValidation.valid) {
-      alert(holderValidation.message);
+      showBookingAlert(holderValidation.message, 'warning');
       console.groupEnd();
       return;
     }
 
     if (!number || !expRaw || !cvv) {
-      alert("Complete todos los datos de la tarjeta.");
+      showBookingAlert("Complete todos los datos de la tarjeta.", "warning");
       console.groupEnd();
       return;
     }
-    if (!/^\d{13,19}$/.test(number)) { alert("Número de tarjeta inválido."); console.groupEnd(); return; }
+    if (!/^\d{13,19}$/.test(number)) { showBookingAlert("Número de tarjeta inválido.", "warning"); console.groupEnd(); return; }
 
     const expResult = formatMonthValue(expRaw);
     if (!expResult || !expResult.valid) {
-      alert(expResult?.message || "Fecha de expiración inválida.");
+      showBookingAlert(expResult?.message || "Fecha de expiración inválida.", "warning");
       console.groupEnd();
       return;
     }
 
-    if (!/^\d{3,4}$/.test(cvv)) { alert("CVV inválido."); console.groupEnd(); return; }
+    if (!/^\d{3,4}$/.test(cvv)) { showBookingAlert("CVV inválido.", "warning"); console.groupEnd(); return; }
 }
 
 // Mostrar resumen actualizado
@@ -403,7 +456,7 @@ if (finalizarReservaBtn) {
       console.log("[FINALIZAR] dataReserva:", dataReserva);
     } catch (err) {
       console.error("[FINALIZAR] Error construyendo dataReserva:", err);
-      alert("No se pudieron recolectar los datos de la reserva. Revisa la consola.");
+      showBookingAlert("No se pudieron recolectar los datos de la reserva. Revisa la consola.", "error");
       finalizarReservaBtn.disabled = false;
       finalizarReservaBtn.textContent = "Finalizar Reserva";
       modal.style.display = "none"; // cerrar modal si hay error
@@ -431,7 +484,7 @@ if (finalizarReservaBtn) {
         console.log("[FINALIZAR] JSON parseado:", result);
       } catch (e) {
         console.error("[FINALIZAR] No se pudo parsear JSON:", e);
-        alert("Respuesta inesperada del servidor. Revisa la consola.");
+        showBookingAlert("Respuesta inesperada del servidor. Revisa la consola.", "error");
         throw e;
       }
 
@@ -440,7 +493,7 @@ if (finalizarReservaBtn) {
         console.log("[FINALIZAR] Reserva guardada OK. ID:", reservaId);
       } else {
         console.error("[FINALIZAR] El backend devolvió un formato inesperado:", result);
-        alert("Ocurrió un problema al guardar la reserva. Revisa la consola.");
+        showBookingAlert("Ocurrió un problema al guardar la reserva. Revisa la consola.", "error");
         throw new Error("Formato de respuesta inválido al guardar reserva");
       }
     } catch (errSave) {
@@ -472,7 +525,7 @@ if (finalizarReservaBtn) {
     // === 2) Guardar transacción ===
     const selectedPaymentRadio = document.querySelector('input[name="payment_method"]:checked');
     if (!selectedPaymentRadio) {
-      alert("Por favor, selecciona un método de pago antes de continuar.");
+      showBookingAlert("Por favor, selecciona un método de pago antes de continuar.", "warning");
       console.warn("⚠️ No se seleccionó ningún método de pago.");
       modal.style.display = "none";
       return;
@@ -516,13 +569,35 @@ if (finalizarReservaBtn) {
 
     } catch (errTrans) {
       console.error("[FINALIZAR] Error guardando transacción:", errTrans);
-      alert("Error al guardar la transacción. Revisa la consola.");
+      showBookingAlert("Error al guardar la transacción. Revisa la consola.", "error");
     }
 
     // === 3) Generar comprobante ===
     try {
       if (step4El) step4El.style.display = "none";
       if (step5El) step5El.style.display = "block";
+      
+      // Limpiar datos de reserva para desactivar interceptación de navegación
+      // El pago ya se completó, permitir navegación libre
+      if (typeof selectedRooms !== 'undefined') {
+        selectedRooms = [];
+      }
+      if (typeof selectedServices !== 'undefined') {
+        selectedServices = [];
+      }
+      if (typeof serviceQuantities !== 'undefined') {
+        serviceQuantities = {};
+      }
+      if (typeof clientData !== 'undefined') {
+        clientData = {};
+      }
+      localStorage.removeItem('booking_pending_data');
+      
+      // Detener temporizador si está corriendo
+      if (window.bookingTimer && typeof window.bookingTimer.stop === 'function') {
+        window.bookingTimer.stop(false);
+      }
+      
       // Scroll hacia arriba al cambiar de paso
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (comprobanteStatus) comprobanteStatus.textContent = "Generando comprobante...";
@@ -578,7 +653,7 @@ if (finalizarReservaBtn) {
     } catch (errPdf) {
       console.error("[FINALIZAR] Error generando comprobante:", errPdf);
       if (comprobanteStatus) comprobanteStatus.textContent = "Error generando comprobante. Intente descargar luego.";
-      alert("Se produjo un error al generar el comprobante. Revisa la consola.");
+      showBookingAlert("Se produjo un error al generar el comprobante. Revisa la consola.", "error");
       modal.style.display = "none";
     }
 
@@ -598,7 +673,7 @@ volverHome?.addEventListener("click", () => {
 
 enviarComprobanteBtn?.addEventListener("click", async () => {
   if (!ultimaReservaId) {
-    alert("Aún no se ha generado un comprobante para esta reserva.");
+    showBookingAlert("Aún no se ha generado un comprobante para esta reserva.", "warning");
     return;
   }
 
