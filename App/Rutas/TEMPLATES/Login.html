@@ -186,6 +186,7 @@
 </style>
 {% endblock %}
 
+{% set return_url = return_url or request.args.get('return_url') %}
 {% block content %}
 <div class="login-container">
     <div class="login-box">
@@ -206,6 +207,7 @@
         {% endwith %}
 
         <form method="POST" action="{{ url_for('usuarios.Login') }}">
+            <input type="hidden" name="return_url" value="{{ return_url or '' }}">
             <div class="form-group">
                 <label for="usuario">Usuario</label>
                 <input 
@@ -245,7 +247,7 @@
         </form>
 
         <div class="login-footer">
-            <p>¿No tienes una cuenta? <a href="{{ url_for('usuarios.Registro') }}">Regístrate aquí</a></p>
+            <p>¿No tienes una cuenta? <a href="{{ url_for('usuarios.Registro', return_url=return_url) }}">Regístrate aquí</a></p>
         </div>
     </div>
 </div>

@@ -1,0 +1,288 @@
+{% extends "/MODULO_RESERVA/Crud_reserva.html" %}
+
+{% block categories_content %}
+<div class="content-crud-categoria section-content" id="categorias">
+    {% if mode == 'list' %}
+    <h2 class="section-title">Gestionar Categorías</h2>
+
+    <div class="alert alert-success" id="alert-categoria-success" style="display: none;"></div>
+    <div class="alert alert-error" id="alert-categoria-error" style="display: none;"></div>
+
+    <div class="search-filters-section">
+        <div class="search-section">
+            <label for="search-categoria" class="search-label">Buscar</label>
+            <div class="search-form">
+                <input type="text" id="search-categoria" class="search-input" placeholder="Nombre o descripción">
+                <button type="button" class="search-button" onclick="buscarCategorias()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="actions-section">
+            <button type="button" onclick="window.location.href='{{ url_for('modulos.new_categoria') }}'"
+                class="create-button">
+                <i class="fas fa-plus"></i> Crear nueva
+            </button>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="pisos-table tbl-list">
+            <thead>
+                <tr>
+                    <th class="text-center">ID</th>
+                    <th>Nombre</th>
+                    <th class="text-center">Capacidad</th>
+                    <th class="text-end">Precio</th>
+                    <th class="text-center">Estado</th>
+                    <th>Descripción</th>
+                    <th class="text-center">Acción</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-categorias-body">
+                {% if categorias %}
+                    {% for categoria in categorias %}
+                    <tr>
+                        <td class="text-center">{{ categoria.id }}</td>
+                        <td>{{ categoria.nombre }}</td>
+                        <td class="text-center">{{ categoria.capacidad }}</td>
+                        <td class="text-end">S/ {{ "%.2f"|format(categoria.precio) }}</td>
+                        <td class="text-center">
+                            <span class="{{ 'estado-Activa' if categoria.estado == 1 else 'estado-Inactiva' }}">
+                                {{ 'Activa' if categoria.estado == 1 else 'Inactiva' }}
+                            </span>
+                        </td>
+                        <td>{{ categoria.descripcion or '—' }}</td>
+                        <td class="text-center">
+                            <div class="action-buttons2">
+                                <button type="button" class="action-btn edit-btn"
+                                    onclick="window.location.href='{{ url_for('modulos.edit_categoria', categoria_id=categoria.id) }}'">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button type="button" class="action-btn calendar-btn"
+                                    onclick="window.location.href='{{ url_for('modulos.view_categoria', categoria_id=categoria.id) }}'">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <button type="button" class="action-btn delete-btn" data-id="{{ categoria.id }}"
+                                    onclick="eliminarCategoria(event)">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center p-3">No se encontraron categorías.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="form-promocion-f" style="background: #f9f9f9; padding: 25px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #328336;">
+        <h3 style="color: #328336; margin-top: 0;">
+            {% if mode == 'insert' %}
+                Crear Nueva Categoría
+            {% elif mode == 'edit' %}
+                Editar Categoría {{ categoria.id }}
+            {% else %}
+                Ver Categoría {{ categoria.id }}
+            {% endif %}
+        </h3>
+
+        <form action="{{ url_for('modulos.save_categoria') if mode == 'insert' else url_for('modulos.update_categoria') }}" method="POST">
+            {% if mode != 'insert' %}
+                <input type="hidden" name="categoria_id" value="{{ categoria.id }}">
+            {% endif %}
+
+            <div class="form-grid" style="margin-bottom: 25px;">
+                <div class="form-group">
+                    <label for="nombre_categoria">Nombre *</label>
+                    <input type="text" id="nombre_categoria" name="nombre_categoria"
+                        value="{{ categoria.nombre if categoria else '' }}"
+                        class="form-control {% if mode == 'view' %}bg-light{% endif %}"
+                        {% if mode == 'view' %}readonly{% else %}required{% endif %}>
+                </div>
+                <div class="form-group">
+                    <label for="capacidad">Capacidad *</label>
+                    <input type="number" id="capacidad" name="capacidad" min="1"
+                        value="{{ categoria.capacidad if categoria else '' }}"
+                        class="form-control {% if mode == 'view' %}bg-light{% endif %}"
+                        {% if mode == 'view' %}readonly{% else %}required{% endif %}>
+                </div>
+                <div class="form-group">
+                    <label for="precio_categoria">Precio *</label>
+                    <input type="number" step="0.01" id="precio_categoria" name="precio_categoria"
+                        value="{{ categoria.precio if categoria else '' }}"
+                        class="form-control {% if mode == 'view' %}bg-light{% endif %}"
+                        {% if mode == 'view' %}readonly{% else %}required{% endif %}>
+                </div>
+                <div class="form-group">
+                    <label for="estado">Estado *</label>
+                    {% if mode == 'view' %}
+                        <input type="text" class="form-control bg-light"
+                            value="{{ 'Activa' if categoria.estado == 1 else 'Inactiva' }}" readonly>
+                    {% else %}
+                        <select id="estado" name="estado" class="form-control">
+                            <option value="1" {% if categoria and categoria.estado == 1 %}selected{% endif %}>Activa</option>
+                            <option value="0" {% if categoria and categoria.estado == 0 %}selected{% endif %}>Inactiva</option>
+                        </select>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="descripcion">Descripción</label>
+                <textarea id="descripcion" name="descripcion" rows="3"
+                    class="form-control {% if mode == 'view' %}bg-light{% endif %}"
+                    {% if mode == 'view' %}readonly{% endif %}>{{ categoria.descripcion if categoria else '' }}</textarea>
+            </div>
+
+            <div class="form-actions" style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #f0f0f0;">
+                <a href="{{ url_for('modulos.categorias') }}" class="btn btn-light btn-volver">Volver</a>
+                {% if mode != 'view' %}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    <div id="modal-confirm-categoria" class="modal-confirm" style="display: none;">
+        <div class="modal-confirm-content">
+            <div class="modal-confirm-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="modal-confirm-title">Eliminar Categoría</h3>
+            <p class="modal-confirm-message">¿Estás seguro?</p>
+            <div class="modal-confirm-buttons">
+                <button class="btn-confirm btn-confirm-danger" onclick="confirmarEliminarCategoria()">
+                    <i class="fas fa-trash"></i>
+                    Eliminar
+                </button>
+                <button class="btn-confirm btn-confirm-secondary" onclick="cancelarEliminarCategoria()">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let categoriaIdToDelete = null;
+
+    function mostrarModalEliminarCategoria(id) {
+        categoriaIdToDelete = id;
+        const modal = document.getElementById('modal-confirm-categoria');
+        modal.style.display = 'flex';
+        modal.classList.add('show');
+    }
+
+    function cancelarEliminarCategoria() {
+        const modal = document.getElementById('modal-confirm-categoria');
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+        categoriaIdToDelete = null;
+    }
+
+    async function confirmarEliminarCategoria() {
+        if (!categoriaIdToDelete) return;
+
+        try {
+            const response = await fetch('/Cruds/DeleteCategoria', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ categoria_id: categoriaIdToDelete })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert(result.message || 'No se pudo eliminar la categoría.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error al eliminar la categoría.');
+        } finally {
+            cancelarEliminarCategoria();
+        }
+    }
+
+    function eliminarCategoria(event) {
+        const id = event.currentTarget.dataset.id;
+        mostrarModalEliminarCategoria(id);
+    }
+
+    async function buscarCategorias() {
+        const query = document.getElementById('search-categoria').value.trim();
+        const tbody = document.getElementById('tabla-categorias-body');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center p-3">
+                    <i class="fas fa-spinner fa-spin"></i> Buscando...
+                </td>
+            </tr>
+        `;
+        try {
+            const response = await fetch(`/Cruds/SearchCategorias?query=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center p-3">No se encontraron resultados</td>
+                    </tr>
+                `;
+                return;
+            }
+            tbody.innerHTML = data.map(cat => `
+                <tr>
+                    <td class="text-center">${cat.id}</td>
+                    <td>${cat.nombre}</td>
+                    <td class="text-center">${cat.capacidad}</td>
+                    <td class="text-end">S/ ${Number(cat.precio).toFixed(2)}</td>
+                    <td class="text-center">
+                        <span class="${cat.estado == 1 ? 'estado-Activa' : 'estado-Inactiva'}">
+                            ${cat.estado == 1 ? 'Activa' : 'Inactiva'}
+                        </span>
+                    </td>
+                    <td>${cat.descripcion || '—'}</td>
+                    <td class="text-center">
+                        <div class="action-buttons2">
+                            <button type="button" class="action-btn edit-btn"
+                                onclick="window.location.href='/Cruds/EditCategoria/${cat.id}'">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button type="button" class="action-btn calendar-btn"
+                                onclick="window.location.href='/Cruds/ViewCategoria/${cat.id}'">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <button type="button" class="action-btn delete-btn" data-id="${cat.id}"
+                                onclick="eliminarCategoria(event)">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error(error);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center p-3 text-danger">Error al buscar categorías</td>
+                </tr>
+            `;
+        }
+    }
+
+    document.getElementById('search-categoria')?.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+            buscarCategorias();
+        }
+    });
+</script>
+{% endblock %}
+

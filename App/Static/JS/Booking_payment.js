@@ -5,6 +5,10 @@ const processPaymentBtn = document.getElementById("process_payment");
 const paymentItemsDiv = document.getElementById("payment_items");
 const paymentTotalAmount = document.getElementById("payment_total_amount");
 const cardForm = document.getElementById("card_form");
+const cardHolderInput = document.getElementById("card_holder");
+const cardNumberInput = document.getElementById("card_number");
+const cardExpInput = document.getElementById("card_exp");
+const cardCvvInput = document.getElementById("card_cvv");
 const finalizarReservaBtn = document.getElementById("finalizar_reserva");
 const step5El = document.getElementById("step5");
 const downloadLink = document.getElementById("download_comprobante_link") || document.createElement("a");
@@ -31,6 +35,69 @@ const setEmailStatus = (type, message) => {
 };
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+function sanitizeCardHolder(value) {
+  if (typeof value !== "string") return "";
+  let cleaned = value
+    .normalize("NFD")
+    .replace(/[^A-Za-zÀ-ÿñÑüÜ\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (cleaned.length > 50) {
+    cleaned = cleaned.slice(0, 50);
+  }
+  return cleaned;
+}
+
+function validateCardHolder(value) {
+  if (!value) return { valid: false, message: "Ingrese el nombre del titular." };
+  if (!/^[A-Za-zÀ-ÿñÑüÜ]+(?:\s[A-Za-zÀ-ÿñÑüÜ]+)*$/.test(value)) {
+    return { valid: false, message: "El titular solo puede contener letras y un espacio entre cada nombre." };
+  }
+  if (value.length > 50) {
+    return { valid: false, message: "El titular no debe exceder 50 caracteres." };
+  }
+  return { valid: true };
+}
+
+function formatMonthValue(value) {
+  if (!value || value.indexOf("-") === -1) return null;
+  const [yearStr, monthStr] = value.split("-");
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  if (!year || !month || month < 1 || month > 12) return null;
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  if (year < currentYear || (year === currentYear && month < currentMonth)) {
+    return { valid: false, message: "La fecha de expiración debe ser futura." };
+  }
+  return {
+    valid: true,
+    year,
+    month,
+    formatted: `${String(month).padStart(2, "0")}/${String(year).slice(-2)}`
+  };
+}
+
+function setCardExpMin() {
+  if (!cardExpInput) return;
+  const now = new Date();
+  const min = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  cardExpInput.min = min;
+}
+
+if (cardHolderInput) {
+  cardHolderInput.addEventListener("input", () => {
+    const sanitized = sanitizeCardHolder(cardHolderInput.value);
+    if (cardHolderInput.value !== sanitized) {
+      cardHolderInput.value = sanitized;
+    }
+  });
+}
+
+setCardExpMin();
 
 function launchConfetti() {
   if (typeof confetti !== "function") return;
@@ -208,6 +275,8 @@ document.getElementById("payment_phase")?.addEventListener("click", (e) => {
   if (step4El) {
     populatePaymentSummary_new();
     step4El.style.display = "block";
+    // Scroll hacia arriba al cambiar de paso
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 });
 
@@ -226,19 +295,36 @@ const method = document.querySelector('input[name="payment_method"]:checked')?.v
 
 // Validaciones de tarjeta si método card
 if (method === '2') {
-    const holder = document.getElementById("card_holder")?.value.trim();
-    const number = (document.getElementById("card_number")?.value || "").replace(/\s+/g, '');
-    const exp = document.getElementById("card_exp")?.value.trim();
-    const cvv = document.getElementById("card_cvv")?.value.trim();
+    const holderValue = sanitizeCardHolder(cardHolderInput?.value || "");
+    if (cardHolderInput && cardHolderInput.value !== holderValue) {
+      cardHolderInput.value = holderValue;
+    }
+    const number = (cardNumberInput?.value || "").replace(/\s+/g, '');
+    const expRaw = cardExpInput?.value || "";
+    const cvv = (cardCvvInput?.value || "").trim();
 
     console.log("[PAGO] Método card seleccionado. Validando campos de tarjeta...");
-    if (!holder || !number || !exp || !cvv) {
-    alert("Complete todos los datos de la tarjeta.");
-    console.groupEnd();
-    return;
+    const holderValidation = validateCardHolder(holderValue);
+    if (!holderValidation.valid) {
+      alert(holderValidation.message);
+      console.groupEnd();
+      return;
+    }
+
+    if (!number || !expRaw || !cvv) {
+      alert("Complete todos los datos de la tarjeta.");
+      console.groupEnd();
+      return;
     }
     if (!/^\d{13,19}$/.test(number)) { alert("Número de tarjeta inválido."); console.groupEnd(); return; }
-    if (!/^\d{2}\/\d{2}$/.test(exp)) { alert("Fecha de expiración inválida. Formato MM/AA."); console.groupEnd(); return; }
+
+    const expResult = formatMonthValue(expRaw);
+    if (!expResult || !expResult.valid) {
+      alert(expResult?.message || "Fecha de expiración inválida.");
+      console.groupEnd();
+      return;
+    }
+
     if (!/^\d{3,4}$/.test(cvv)) { alert("CVV inválido."); console.groupEnd(); return; }
 }
 
@@ -394,6 +480,8 @@ if (finalizarReservaBtn) {
     try {
       if (step4El) step4El.style.display = "none";
       if (step5El) step5El.style.display = "block";
+      // Scroll hacia arriba al cambiar de paso
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       if (comprobanteStatus) comprobanteStatus.textContent = "Generando comprobante...";
 
       console.log("[FINALIZAR] Solicitando PDF a /Rutas/crear_comprobante/" + encodeURIComponent(reservaId));

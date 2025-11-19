@@ -140,3 +140,220 @@ def get_available_rooms(start_dt=None, end_dt=None, limit=20, offset=0):
         connection.close()
     return rooms
 
+
+def get_rooms(limit=20, offset=0):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    h.habitacion_id,
+                    h.numero,
+                    h.estado,
+                    h.id_categoria,
+                    c.nombre_categoria,
+                    h.piso_id,
+                    p.numero AS numero_piso
+                FROM HABITACION h
+                LEFT JOIN CATEGORIA c ON h.id_categoria = c.categoria_id
+                LEFT JOIN PISO p ON h.piso_id = p.piso_id
+                LIMIT %s OFFSET %s
+            """, (limit, offset))
+            rows = cursor.fetchall()
+            rooms = []
+            for row in rows:
+                rooms.append({
+                    "id": row[0],
+                    "numero": row[1],
+                    "estado": row[2],
+                    "categoria_id": row[3],
+                    "categoria": row[4],
+                    "piso_id": row[5],
+                    "piso": row[6]
+                })
+            return rooms
+    finally:
+        connection.close()
+
+
+def count_rooms():
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM HABITACION")
+            row = cursor.fetchone()
+            return row[0] if row else 0
+    finally:
+        connection.close()
+
+
+def order_rooms(field="habitacion_id", order="asc"):
+    valid_fields = {
+        "habitacion_id": "habitacion_id",
+        "numero": "numero",
+        "estado": "estado",
+        "categoria": "id_categoria",
+        "piso": "piso_id"
+    }
+    field_db = valid_fields.get(field, "habitacion_id")
+    order_db = "DESC" if str(order).lower() == "desc" else "ASC"
+
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                SELECT
+                    h.habitacion_id,
+                    h.numero,
+                    h.estado,
+                    h.id_categoria,
+                    c.nombre_categoria,
+                    h.piso_id,
+                    p.numero AS numero_piso
+                FROM HABITACION h
+                LEFT JOIN CATEGORIA c ON h.id_categoria = c.categoria_id
+                LEFT JOIN PISO p ON h.piso_id = p.piso_id
+                ORDER BY {field_db} {order_db}
+            """)
+            rows = cursor.fetchall()
+            rooms = []
+            for row in rows:
+                rooms.append({
+                    "id": row[0],
+                    "numero": row[1],
+                    "estado": row[2],
+                    "categoria_id": row[3],
+                    "categoria": row[4],
+                    "piso_id": row[5],
+                    "piso": row[6]
+                })
+            return rooms
+    finally:
+        connection.close()
+
+
+def get_room(habitacion_id):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    h.habitacion_id,
+                    h.numero,
+                    h.estado,
+                    h.id_categoria,
+                    c.nombre_categoria,
+                    h.piso_id,
+                    p.numero AS numero_piso
+                FROM HABITACION h
+                LEFT JOIN CATEGORIA c ON h.id_categoria = c.categoria_id
+                LEFT JOIN PISO p ON h.piso_id = p.piso_id
+                WHERE h.habitacion_id = %s
+            """, (habitacion_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return {
+                "id": row[0],
+                "numero": row[1],
+                "estado": row[2],
+                "categoria_id": row[3],
+                "categoria": row[4],
+                "piso_id": row[5],
+                "piso": row[6]
+            }
+    finally:
+        connection.close()
+
+
+def insert_room(numero, estado, categoria_id, piso_id):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO HABITACION (numero, estado, id_categoria, piso_id)
+                VALUES (%s, %s, %s, %s)
+            """, (numero, estado, categoria_id, piso_id))
+        connection.commit()
+        return True
+    except Exception:
+        if connection:
+            connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def update_room(habitacion_id, numero, estado, categoria_id, piso_id):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE HABITACION
+                SET numero = %s,
+                    estado = %s,
+                    id_categoria = %s,
+                    piso_id = %s
+                WHERE habitacion_id = %s
+            """, (numero, estado, categoria_id, piso_id, habitacion_id))
+        connection.commit()
+        return True
+    except Exception:
+        if connection:
+            connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def delete_room(habitacion_id):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM HABITACION WHERE habitacion_id = %s", (habitacion_id,))
+        connection.commit()
+        return True
+    except Exception:
+        if connection:
+            connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def search_rooms(query):
+    connection = get_connection()
+    try:
+        wildcard = f"%{query}%"
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    h.habitacion_id,
+                    h.numero,
+                    h.estado,
+                    h.id_categoria,
+                    c.nombre_categoria,
+                    h.piso_id,
+                    p.numero AS numero_piso
+                FROM HABITACION h
+                LEFT JOIN CATEGORIA c ON h.id_categoria = c.categoria_id
+                LEFT JOIN PISO p ON h.piso_id = p.piso_id
+                WHERE h.numero LIKE %s
+                   OR c.nombre_categoria LIKE %s
+                   OR p.numero LIKE %s
+            """, (wildcard, wildcard, wildcard))
+            rows = cursor.fetchall()
+            rooms = []
+            for row in rows:
+                rooms.append({
+                    "id": row[0],
+                    "numero": row[1],
+                    "estado": row[2],
+                    "categoria_id": row[3],
+                    "categoria": row[4],
+                    "piso_id": row[5],
+                    "piso": row[6]
+                })
+            return rooms
+    finally:
+        connection.close()

@@ -1,0 +1,290 @@
+{% extends "/MODULO_RESERVA/Crud_reserva.html" %}
+
+{% block rooms_content %}
+<div class="content-crud-habitacion section-content" id="habitaciones">
+    {% if mode == 'list' %}
+    <h2 class="section-title">Gestionar Habitaciones</h2>
+
+    <div class="alert alert-success" id="alert-habitacion-success" style="display: none;"></div>
+    <div class="alert alert-error" id="alert-habitacion-error" style="display: none;"></div>
+
+    <div class="search-filters-section">
+        <div class="search-section">
+            <label for="search-habitacion" class="search-label">Buscar</label>
+            <div class="search-form">
+                <input type="text" id="search-habitacion" class="search-input" placeholder="Número, categoría o piso">
+                <button type="button" class="search-button" onclick="buscarHabitaciones()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="actions-section">
+            <button type="button" onclick="window.location.href='{{ url_for('modulos.new_habitacion') }}'"
+                class="create-button">
+                <i class="fas fa-plus"></i> Crear nueva
+            </button>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="pisos-table tbl-list">
+            <thead>
+                <tr>
+                    <th class="text-center">ID</th>
+                    <th class="text-center">Número</th>
+                    <th>Categoría</th>
+                    <th class="text-center">Piso</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center">Acción</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-habitaciones-body">
+                {% if habitaciones %}
+                    {% for habitacion in habitaciones %}
+                    <tr>
+                        <td class="text-center">{{ habitacion.id }}</td>
+                        <td class="text-center">{{ habitacion.numero }}</td>
+                        <td>{{ habitacion.categoria or 'Sin categoría' }}</td>
+                        <td class="text-center">{{ habitacion.piso or '—' }}</td>
+                        <td class="text-center">
+                            <span class="{{ 'estado-Activa' if habitacion.estado == 1 else 'estado-Inactiva' }}">
+                                {{ 'Activa' if habitacion.estado == 1 else 'Inactiva' }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="action-buttons2">
+                                <button type="button" class="action-btn edit-btn"
+                                    onclick="window.location.href='{{ url_for('modulos.edit_habitacion', habitacion_id=habitacion.id) }}'">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button type="button" class="action-btn calendar-btn"
+                                    onclick="window.location.href='{{ url_for('modulos.view_habitacion', habitacion_id=habitacion.id) }}'">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <button type="button" class="action-btn delete-btn" data-id="{{ habitacion.id }}"
+                                    onclick="eliminarHabitacion(event)">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center p-3">No se encontraron habitaciones.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="form-promocion-f" style="background: #f9f9f9; padding: 25px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #328336;">
+        <h3 style="color: #328336; margin-top: 0;">
+            {% if mode == 'insert' %}
+                Crear Nueva Habitación
+            {% elif mode == 'edit' %}
+                Editar Habitación {{ habitacion.id }}
+            {% else %}
+                Ver Habitación {{ habitacion.id }}
+            {% endif %}
+        </h3>
+
+        <form action="{{ url_for('modulos.save_habitacion') if mode == 'insert' else url_for('modulos.update_habitacion') }}" method="POST">
+            {% if mode != 'insert' %}
+                <input type="hidden" name="habitacion_id" value="{{ habitacion.id }}">
+            {% endif %}
+
+            <div class="form-grid" style="margin-bottom: 25px;">
+                <div class="form-group">
+                    <label for="numero">Número *</label>
+                    <input type="text" id="numero" name="numero"
+                        value="{{ habitacion.numero if habitacion else '' }}"
+                        class="form-control {% if mode == 'view' %}bg-light{% endif %}"
+                        {% if mode == 'view' %}readonly{% else %}required{% endif %}>
+                </div>
+                <div class="form-group">
+                    <label for="categoria_id">Categoría *</label>
+                    {% if mode == 'view' %}
+                        <input type="text" class="form-control bg-light"
+                            value="{{ habitacion.categoria or 'Sin categoría' }}" readonly>
+                    {% else %}
+                        <select id="categoria_id" name="categoria_id" class="form-control" required>
+                            <option value="" disabled {% if not habitacion %}selected{% endif %}>Seleccione...</option>
+                            {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}" {% if habitacion and habitacion.categoria_id == categoria.id %}selected{% endif %}>
+                                    {{ categoria.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="piso_id">Piso *</label>
+                    {% if mode == 'view' %}
+                        <input type="text" class="form-control bg-light"
+                            value="{{ habitacion.piso or 'Sin piso' }}" readonly>
+                    {% else %}
+                        <select id="piso_id" name="piso_id" class="form-control" required>
+                            <option value="" disabled {% if not habitacion %}selected{% endif %}>Seleccione...</option>
+                            {% for piso in pisos %}
+                                <option value="{{ piso.piso_id }}" {% if habitacion and habitacion.piso_id == piso.piso_id %}selected{% endif %}>
+                                    Piso {{ piso.numero }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="estado">Estado *</label>
+                    {% if mode == 'view' %}
+                        <input type="text" class="form-control bg-light"
+                            value="{{ 'Activa' if habitacion.estado == 1 else 'Inactiva' }}" readonly>
+                    {% else %}
+                        <select id="estado" name="estado" class="form-control">
+                            <option value="1" {% if habitacion and habitacion.estado == 1 %}selected{% endif %}>Activa</option>
+                            <option value="0" {% if habitacion and habitacion.estado == 0 %}selected{% endif %}>Inactiva</option>
+                        </select>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #f0f0f0;">
+                <a href="{{ url_for('modulos.habitaciones') }}" class="btn btn-light btn-volver">Volver</a>
+                {% if mode != 'view' %}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    <div id="modal-confirm-habitacion" class="modal-confirm" style="display: none;">
+        <div class="modal-confirm-content">
+            <div class="modal-confirm-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="modal-confirm-title">Eliminar Habitación</h3>
+            <p class="modal-confirm-message">¿Estás seguro?</p>
+            <div class="modal-confirm-buttons">
+                <button class="btn-confirm btn-confirm-danger" onclick="confirmarEliminarHabitacion()">
+                    <i class="fas fa-trash"></i>
+                    Eliminar
+                </button>
+                <button class="btn-confirm btn-confirm-secondary" onclick="cancelarEliminarHabitacion()">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let habitacionIdToDelete = null;
+
+    function eliminarHabitacion(event) {
+        habitacionIdToDelete = event.currentTarget.dataset.id;
+        const modal = document.getElementById('modal-confirm-habitacion');
+        modal.style.display = 'flex';
+        modal.classList.add('show');
+    }
+
+    function cancelarEliminarHabitacion() {
+        const modal = document.getElementById('modal-confirm-habitacion');
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+        habitacionIdToDelete = null;
+    }
+
+    async function confirmarEliminarHabitacion() {
+        if (!habitacionIdToDelete) return;
+        try {
+            const response = await fetch('/Cruds/DeleteHabitacion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ habitacion_id: habitacionIdToDelete })
+            });
+            const result = await response.json();
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert(result.message || 'No se pudo eliminar la habitación.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error al eliminar la habitación.');
+        } finally {
+            cancelarEliminarHabitacion();
+        }
+    }
+
+    async function buscarHabitaciones() {
+        const query = document.getElementById('search-habitacion').value.trim();
+        const tbody = document.getElementById('tabla-habitaciones-body');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center p-3">
+                    <i class="fas fa-spinner fa-spin"></i> Buscando...
+                </td>
+            </tr>
+        `;
+        try {
+            const response = await fetch(`/Cruds/SearchHabitaciones?query=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center p-3">No se encontraron resultados</td>
+                    </tr>
+                `;
+                return;
+            }
+            tbody.innerHTML = data.map(room => `
+                <tr>
+                    <td class="text-center">${room.id}</td>
+                    <td class="text-center">${room.numero}</td>
+                    <td>${room.categoria || 'Sin categoría'}</td>
+                    <td class="text-center">${room.piso || '—'}</td>
+                    <td class="text-center">
+                        <span class="${room.estado == 1 ? 'estado-Activa' : 'estado-Inactiva'}">
+                            ${room.estado == 1 ? 'Activa' : 'Inactiva'}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <div class="action-buttons2">
+                            <button type="button" class="action-btn edit-btn"
+                                onclick="window.location.href='/Cruds/EditHabitacion/${room.id}'">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button type="button" class="action-btn calendar-btn"
+                                onclick="window.location.href='/Cruds/ViewHabitacion/${room.id}'">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <button type="button" class="action-btn delete-btn" data-id="${room.id}"
+                                onclick="eliminarHabitacion(event)">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error(error);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center p-3 text-danger">Error al buscar habitaciones</td>
+                </tr>
+            `;
+        }
+    }
+
+    document.getElementById('search-habitacion')?.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+            buscarHabitaciones();
+        }
+    });
+</script>
+{% endblock %}
+

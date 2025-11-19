@@ -32,24 +32,35 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def _get_safe_return_url(value):
+    if not value:
+        return None
+    if value.startswith('/'):
+        return value
+    return None
+
 @usuarios_bp.route('/login', methods=['GET', 'POST'])
 def Login():
     """
     Página de inicio de sesión
     """
+    return_url = _get_safe_return_url(request.args.get('return_url'))
     # Si ya hay sesión activa, redirigir al inicio
     if 'usuario_id' in session:
+        if return_url:
+            return redirect(return_url)
         return redirect(url_for('Index'))
     
     if request.method == 'POST':
         try:
             usuario = request.form.get('usuario')
             contrasena = request.form.get('contrasena')
+            return_url = _get_safe_return_url(request.form.get('return_url')) or return_url
             
             # Validar campos requeridos
             if not usuario or not contrasena:
                 flash('Usuario y contraseña son obligatorios', 'error')
-                return render_template('Login.html')
+                return render_template('Login.html', return_url=return_url)
             
             # Verificar credenciales
             usuario_data = controller_usuario.verificar_usuario(usuario, contrasena)
@@ -63,13 +74,15 @@ def Login():
                 session['rol_nombre'] = usuario_data['rol_nombre']
                 
                 flash(f'Bienvenido {usuario_data["usuario"]}!', 'success')
+                if return_url:
+                    return redirect(return_url)
                 return redirect(url_for('Index'))
             else:
                 flash('Usuario o contraseña incorrectos', 'error')
         except Exception as ex:
             flash(f'Error al iniciar sesión: {str(ex)}', 'error')
     
-    return render_template('Login.html')
+    return render_template('Login.html', return_url=return_url)
 
 def validar_usuario_registro(usuario):
     """Valida el nombre de usuario"""
@@ -138,8 +151,11 @@ def Registro():
     """
     Página de registro de nuevos usuarios con validaciones completas
     """
+    return_url = _get_safe_return_url(request.args.get('return_url'))
     # Si ya hay sesión activa, redirigir al inicio
     if 'usuario_id' in session:
+        if return_url:
+            return redirect(return_url)
         return redirect(url_for('Index'))
 
     form_data = {
@@ -156,8 +172,12 @@ def Registro():
     }
     errors = {}
 
+    def render_registro_template():
+        return render_template('Registro.html', form_data=form_data, errors=errors, return_url=return_url)
+
     if request.method == 'POST':
         try:
+            return_url = _get_safe_return_url(request.form.get('return_url')) or return_url
             # Datos de cuenta
             form_data['usuario'] = request.form.get('usuario', '').strip()
             form_data['email'] = request.form.get('email', '').strip()
@@ -194,67 +214,67 @@ def Registro():
 
             if errors:
                 flash('Por favor, corrija los campos marcados en rojo.', 'error')
-                return render_template('Registro.html', form_data=form_data, errors=errors)
+                return render_registro_template()
 
             # Validar usuario
             valido, mensaje = validar_usuario_registro(form_data['usuario'])
             if not valido:
                 errors['usuario'] = mensaje
                 flash(mensaje, 'error')
-                return render_template('Registro.html', form_data=form_data, errors=errors)
+                return render_registro_template()
 
             # Validar email
             valido, mensaje = validar_email_formato(form_data['email'])
             if not valido:
                 errors['email'] = mensaje
                 flash(mensaje, 'error')
-                return render_template('Registro.html', form_data=form_data, errors=errors)
+                return render_registro_template()
 
             # Validar contraseñas
             if contrasena != confirmar_contrasena:
                 errors['confirmar_contrasena'] = 'Las contraseñas no coinciden'
                 flash('Las contraseñas no coinciden', 'error')
-                return render_template('Registro.html', form_data=form_data, errors=errors)
+                return render_registro_template()
 
             if len(contrasena) < 6:
                 errors['contrasena'] = 'La contraseña debe tener al menos 6 caracteres'
                 flash('La contraseña debe tener al menos 6 caracteres', 'error')
-                return render_template('Registro.html', form_data=form_data, errors=errors)
+                return render_registro_template()
 
             # Validar nombres
             valido, mensaje = validar_nombres_apellidos(form_data['nombres'], 'Nombres')
             if not valido:
                 errors['nombres'] = mensaje
                 flash(mensaje, 'error')
-                return render_template('Registro.html', form_data=form_data, errors=errors)
+                return render_registro_template()
 
             # Validar apellidos
             valido, mensaje = validar_nombres_apellidos(form_data['apellido_paterno'], 'Apellido paterno')
             if not valido:
                 errors['apellido_paterno'] = mensaje
                 flash(mensaje, 'error')
-                return render_template('Registro.html', form_data=form_data, errors=errors)
+                return render_registro_template()
 
             valido, mensaje = validar_nombres_apellidos(form_data['apellido_materno'], 'Apellido materno')
             if not valido:
                 errors['apellido_materno'] = mensaje
                 flash(mensaje, 'error')
-                return render_template('Registro.html', form_data=form_data, errors=errors)
+                return render_registro_template()
 
             # Validar número de documento
             valido, mensaje = validar_numero_documento(form_data['num_documento'], form_data['tipo_documento_id'])
             if not valido:
                 errors['num_documento'] = mensaje
                 flash(mensaje, 'error')
-                return render_template('Registro.html', form_data=form_data, errors=errors)
+                return render_registro_template()
 
             # Validar teléfono (si se proporciona)
-            if form_data['telefono']:
-                valido, mensaje = validar_telefono(form_data['telefono'])
-                if not valido:
-                    errors['telefono'] = mensaje
-                    flash(mensaje, 'error')
-                    return render_template('Registro.html', form_data=form_data, errors=errors)
+                if form_data['telefono']:
+                    valido, mensaje = validar_telefono(form_data['telefono'])
+                    if not valido:
+                        errors['telefono'] = mensaje
+                        flash(mensaje, 'error')
+                        return render_registro_template()
 
             # Registrar usuario con datos personales
             resultado = controller_usuario.insert_usuario(
@@ -272,18 +292,28 @@ def Registro():
             )
 
             if resultado['success']:
+                if return_url:
+                    nuevo_usuario = controller_usuario.verificar_usuario(form_data['usuario'], contrasena)
+                    if nuevo_usuario:
+                        session['usuario_id'] = nuevo_usuario['usuario_id']
+                        session['usuario'] = nuevo_usuario['usuario']
+                        session['email'] = nuevo_usuario['email']
+                        session['rol_id'] = nuevo_usuario['rol_id']
+                        session['rol_nombre'] = nuevo_usuario['rol_nombre']
+                        flash('¡Registro exitoso! Bienvenido a Hostal Bolívar.', 'success')
+                        return redirect(return_url)
                 flash('¡Registro exitoso! Ya puedes iniciar sesión con tus credenciales.', 'success')
                 return redirect(url_for('usuarios.Login'))
             else:
                 errors[resultado.get('field', 'general')] = resultado['message']
                 flash(resultado['message'], 'error')
-                return render_template('Registro.html', form_data=form_data, errors=errors)
+                return render_registro_template()
         except Exception as ex:
             flash(f'Error al registrar usuario: {str(ex)}', 'error')
             errors['general'] = f'Error al registrar usuario: {str(ex)}'
-            return render_template('Registro.html', form_data=form_data, errors=errors)
+            return render_registro_template()
 
-    return render_template('Registro.html', form_data=form_data, errors=errors)
+    return render_registro_template()
 
 
 @usuarios_bp.route('/registro/verificar-usuario')

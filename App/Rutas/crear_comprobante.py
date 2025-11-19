@@ -6,6 +6,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from datetime import datetime
 import traceback
+import unicodedata
 
 crear_comprobante_bp = Blueprint('rutas', __name__, url_prefix='/Rutas')
 
@@ -172,6 +173,36 @@ def generar_pdf_boleta(reserva_id):
     return buffer, filename
 
 
+def _normalize_email_address(address: str):
+    """
+    Convierte direcciones con caracteres no ASCII a una versión segura (ASCII)
+    usando normalización Unicode para la parte local y IDNA para el dominio.
+    """
+    if not address:
+        return None
+
+    address = address.strip()
+    if "@" not in address:
+        return None
+
+    local_part, domain_part = address.split("@", 1)
+    local_part = unicodedata.normalize("NFKD", local_part).encode("ascii", "ignore").decode("ascii")
+    domain_segments = []
+    for segment in domain_part.split("."):
+        segment = segment.strip()
+        if not segment:
+            return None
+        normalized = unicodedata.normalize("NFKD", segment)
+        domain_segments.append(normalized.encode("idna").decode("ascii"))
+
+    domain_ascii = ".".join(domain_segments)
+    if not local_part or not domain_ascii:
+        return None
+
+    sanitized = f"{local_part}@{domain_ascii}".lower()
+    return sanitized
+
+
 @crear_comprobante_bp.route('/crear_comprobante/<int:reserva_id>', methods=['GET'])
 def crear_comprobante(reserva_id):
     try:
@@ -195,6 +226,10 @@ def enviar_comprobante(reserva_id):
     if not email:
         return jsonify(success=False, message="Debes ingresar un correo electrónico."), 400
 
+    normalized_email = _normalize_email_address(email)
+    if not normalized_email:
+        return jsonify(success=False, message="El correo ingresado no es válido."), 400
+
     try:
         buffer, filename = generar_pdf_boleta(reserva_id)
     except LookupError:
@@ -215,7 +250,7 @@ def enviar_comprobante(reserva_id):
 
         message = Message(
             subject=f"Comprobante de reserva #{reserva_id}",
-            recipients=[email]
+            recipients=[normalized_email]
         )
         message.body = (
             "Hola,\n\n"

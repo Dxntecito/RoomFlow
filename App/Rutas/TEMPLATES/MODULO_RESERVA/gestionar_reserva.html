@@ -1,7 +1,472 @@
 {% extends "/MODULO_RESERVA/Crud_reserva.html" %}
 
 {% block booking_content %}
-<div id="reservas">
-    <p>En proceso...</p>
+<div class="content-crud-reservas section-content" id="reservas">
+    {% if mode == 'list' %}
+    <h2 class="section-title">Gestionar Reservas</h2>
+
+    <div class="search-filters-section">
+        <div class="search-section">
+            <label for="search-reserva" class="search-label">Buscar</label>
+            <div class="search-form">
+                <input type="text" id="search-reserva" class="search-input" placeholder="Cliente, documento o ID">
+                <button type="button" class="search-button" onclick="buscarReservas()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="pisos-table tbl-list">
+            <thead>
+                <tr>
+                    <th class="text-center">ID</th>
+                    <th>Cliente</th>
+                    <th class="text-center">Ingreso</th>
+                    <th class="text-center">Salida</th>
+                    <th class="text-end">Monto</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center">Acción</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-reservas-body">
+                {% if reservas %}
+                    {% for reserva in reservas %}
+                    <tr>
+                        <td class="text-center">{{ reserva.id }}</td>
+                        <td>
+                            <div class="cliente-info">
+                                <strong>{{ reserva.cliente }}</strong>
+                                <span class="cliente-doc">{{ reserva.documento }}</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            {{ reserva.fecha_ingreso or '—' }}<br>
+                            <small>{{ reserva.hora_ingreso or '' }}</small>
+                        </td>
+                        <td class="text-center">
+                            {{ reserva.fecha_salida or '—' }}<br>
+                            <small>{{ reserva.hora_salida or '' }}</small>
+                        </td>
+                        <td class="text-end">S/ {{ "%.2f"|format(reserva.monto_total) }}</td>
+                        <td class="text-center">
+                            <span class="{{ 'estado-Activa' if reserva.estado == 1 else 'estado-Inactiva' }}">
+                                {{ 'Activa' if reserva.estado == 1 else 'Finalizada' }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="action-buttons2">
+                                <button type="button" class="action-btn edit-btn"
+                                    onclick="window.location.href='{{ url_for('modulos.edit_reserva', reserva_id=reserva.id) }}'">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button type="button" class="action-btn calendar-btn"
+                                    onclick="window.location.href='{{ url_for('modulos.view_reserva', reserva_id=reserva.id) }}'">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <button type="button" class="action-btn delete-btn" data-id="{{ reserva.id }}"
+                                    onclick="eliminarReserva(event)">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center p-3">No se encontraron reservas.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="form-promocion-f" style="background: #f9f9f9; padding: 25px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #328336;">
+        <h3 style="color: #328336; margin-top: 0;">
+            {% if mode == 'edit' %}
+                Editar Reserva #{{ reserva.id }}
+            {% else %}
+                Ver Reserva #{{ reserva.id }}
+            {% endif %}
+        </h3>
+
+        <form action="{{ url_for('modulos.update_reserva') if mode == 'edit' else '#' }}" method="POST">
+            {% if mode == 'edit' %}
+                <input type="hidden" name="reserva_id" value="{{ reserva.id }}">
+            {% endif %}
+
+            <div class="form-grid" style="margin-bottom: 25px;">
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <input type="text" class="form-control bg-light" value="{{ reserva.cliente }}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Documento</label>
+                    <input type="text" class="form-control bg-light" value="{{ reserva.documento }}" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="fecha_ingreso">Fecha de ingreso *</label>
+                    <input type="date" id="fecha_ingreso" name="fecha_ingreso"
+                        value="{{ reserva.fecha_ingreso }}"
+                        class="form-control {% if mode == 'view' %}bg-light{% endif %}"
+                        {% if mode == 'view' %}readonly{% else %}required{% endif %}>
+                </div>
+                <div class="form-group">
+                    <label for="hora_ingreso">Hora de ingreso *</label>
+                    <input type="time" id="hora_ingreso" name="hora_ingreso"
+                        value="{{ reserva.hora_ingreso }}"
+                        class="form-control {% if mode == 'view' %}bg-light{% endif %}"
+                        {% if mode == 'view' %}readonly{% else %}required{% endif %}>
+                </div>
+                <div class="form-group">
+                    <label for="fecha_salida">Fecha de salida *</label>
+                    <input type="date" id="fecha_salida" name="fecha_salida"
+                        value="{{ reserva.fecha_salida }}"
+                        class="form-control {% if mode == 'view' %}bg-light{% endif %}"
+                        {% if mode == 'view' %}readonly{% else %}required{% endif %}>
+                </div>
+                <div class="form-group">
+                    <label for="hora_salida">Hora de salida *</label>
+                    <input type="time" id="hora_salida" name="hora_salida"
+                        value="{{ reserva.hora_salida }}"
+                        class="form-control {% if mode == 'view' %}bg-light{% endif %}"
+                        {% if mode == 'view' %}readonly{% else %}required{% endif %}>
+                </div>
+                <div class="form-group">
+                    <label for="estado">Estado *</label>
+                    {% if mode == 'view' %}
+                        <input type="text" class="form-control bg-light"
+                            value="{{ 'Activa' if reserva.estado == 1 else 'Finalizada' }}" readonly>
+                    {% else %}
+                        <select id="estado" name="estado" class="form-control">
+                            <option value="1" {% if reserva.estado == 1 %}selected{% endif %}>Activa</option>
+                            <option value="0" {% if reserva.estado == 0 %}selected{% endif %}>Finalizada</option>
+                        </select>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="monto_total">Monto total *</label>
+                    <input type="number" step="0.01" id="monto_total" name="monto_total"
+                        value="{{ reserva.monto_total }}"
+                        class="form-control {% if mode == 'view' %}bg-light{% endif %}"
+                        {% if mode == 'view' %}readonly{% else %}required{% endif %}>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="motivo">Motivo / Comentario</label>
+                <textarea id="motivo" name="motivo" rows="3"
+                    class="form-control {% if mode == 'view' %}bg-light{% endif %}"
+                    {% if mode == 'view' %}readonly{% endif %}>{{ reserva.motivo }}</textarea>
+            </div>
+
+            <div class="detalle-reserva mt-4">
+                <h4>Habitaciones</h4>
+                <ul class="detalle-lista">
+                    {% for habitacion in reserva.habitaciones %}
+                        <li>
+                            Habitación {{ habitacion.numero }} · {{ habitacion.categoria or 'Sin categoría' }} · Piso {{ habitacion.piso or '—' }}
+                        </li>
+                    {% endfor %}
+                    {% if reserva.habitaciones|length == 0 %}
+                        <li>No hay habitaciones asociadas.</li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <div class="detalle-reserva mt-4">
+                <h4>Servicios adicionales</h4>
+
+                {% if mode == 'edit' %}
+                <div class="servicios-selector">
+                    <div class="selector-row">
+                        <select id="select-servicio" class="form-control">
+                            <option value="" disabled selected>Seleccionar servicio...</option>
+                            {% set servicios_asignados = reserva.servicios | map(attribute='servicio_id') | list %}
+                            {% for service in servicios %}
+                                {% if service.id not in servicios_asignados %}
+                                <option value="{{ service.id }}"
+                                    data-nombre="{{ service.nombre }}"
+                                    data-precio="{{ service.precio }}">
+                                    {{ service.nombre }} — S/ {{ "%.2f"|format(service.precio) }}
+                                </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-secondary" id="btn-agregar-servicio">
+                            <i class="fas fa-plus"></i> Agregar
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div id="lista-servicios" class="lista-servicios">
+                    {% for servicio in reserva.servicios %}
+                    <div class="servicio-item" data-id="{{ servicio.servicio_id }}" data-precio="{{ servicio.precio_unitario }}">
+                        <input type="hidden" name="servicio_id[]" value="{{ servicio.servicio_id }}">
+                        <div class="servicio-nombre">
+                            {{ servicio.nombre or 'Servicio' }}
+                        </div>
+                        {% if mode == 'view' %}
+                            <div class="servicio-valores">
+                                <span>Cantidad: {{ servicio.cantidad }}</span>
+                                <span>Precio: S/ {{ "%.2f"|format(servicio.precio_unitario) }}</span>
+                            </div>
+                        {% else %}
+                            <div class="servicio-inputs">
+                                <label>
+                                    Cantidad
+                                    <input type="number" min="1" name="servicio_cantidad[]" value="{{ servicio.cantidad or 1 }}">
+                                </label>
+                                <label>
+                                    Precio
+                                    <input type="number" step="0.01" name="servicio_precio[]" value="{{ servicio.precio_unitario or 0 }}">
+                                </label>
+                            </div>
+                            <button type="button" class="servicio-remove" onclick="removerServicio(this)">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if mode == 'edit' and reserva.servicios|length == 0 %}
+                    <p id="mensaje-sin-servicios" class="texto-suave">No hay servicios adicionales asignados.</p>
+                {% endif %}
+                {% if mode == 'view' and reserva.servicios|length == 0 %}
+                    <p class="texto-suave">No hay servicios adicionales asignados.</p>
+                {% endif %}
+            </div>
+
+            <div class="form-actions" style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #f0f0f0;">
+                <a href="{{ url_for('modulos.reserva') }}" class="btn btn-light btn-volver">Volver</a>
+                {% if mode == 'edit' %}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    <div id="modal-confirm-reserva" class="modal-confirm" style="display: none;">
+        <div class="modal-confirm-content">
+            <div class="modal-confirm-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="modal-confirm-title">Eliminar Reserva</h3>
+            <p class="modal-confirm-message">¿Estás seguro?</p>
+            <div class="modal-confirm-buttons">
+                <button class="btn-confirm btn-confirm-danger" onclick="confirmarEliminarReserva()">
+                    <i class="fas fa-trash"></i>
+                    Eliminar
+                </button>
+                <button class="btn-confirm btn-confirm-secondary" onclick="cancelarEliminarReserva()">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
+
+{% if mode == 'edit' %}
+<script>
+    const listaServicios = document.getElementById('lista-servicios');
+    const selectServicio = document.getElementById('select-servicio');
+    const mensajeSinServicios = document.getElementById('mensaje-sin-servicios');
+
+    function actualizarMensajeServicios() {
+        if (!mensajeSinServicios) return;
+        const items = listaServicios.querySelectorAll('.servicio-item');
+        mensajeSinServicios.style.display = items.length === 0 ? 'block' : 'none';
+    }
+
+    function removerServicio(button) {
+        const item = button.closest('.servicio-item');
+        if (!item) return;
+
+        const id = item.dataset.id;
+        const nombre = item.querySelector('.servicio-nombre').textContent.trim();
+        const precio = item.dataset.precio || 0;
+
+        const option = document.createElement('option');
+        option.value = id;
+        option.dataset.nombre = nombre;
+        option.dataset.precio = precio;
+        option.textContent = `${nombre} — S/ ${parseFloat(precio || 0).toFixed(2)}`;
+        selectServicio.appendChild(option);
+
+        item.remove();
+        actualizarMensajeServicios();
+    }
+
+    document.getElementById('btn-agregar-servicio')?.addEventListener('click', () => {
+        if (!selectServicio.value) {
+            alert('Seleccione un servicio para agregar.');
+            return;
+        }
+
+        const option = selectServicio.options[selectServicio.selectedIndex];
+        const id = option.value;
+        const nombre = option.dataset.nombre || option.textContent.trim();
+        const precio = option.dataset.precio || 0;
+
+        const item = document.createElement('div');
+        item.className = 'servicio-item';
+        item.dataset.id = id;
+        item.dataset.precio = precio;
+
+        item.innerHTML = `
+            <input type="hidden" name="servicio_id[]" value="${id}">
+            <div class="servicio-nombre">${nombre}</div>
+            <div class="servicio-inputs">
+                <label>
+                    Cantidad
+                    <input type="number" min="1" name="servicio_cantidad[]" value="1">
+                </label>
+                <label>
+                    Precio
+                    <input type="number" step="0.01" name="servicio_precio[]" value="${parseFloat(precio || 0).toFixed(2)}">
+                </label>
+            </div>
+            <button type="button" class="servicio-remove" onclick="removerServicio(this)">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+
+        listaServicios.appendChild(item);
+
+        selectServicio.remove(selectServicio.selectedIndex);
+        selectServicio.value = '';
+        actualizarMensajeServicios();
+    });
+
+    actualizarMensajeServicios();
+</script>
+{% else %}
+<script>
+    function removerServicio() {}
+</script>
+{% endif %}
+
+<script>
+    let reservaIdToDelete = null;
+
+    function eliminarReserva(event) {
+        reservaIdToDelete = event.currentTarget.dataset.id;
+        const modal = document.getElementById('modal-confirm-reserva');
+        modal.style.display = 'flex';
+        modal.classList.add('show');
+    }
+
+    function cancelarEliminarReserva() {
+        const modal = document.getElementById('modal-confirm-reserva');
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+        reservaIdToDelete = null;
+    }
+
+    async function confirmarEliminarReserva() {
+        if (!reservaIdToDelete) return;
+        try {
+            const response = await fetch('/Cruds/DeleteReserva', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ reserva_id: reservaIdToDelete })
+            });
+            const result = await response.json();
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert(result.message || 'No se pudo eliminar la reserva.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error al eliminar la reserva.');
+        } finally {
+            cancelarEliminarReserva();
+        }
+    }
+
+    async function buscarReservas() {
+        const query = document.getElementById('search-reserva').value.trim();
+        const tbody = document.getElementById('tabla-reservas-body');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center p-3">
+                    <i class="fas fa-spinner fa-spin"></i> Buscando...
+                </td>
+            </tr>
+        `;
+        try {
+            const response = await fetch(`/Cruds/SearchReservas?query=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center p-3">No se encontraron resultados.</td>
+                    </tr>
+                `;
+                return;
+            }
+            tbody.innerHTML = data.map(reserva => `
+                <tr>
+                    <td class="text-center">${reserva.id}</td>
+                    <td>
+                        <div class="cliente-info">
+                            <strong>${reserva.cliente}</strong>
+                            <span class="cliente-doc">${reserva.documento || ''}</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        ${reserva.fecha_ingreso || '—'}<br>
+                        <small>${reserva.hora_ingreso || ''}</small>
+                    </td>
+                    <td class="text-center">
+                        ${reserva.fecha_salida || '—'}<br>
+                        <small>${reserva.hora_salida || ''}</small>
+                    </td>
+                    <td class="text-end">S/ ${Number(reserva.monto_total || 0).toFixed(2)}</td>
+                    <td class="text-center">
+                        <span class="${reserva.estado == 1 ? 'estado-Activa' : 'estado-Inactiva'}">
+                            ${reserva.estado == 1 ? 'Activa' : 'Finalizada'}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <div class="action-buttons2">
+                            <button type="button" class="action-btn edit-btn"
+                                onclick="window.location.href='/Cruds/EditReserva/${reserva.id}'">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button type="button" class="action-btn calendar-btn"
+                                onclick="window.location.href='/Cruds/ViewReserva/${reserva.id}'">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <button type="button" class="action-btn delete-btn" data-id="${reserva.id}"
+                                onclick="eliminarReserva(event)">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error(error);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center p-3 text-danger">Error al buscar reservas.</td>
+                </tr>
+            `;
+        }
+    }
+
+    document.getElementById('search-reserva')?.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+            buscarReservas();
+        }
+    });
+</script>
 {% endblock %}

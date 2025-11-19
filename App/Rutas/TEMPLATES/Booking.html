@@ -66,8 +66,13 @@
 </style>
 {% endblock %}
 {% block content %}
+<script>
+  window.bookingHasSession = {{ (session.get('usuario_id') is not none)|tojson }};
+  window.BOOKING_PAGE_URL = "{{ url_for('bookingroom.BookingRoom') }}";
+  window.BOOKING_LOGIN_URL = "{{ url_for('usuarios.Login') }}";
+  window.BOOKING_REGISTER_URL = "{{ url_for('usuarios.Registro') }}";
+</script>
 <div id="booking_room_page">
-  <div id="booking_room_page">
   <div class="progress-container">
   <div class="progress-line"></div>
   <div class="progress-step active" data-step="1">
@@ -87,13 +92,7 @@
   <div id="step1">
     <div class="booking-hero">
       <div class="booking-heading">
-        <span class="booking-badge"><i class="fas fa-calendar-alt"></i> Reserva fácil</span>
-        <h2 class="booking_tittle">Reserva de habitaciones</h2>
-        <p class="booking-subtitle">Selecciona tus fechas y encuentra la habitación perfecta para tu estadía en Hostal Bolívar.</p>
-        <div class="booking-timer booking-timer--hidden" id="booking_timer_container">
-          <i class="fas fa-hourglass-half"></i>
-          <span>Tiempo restante: <strong id="booking_timer_display">10:00</strong></span>
-        </div>
+        <!-- Temporizador NO debe aparecer en step1, solo desde step2 en adelante -->
       </div>
 
       <form method="GET" action="{{ url_for('bookingroom.BookingRoom') }}" class="booking-card">
@@ -130,48 +129,47 @@
       </form>
     </div>
 
-    <div class="booking-filters-card" id="Booking_Filters">
-      <div class="filter-header">
-        <h3>Filtros</h3>
-        <p>Refina tu búsqueda según piso o categoría para encontrar la habitación ideal.</p>
-      </div>
-      <div class="filter-fields">
-        <div class="filter-field">
-          <label for="floor_number">Nro. de Piso</label>
-          <div class="select-wrapper">
-            <i class="fas fa-building"></i>
-            <select class="select_design" id="floor_number" name="floor_number">
-              <option value="">-- Selecciona una opción --</option>
-              {% for floor in floors %}
-              <option value="{{ floor[0] }}">{{ floor[1] }}</option>
-              {% endfor %}
-            </select>
+    <!-- Contenedor principal: Filtros (izquierda) + Tabla (derecha) -->
+    <div class="booking-main-layout">
+      <!-- Barra lateral de filtros -->
+      <aside class="booking-filters-sidebar" id="Booking_Filters">
+        <div class="filter-header">
+          <h3>Filtros</h3>
+          <p>Refina tu búsqueda según piso o categoría para encontrar la habitación ideal.</p>
+        </div>
+        <div class="filter-fields">
+          <div class="filter-field">
+            <label for="floor_number">Nro. de Piso</label>
+            <div class="select-wrapper">
+              <i class="fas fa-building"></i>
+              <select class="select_design" id="floor_number" name="floor_number">
+                <option value="">-- Selecciona una opción --</option>
+                {% for floor in floors %}
+                <option value="{{ floor[0] }}">{{ floor[1] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="filter-field">
+            <label for="room_category">Categoría</label>
+            <div class="select-wrapper">
+              <i class="fas fa-star"></i>
+              <select class="select_design" id="room_category" name="turno">
+                <option value="">-- Selecciona una opción --</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
         </div>
+        <div class="filter-helper">Puedes combinar filtros para mostrar sólo las habitaciones que se ajustan a tus necesidades.</div>
+      </aside>
 
-        <div class="filter-field">
-          <label for="room_category">Categoría</label>
-          <div class="select-wrapper">
-            <i class="fas fa-star"></i>
-            <select class="select_design" id="room_category" name="turno">
-              <option value="">-- Selecciona una opción --</option>
-              {% for category in categories %}
-              <option value="{{ category.id }}">{{ category.nombre }}</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="filter-helper">Puedes combinar filtros para mostrar sólo las habitaciones que se ajustan a tus necesidades.</div>
-    </div>
-
-    <div class="travel-motive-card">
-      <label for="motivo_viaje">Motivo de viaje</label>
-      <input type="text" id="motivo_viaje" name="motivo_viaje" placeholder="Ej. Vacaciones familiares, viaje de negocios, evento especial...">
-      <p class="travel-motive-helper">Comparte el propósito de tu estadía para que podamos sugerirte servicios y experiencias a medida.</p>
-    </div>
-
-    <table id="booking_room_available" class="booking_label" border="1">
+      <!-- Contenido principal: Tabla de habitaciones -->
+      <div class="booking-content-main">
+        <table id="booking_room_available" class="booking_label" border="1">
   <thead>
     <tr>
       <th>Habitación</th>
@@ -224,7 +222,17 @@
     {% endif %}
   </tbody>
 </table>
+      </div>
+    </div>
 
+    <!-- Motivo de viaje -->
+    <div class="travel-motive-card">
+      <label for="motivo_viaje">MOTIVO DE VIAJE</label>
+      <input type="text" id="motivo_viaje" name="motivo_viaje" placeholder="Ej. Vacaciones familiares, viaje de negocios, evento especial...">
+      <p class="travel-motive-helper">Comparte el propósito de tu estadía para que podamos sugerirte servicios y experiencias a medida.</p>
+    </div>
+
+    <!-- Habitaciones elegidas y servicios -->
     <div>
       <h2 class="Booking_web_subheaders" id="block_titles">Habitaciones elegidas</h2>
       <div class="summary-card" id="summary_booking">
@@ -267,7 +275,10 @@
 
   <!-- PASO 2: Registro de cliente -->
   <div id="step2" style="display:none;">
-    
+    <div class="booking-timer booking-timer--hidden" id="booking_timer_container_step2">
+      <i class="fas fa-hourglass-half"></i>
+      <span>Tiempo restante: <strong id="booking_timer_display_step2">10:00</strong></span>
+    </div>
     <h2>Registro del Cliente</h2>
     <form id="client_form" autocomplete="off">
       <div class="client-form-card">
@@ -391,6 +402,10 @@
 
   <!-- PASO 3: Registro de huéspedes -->
   <div id="step3" style="display:none;">
+    <div class="booking-timer booking-timer--hidden" id="booking_timer_container_step3">
+      <i class="fas fa-hourglass-half"></i>
+      <span>Tiempo restante: <strong id="booking_timer_display_step3">10:00</strong></span>
+    </div>
     <h2>Registro de Huéspedes por Habitación</h2>
     <div id="habitaciones_container"></div>
 
@@ -403,8 +418,12 @@
 
   <!-- PASO 4: Facturación / Pago (lo dejamos, pero lo ocultamos al guardar reserva) -->
   <!-- Tu contenido existente -->
-<div id="step4" style="display:none;">
-  <h2>Facturación y pago</h2>
+  <div id="step4" style="display:none;">
+    <div class="booking-timer booking-timer--hidden" id="booking_timer_container_step4">
+      <i class="fas fa-hourglass-half"></i>
+      <span>Tiempo restante: <strong id="booking_timer_display_step4">10:00</strong></span>
+    </div>
+    <h2>Facturación y pago</h2>
 
   <section id="payment_method_section">
     <label class="booking_label">Método de pago:</label>
@@ -419,7 +438,14 @@
     <h3>Datos de la tarjeta</h3>
     <div>
       <label class="booking_label">Titular</label>
-      <input type="text" id="card_holder" placeholder="Nombre como en la tarjeta" required>
+      <input
+        type="text"
+        id="card_holder"
+        placeholder="Nombre como en la tarjeta"
+        maxlength="50"
+        autocomplete="cc-name"
+        inputmode="text"
+        required>
     </div>
     <div class="card-number-wrapper">
   <label class="booking_label">Número de tarjeta</label>
@@ -438,7 +464,7 @@
     <div style="display:flex; gap:10px;">
       <div style="flex:1;">
         <label class="booking_label">Expiración (MM/AA)</label>
-        <input type="text" id="card_exp" placeholder="MM/AA" maxlength="5" required>
+        <input type="month" id="card_exp" required>
       </div>
       <div style="width:120px;">
         <label class="booking_label">CVV</label>
@@ -494,7 +520,11 @@
 
   <!-- PASO 5: Comprobante / Descarga -->
   <div id="step5" style="display:none;">
-  <h2>Pago completado — Comprobante</h2>
+    <div class="booking-timer booking-timer--hidden" id="booking_timer_container_step5">
+      <i class="fas fa-hourglass-half"></i>
+      <span>Tiempo restante: <strong id="booking_timer_display_step5">10:00</strong></span>
+    </div>
+    <h2>Pago completado — Comprobante</h2>
   <p>Tu reserva se guardó correctamente. Descarga tu comprobante aquí:</p>
 
   <div style="display:flex; gap:12px; align-items:center;">
@@ -545,9 +575,52 @@ document.addEventListener("DOMContentLoaded", () => {
   // Poner la fecha mínima en la hora actual
   const now = new Date();
   const pad = n => String(n).padStart(2, "0");
-  const localNow = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const formatDateTimeLocal = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  const ONE_HOUR_MS = 60 * 60 * 1000;
+
+  const localNow = formatDateTimeLocal(now);
+  const initialSalidaMin = formatDateTimeLocal(new Date(now.getTime() + ONE_HOUR_MS));
+
   fechaEntrada.min = localNow;
-  fechaSalida.min = localNow;
+  fechaSalida.min = initialSalidaMin;
+
+  fechaEntrada.addEventListener("change", () => {
+    if (fechaEntrada.value) {
+      const entradaDate = new Date(fechaEntrada.value);
+      const minSalidaDate = new Date(entradaDate.getTime() + ONE_HOUR_MS);
+      const minSalidaString = formatDateTimeLocal(minSalidaDate);
+
+      fechaSalida.min = minSalidaString;
+
+      if (fechaSalida.value) {
+        const salidaDate = new Date(fechaSalida.value);
+        if (salidaDate < minSalidaDate) {
+          fechaSalida.value = minSalidaString;
+        }
+      } else {
+        fechaSalida.value = minSalidaString;
+      }
+    } else {
+      fechaSalida.min = initialSalidaMin;
+      if (fechaSalida.value && fechaSalida.value < initialSalidaMin) {
+        fechaSalida.value = initialSalidaMin;
+      }
+    }
+  });
+
+  fechaSalida.addEventListener("change", () => {
+    if (fechaEntrada.value && fechaSalida.value) {
+      const entradaDate = new Date(fechaEntrada.value);
+      const minSalidaDate = new Date(entradaDate.getTime() + ONE_HOUR_MS);
+      const salidaDate = new Date(fechaSalida.value);
+
+      if (salidaDate < minSalidaDate) {
+        const minSalidaString = formatDateTimeLocal(minSalidaDate);
+        fechaSalida.value = minSalidaString;
+        fechaSalida.min = minSalidaString;
+      }
+    }
+  });
 
   form.addEventListener("submit", (e) => {
     const entrada = new Date(fechaEntrada.value);
@@ -559,8 +632,22 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Validar que la entrada sea después de la hora actual
+    if (entrada < now) {
+      alert("⚠️ La fecha de entrada debe ser posterior a la fecha y hora actuales.");
+      e.preventDefault();
+      return;
+    }
+
     if (entrada >= salida) {
-      alert("⚠️ La fecha de entrada debe ser antes que la fecha de salida.");
+      alert("⚠️ La fecha de salida debe ser posterior a la fecha de entrada.");
+      e.preventDefault();
+      return;
+    }
+
+    const diffMs = salida.getTime() - entrada.getTime();
+    if (diffMs < ONE_HOUR_MS) {
+      alert("⚠️ La fecha de salida debe ser al menos una hora después de la fecha de entrada.");
       e.preventDefault();
       return;
     }
@@ -677,9 +764,69 @@ const categorySelect = document.getElementById("room_category");
 floorSelect.addEventListener('change', filterRows);
 categorySelect.addEventListener('change', filterRows);
 
+// Función para verificar si hay habitaciones y deshabilitar filtros
+function updateFiltersState() {
+  const filtersSidebar = document.getElementById('Booking_Filters');
+  const roomRows = document.querySelectorAll('.room-row');
+  const hasRooms = roomRows.length > 0;
+  
+  if (filtersSidebar) {
+    if (hasRooms) {
+      filtersSidebar.classList.remove('disabled');
+      if (floorSelect) floorSelect.disabled = false;
+      if (categorySelect) categorySelect.disabled = false;
+    } else {
+      filtersSidebar.classList.add('disabled');
+      if (floorSelect) floorSelect.disabled = true;
+      if (categorySelect) categorySelect.disabled = true;
+    }
+  }
+}
+
+// Función para sincronizar altura del aside con la tabla
+function syncSidebarHeight() {
+  const filtersSidebar = document.getElementById('Booking_Filters');
+  const table = document.getElementById('booking_room_available');
+  const contentMain = document.querySelector('.booking-content-main');
+  
+  if (filtersSidebar && table && contentMain) {
+    // Resetear altura para obtener la altura natural
+    filtersSidebar.style.height = 'auto';
+    const tableHeight = table.offsetHeight;
+    
+    // Si la tabla tiene altura, aplicar esa altura al aside
+    if (tableHeight > 0) {
+      filtersSidebar.style.height = tableHeight + 'px';
+    }
+  }
+}
+
 // Si quieres aplicar el filtro al cargar con valores por defecto:
 filterRows();
+updateFiltersState();
+syncSidebarHeight();
 toggleServicesSection?.();
+
+// Observar cambios en la tabla para actualizar altura y estado de filtros
+const tableObserver = new MutationObserver(() => {
+  updateFiltersState();
+  syncSidebarHeight();
+});
+
+const table = document.getElementById('booking_room_available');
+if (table) {
+  tableObserver.observe(table, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['style']
+  });
+}
+
+// Actualizar altura cuando cambie el tamaño de la ventana
+window.addEventListener('resize', () => {
+  setTimeout(syncSidebarHeight, 100);
+});
 
 // --- Datos de habitaciones generados con Jinja ---
 const roomCapacities = {
@@ -687,6 +834,129 @@ const roomCapacities = {
   "{{ room.id }}": {{ categories_map.get(room.categoria_id).capacidad if categories_map.get(room.categoria_id) else 0 }}{% if not loop.last %},{% endif %}
 {% endfor %}
 };
+
+const BOOKING_STORAGE_KEY = 'booking_pending_data';
+
+function getSelectedServiceIds() {
+  return Array.from(document.querySelectorAll('.service-checkbox:checked')).map(cb => cb.value);
+}
+
+function saveBookingProgress(reason = 'login') {
+  try {
+    const state = {
+      rooms: Array.isArray(selectedRooms) ? [...selectedRooms] : [],
+      services: getSelectedServiceIds(),
+      startDate: startDateInput?.value || '',
+      endDate: endDateInput?.value || '',
+      timestamp: Date.now(),
+      reason
+    };
+    localStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(state));
+  } catch (error) {
+    console.warn('[Booking] No se pudo guardar el progreso:', error);
+  }
+}
+
+function resetBookingSelections() {
+  selectedRooms = [];
+  selectedServices = [];
+  roomsTotal = 0;
+  servicesTotal = 0;
+  total = 0;
+  if (selectedContainer) {
+    selectedContainer.innerHTML = '';
+  }
+  document.querySelectorAll('.checkbox_booking').forEach(cb => {
+    cb.checked = false;
+  });
+  resetServicesSelection();
+  updateTotalDisplay();
+}
+
+function restoreBookingProgressIfNeeded() {
+  if (!window.bookingHasSession) return;
+  let stored = null;
+  try {
+    stored = localStorage.getItem(BOOKING_STORAGE_KEY);
+  } catch (error) {
+    console.warn('[Booking] No se pudo leer el progreso guardado:', error);
+  }
+  if (!stored) return;
+
+  let data = null;
+  try {
+    data = JSON.parse(stored);
+  } catch (error) {
+    console.warn('[Booking] Progreso inválido, se eliminará.', error);
+    localStorage.removeItem(BOOKING_STORAGE_KEY);
+    return;
+  }
+
+  resetBookingSelections();
+
+  if (startDateInput && data.startDate) {
+    startDateInput.value = data.startDate;
+  }
+  if (endDateInput && data.endDate) {
+    endDateInput.value = data.endDate;
+  }
+
+  if (Array.isArray(data.rooms)) {
+    const roomsSet = new Set(data.rooms);
+    document.querySelectorAll('.checkbox_booking').forEach(cb => {
+      if (roomsSet.has(cb.value)) {
+        cb.checked = true;
+        cb.dispatchEvent(new Event('change'));
+      }
+    });
+  }
+
+  if (Array.isArray(data.services)) {
+    const servicesSet = new Set(data.services);
+    serviceCheckboxes.forEach(cb => {
+      cb.checked = servicesSet.has(cb.value);
+      cb.dispatchEvent(new Event('change'));
+    });
+  }
+
+  // Ocultar paso 1 y mostrar el siguiente paso apropiado
+  if (step1) step1.style.display = 'none';
+  if (usuarioId) {
+    if (step2) step2.style.display = 'none';
+    if (step3) {
+      step3.style.display = 'block';
+      generarFormulariosHuespedes();
+    }
+  } else {
+    if (step2) step2.style.display = 'block';
+  }
+
+  if (window.bookingTimer && typeof window.bookingTimer.updateVisibility === 'function') {
+    window.bookingTimer.updateVisibility();
+  }
+
+  scrollToTop();
+
+  try {
+    localStorage.removeItem(BOOKING_STORAGE_KEY);
+  } catch (error) {
+    console.warn('[Booking] No se pudo limpiar el progreso guardado:', error);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  restoreBookingProgressIfNeeded();
+  // Verificar estado inicial de filtros y altura
+  setTimeout(() => {
+    updateFiltersState();
+    syncSidebarHeight();
+  }, 100);
+});
+
+// Función helper para hacer scroll hacia arriba
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 // --- Paso 1 → Paso 2 (Cliente) ---
 nextLink.addEventListener("click", e => {
@@ -699,17 +969,27 @@ nextLink.addEventListener("click", e => {
     step1.style.display = "none";
     step3.style.display = "block";
     generarFormulariosHuespedes();
-  }else{
-    step1.style.display = "none";
-    step2.style.display = "block";
+  } else {
+    saveBookingProgress('login');
+    const currentUrl = window.location.pathname + window.location.search;
+    const loginTarget = window.BOOKING_LOGIN_URL
+      ? `${window.BOOKING_LOGIN_URL}?return_url=${encodeURIComponent(currentUrl)}`
+      : currentUrl;
+    window.location.href = loginTarget;
+    return;
   }
-  
+  // Actualizar visibilidad del temporizador
+  if (window.bookingTimer && typeof window.bookingTimer.updateVisibility === 'function') {
+    window.bookingTimer.updateVisibility();
+  }
+  scrollToTop();
 });
 
 // --- Paso 2 → Paso 1 ---
 backToRooms.addEventListener("click", () => {
   step2.style.display = "none";
   step1.style.display = "block";
+  scrollToTop();
 });
 
 // --- Paso 3 → Paso 2 ---
@@ -721,12 +1001,18 @@ backToClient.addEventListener("click", () => {
     step3.style.display = "none";
     step2.style.display = "block";
   }
+  // Actualizar visibilidad del temporizador
+  if (window.bookingTimer && typeof window.bookingTimer.updateVisibility === 'function') {
+    window.bookingTimer.updateVisibility();
+  }
+  scrollToTop();
 });
 
 // estado de cliente que construirás
 backToStep3Btn?.addEventListener("click", () => {
   if (step4El) step4El.style.display = "none";
   if (step3El) step3El.style.display = "block";
+  scrollToTop();
 });
 
 // validar DNI (8 dígitos) y RUC (11 dígitos) - solo números
@@ -810,6 +1096,7 @@ if (backToRoomsBtn) {
     const step2 = document.getElementById("step2");
     if (step2) step2.style.display = "none";
     if (step1) step1.style.display = "block";
+    scrollToTop();
   });
 }
 
@@ -881,6 +1168,11 @@ if (nextToGuestsBtn) {
     const step3 = document.getElementById("step3");
     if (step2) step2.style.display = "none";
     if (step3) step3.style.display = "block";
+    // Actualizar visibilidad del temporizador
+    if (window.bookingTimer && typeof window.bookingTimer.updateVisibility === 'function') {
+      window.bookingTimer.updateVisibility();
+    }
+    scrollToTop();
 
     // guarda clientData en un scope global si lo necesitas:
     window.__CLIENT_DATA__ = clientData;
@@ -889,7 +1181,10 @@ if (nextToGuestsBtn) {
 </script>
 <script>
 document.getElementById("volver_home").addEventListener("click", () => {
-  window.location.href = "/RoomFlow";
+  if (confirm("¿Deseas salir y volver al inicio?")) {
+    const homeUrl = window.BOOKING_HOME_URL || "/";
+    window.location.replace(homeUrl);
+  }
 });
 </script>
 
@@ -968,6 +1263,202 @@ function obtenerServiciosSeleccionados() {
   // 8. Devuelve el array con todos los servicios seleccionados
   return serviciosArray;
 }
+</script>
+
+<script>
+// Interceptar botón atrás, recarga y cierre de página
+(function() {
+  let isNavigatingAway = false;
+  let isReloading = false;
+  
+  // Función para verificar si estamos en el flujo de reserva
+  function isInBookingFlow() {
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+    const step4 = document.getElementById('step4');
+    const step5 = document.getElementById('step5');
+    
+    const isStep1Visible = step1 && step1.style.display !== 'none';
+    const isInFlow = !isStep1Visible || 
+                     (step2 && step2.style.display === 'block') ||
+                     (step3 && step3.style.display === 'block') ||
+                     (step4 && step4.style.display === 'block') ||
+                     (step5 && step5.style.display === 'block');
+    
+    return isInFlow;
+  }
+  
+  // Función para limpiar todos los datos del formulario
+  function clearAllBookingData() {
+    // Limpiar localStorage
+    localStorage.removeItem('booking_pending_data');
+    
+    // Limpiar sessionStorage del temporizador
+    if (window.sessionStorage) {
+      window.sessionStorage.removeItem('bookingTimerExpiration');
+    }
+    
+    // Limpiar variables globales
+    if (typeof selectedRooms !== 'undefined') {
+      selectedRooms = [];
+    }
+    if (typeof selectedServices !== 'undefined') {
+      selectedServices = [];
+    }
+    if (typeof clientData !== 'undefined') {
+      clientData = {};
+    }
+    
+    // Limpiar formularios
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+      form.reset();
+    });
+    
+    // Limpiar checkboxes de habitaciones
+    document.querySelectorAll('.checkbox_booking').forEach(cb => {
+      cb.checked = false;
+    });
+    
+    // Limpiar checkboxes de servicios
+    document.querySelectorAll('.service-checkbox').forEach(cb => {
+      cb.checked = false;
+      cb.closest('.service-card')?.classList.remove('selected');
+    });
+    
+    // Limpiar contenedores de habitaciones seleccionadas
+    const selectedRoomsContainer = document.getElementById('selected_rooms');
+    if (selectedRoomsContainer) {
+      selectedRoomsContainer.innerHTML = '';
+    }
+    
+    // Detener temporizador si está corriendo
+    if (window.bookingTimer && typeof window.bookingTimer.stop === 'function') {
+      window.bookingTimer.stop(false);
+    }
+  }
+  
+  // Función para volver al inicio
+  function navigateSafely(targetUrl) {
+    isNavigatingAway = true;
+    clearAllBookingData();
+    window.location.replace(targetUrl);
+  }
+
+  function goToHome() {
+    navigateSafely("{{ url_for('Index') }}");
+  }
+  
+  // Interceptar botón atrás del navegador
+  window.addEventListener('popstate', function(e) {
+    if (isNavigatingAway) {
+      return; // Permitir navegación si ya confirmamos
+    }
+    
+    if (isInBookingFlow()) {
+      // Prevenir la navegación hacia atrás
+      history.pushState(null, null, window.location.href);
+      
+      if (confirm('¿Estás seguro de que quieres salir? Si continúas, serás redirigido al inicio y se borrarán todos los datos ingresados.')) {
+        goToHome();
+      }
+    }
+  });
+  
+  // Interceptar teclas de recarga (F5, Ctrl+R, Ctrl+F5) ANTES del beforeunload
+  document.addEventListener('keydown', function(e) {
+    // F5 o Ctrl+R o Ctrl+F5
+    if (e.key === 'F5' || (e.ctrlKey && e.key === 'r') || (e.ctrlKey && e.key === 'R') || (e.ctrlKey && e.shiftKey && e.key === 'R')) {
+      if (isInBookingFlow() && !isNavigatingAway && !isReloading) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (confirm('¿Estás seguro de que quieres recargar la página? Si continúas, se borrarán todos los datos ingresados.')) {
+          isReloading = true;
+          clearAllBookingData();
+          window.location.reload();
+        }
+      }
+    }
+  });
+  
+  // Interceptar recarga y cierre de página
+  window.addEventListener('beforeunload', function(e) {
+    if (isNavigatingAway || isReloading) {
+      return; // Permitir si ya confirmamos
+    }
+    
+    if (isInBookingFlow()) {
+      // Los navegadores modernos solo muestran su propio diálogo
+      // No podemos personalizar el mensaje, pero podemos prevenir la salida
+      e.preventDefault();
+      e.returnValue = ''; // Chrome requiere returnValue
+      return ''; // Algunos navegadores requieren return
+    }
+  });
+  
+  // Limpiar datos cuando realmente se cierra/recarga la página
+  window.addEventListener('unload', function(e) {
+    if (isNavigatingAway || isReloading) {
+      return;
+    }
+    
+    if (isInBookingFlow()) {
+      // Limpiar datos al salir
+      clearAllBookingData();
+    }
+  });
+  
+  // Interceptar clic en el botón de recarga del navegador (si es posible)
+  // Nota: Esto solo funciona si el navegador lo permite
+  window.addEventListener('pageshow', function(e) {
+    // Si la página se cargó desde caché (back/forward), verificar si necesitamos limpiar
+    if (e.persisted && isInBookingFlow()) {
+      // La página se cargó desde caché, verificar si debemos limpiar datos
+      const savedState = sessionStorage.getItem('booking_should_clear');
+      if (savedState === 'true') {
+        clearAllBookingData();
+        sessionStorage.removeItem('booking_should_clear');
+      }
+    }
+  });
+  
+  // Interceptar clics en nav y footer cuando hay un flujo activo
+  function attachNavigationGuards() {
+    const selectors = [
+      '.nav a',
+      '.footer a',
+      'header a',
+      '.logo a'
+    ];
+
+    const links = document.querySelectorAll(selectors.join(','));
+
+    links.forEach(link => {
+      link.addEventListener('click', function(e) {
+        const targetUrl = this.href;
+
+        if (!isInBookingFlow() || isNavigatingAway) {
+          return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (confirm('¿Estás seguro de que quieres salir? Si continúas, se cancelará tu reserva.')) {
+          const url = targetUrl || "{{ url_for('Index') }}";
+          navigateSafely(url);
+        }
+      });
+    });
+  }
+
+  // Agregar un estado inicial al historial
+  window.addEventListener('DOMContentLoaded', () => {
+    history.pushState(null, null, window.location.href);
+    attachNavigationGuards();
+  });
+})();
 </script>
 
 {% endblock %}

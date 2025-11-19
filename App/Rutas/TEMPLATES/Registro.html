@@ -250,6 +250,7 @@
 </style>
 {% endblock %}
 
+{% set return_url = return_url or request.args.get('return_url') %}
 {% block content %}
 {% set form_data = form_data or {} %}
 {% set errors = errors or {} %}
@@ -272,6 +273,7 @@
         {% endwith %}
 
         <form method="POST" action="{{ url_for('usuarios.Registro') }}" id="registroForm">
+            <input type="hidden" name="return_url" value="{{ return_url or '' }}">
             <!-- Datos de Cuenta -->
             <h3 style="color: #333; margin-bottom: 20px; font-size: 18px; border-bottom: 2px solid #328336; padding-bottom: 10px;">
                 <i class="fas fa-user-lock"></i> Datos de Cuenta
@@ -459,7 +461,7 @@
         </form>
 
         <div class="registro-footer">
-            <p>¿Ya tienes una cuenta? <a href="{{ url_for('usuarios.Login') }}">Inicia sesión aquí</a></p>
+            <p>¿Ya tienes una cuenta? <a href="{{ url_for('usuarios.Login', return_url=return_url) }}">Inicia sesión aquí</a></p>
         </div>
     </div>
 </div>

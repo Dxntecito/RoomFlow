@@ -409,3 +409,315 @@ def _format_time(value):
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     return str(value)
 
+
+def count_reservas():
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM RESERVA")
+            row = cursor.fetchone()
+            return row[0] if row else 0
+    finally:
+        if connection:
+            connection.close()
+
+
+def get_reservas(limit=20, offset=0):
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    r.reserva_id,
+                    r.fecha_registro,
+                    r.hora_registro,
+                    r.fecha_ingreso,
+                    r.hora_ingreso,
+                    r.fecha_salida,
+                    r.hora_salida,
+                    r.monto_total,
+                    r.estado,
+                    r.motivo,
+                    c.nombres,
+                    c.ape_paterno,
+                    c.ape_materno,
+                    c.num_doc
+                FROM RESERVA r
+                LEFT JOIN CLIENTE c ON c.cliente_id = r.cliente_id
+                ORDER BY r.fecha_registro DESC, r.hora_registro DESC
+                LIMIT %s OFFSET %s
+            """, (limit, offset))
+            rows = cursor.fetchall()
+            reservas = []
+            for row in rows:
+                reservas.append({
+                    "id": row[0],
+                    "fecha_registro": _format_date(row[1]),
+                    "hora_registro": _format_time(row[2]),
+                    "fecha_ingreso": _format_date(row[3]),
+                    "hora_ingreso": _format_time(row[4]),
+                    "fecha_salida": _format_date(row[5]),
+                    "hora_salida": _format_time(row[6]),
+                    "monto_total": float(row[7]) if row[7] is not None else 0.0,
+                    "estado": row[8],
+                    "motivo": row[9],
+                    "cliente": " ".join(filter(None, [row[10], row[11], row[12]])).strip() or "Sin nombre",
+                    "documento": row[13]
+                })
+            return reservas
+    finally:
+        if connection:
+            connection.close()
+
+
+def order_reservas(field="reserva_id", order="desc"):
+    valid_fields = {
+        "reserva_id": "r.reserva_id",
+        "fecha_ingreso": "r.fecha_ingreso",
+        "fecha_salida": "r.fecha_salida",
+        "monto_total": "r.monto_total",
+        "estado": "r.estado"
+    }
+    field_db = valid_fields.get(field, "r.reserva_id")
+    order_db = "ASC" if str(order).lower() == "asc" else "DESC"
+
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                SELECT
+                    r.reserva_id,
+                    r.fecha_registro,
+                    r.hora_registro,
+                    r.fecha_ingreso,
+                    r.hora_ingreso,
+                    r.fecha_salida,
+                    r.hora_salida,
+                    r.monto_total,
+                    r.estado,
+                    r.motivo,
+                    c.nombres,
+                    c.ape_paterno,
+                    c.ape_materno,
+                    c.num_doc
+                FROM RESERVA r
+                LEFT JOIN CLIENTE c ON c.cliente_id = r.cliente_id
+                ORDER BY {field_db} {order_db}
+            """)
+            rows = cursor.fetchall()
+            reservas = []
+            for row in rows:
+                reservas.append({
+                    "id": row[0],
+                    "fecha_registro": _format_date(row[1]),
+                    "hora_registro": _format_time(row[2]),
+                    "fecha_ingreso": _format_date(row[3]),
+                    "hora_ingreso": _format_time(row[4]),
+                    "fecha_salida": _format_date(row[5]),
+                    "hora_salida": _format_time(row[6]),
+                    "monto_total": float(row[7]) if row[7] is not None else 0.0,
+                    "estado": row[8],
+                    "motivo": row[9],
+                    "cliente": " ".join(filter(None, [row[10], row[11], row[12]])).strip() or "Sin nombre",
+                    "documento": row[13]
+                })
+            return reservas
+    finally:
+        if connection:
+            connection.close()
+
+
+def search_reservas(query):
+    wildcard = f"%{query}%"
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    r.reserva_id,
+                    r.fecha_registro,
+                    r.hora_registro,
+                    r.fecha_ingreso,
+                    r.hora_ingreso,
+                    r.fecha_salida,
+                    r.hora_salida,
+                    r.monto_total,
+                    r.estado,
+                    r.motivo,
+                    c.nombres,
+                    c.ape_paterno,
+                    c.ape_materno,
+                    c.num_doc
+                FROM RESERVA r
+                LEFT JOIN CLIENTE c ON c.cliente_id = r.cliente_id
+                WHERE c.nombres LIKE %s
+                   OR c.ape_paterno LIKE %s
+                   OR c.ape_materno LIKE %s
+                   OR c.num_doc LIKE %s
+                   OR r.reserva_id LIKE %s
+            """, (wildcard, wildcard, wildcard, wildcard, wildcard))
+            rows = cursor.fetchall()
+            reservas = []
+            for row in rows:
+                reservas.append({
+                    "id": row[0],
+                    "fecha_registro": _format_date(row[1]),
+                    "hora_registro": _format_time(row[2]),
+                    "fecha_ingreso": _format_date(row[3]),
+                    "hora_ingreso": _format_time(row[4]),
+                    "fecha_salida": _format_date(row[5]),
+                    "hora_salida": _format_time(row[6]),
+                    "monto_total": float(row[7]) if row[7] is not None else 0.0,
+                    "estado": row[8],
+                    "motivo": row[9],
+                    "cliente": " ".join(filter(None, [row[10], row[11], row[12]])).strip() or "Sin nombre",
+                    "documento": row[13]
+                })
+            return reservas
+    finally:
+        if connection:
+            connection.close()
+
+
+def get_reserva_detalle(reserva_id):
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    r.reserva_id,
+                    r.fecha_registro,
+                    r.hora_registro,
+                    r.fecha_ingreso,
+                    r.hora_ingreso,
+                    r.fecha_salida,
+                    r.hora_salida,
+                    r.monto_total,
+                    r.estado,
+                    r.motivo,
+                    c.cliente_id,
+                    c.nombres,
+                    c.ape_paterno,
+                    c.ape_materno,
+                    c.num_doc
+                FROM RESERVA r
+                LEFT JOIN CLIENTE c ON c.cliente_id = r.cliente_id
+                WHERE r.reserva_id = %s
+            """, (reserva_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+
+            detalle = {
+                "id": row[0],
+                "fecha_registro": _format_date(row[1]),
+                "hora_registro": _format_time(row[2]),
+                "fecha_ingreso": _format_date(row[3]),
+                "hora_ingreso": _format_time(row[4]),
+                "fecha_salida": _format_date(row[5]),
+                "hora_salida": _format_time(row[6]),
+                "monto_total": float(row[7]) if row[7] is not None else 0.0,
+                "estado": row[8],
+                "motivo": row[9],
+                "cliente_id": row[10],
+                "cliente": " ".join(filter(None, [row[11], row[12], row[13]])).strip() or "Sin nombre",
+                "documento": row[14]
+            }
+
+            cursor.execute("""
+                SELECT
+                    rh.reserva_habitacion_id,
+                    h.habitacion_id,
+                    h.numero,
+                    c.nombre_categoria,
+                    p.numero AS numero_piso
+                FROM RESERVA_HABITACION rh
+                LEFT JOIN HABITACION h ON h.habitacion_id = rh.habitacion_id
+                LEFT JOIN CATEGORIA c ON c.categoria_id = h.id_categoria
+                LEFT JOIN PISO p ON p.piso_id = h.piso_id
+                WHERE rh.reserva_id = %s
+            """, (reserva_id,))
+            detalle["habitaciones"] = [
+                {
+                    "reserva_habitacion_id": hab[0],
+                    "habitacion_id": hab[1],
+                    "numero": hab[2],
+                    "categoria": hab[3],
+                    "piso": hab[4]
+                }
+                for hab in cursor.fetchall()
+            ]
+
+            cursor.execute("""
+                SELECT
+                    rs.reserva_servicio_id,
+                    rs.servicio_id,
+                    s.nombre_servicio,
+                    rs.cantidad,
+                    rs.precio_unitario
+                FROM RESERVA_SERVICIO rs
+                LEFT JOIN SERVICIO s ON s.servicio_id = rs.servicio_id
+                WHERE rs.reserva_id = %s
+            """, (reserva_id,))
+            detalle["servicios"] = [
+                {
+                    "reserva_servicio_id": serv[0],
+                    "servicio_id": serv[1],
+                    "nombre": serv[2],
+                    "cantidad": serv[3],
+                    "precio_unitario": float(serv[4]) if serv[4] is not None else 0.0
+                }
+                for serv in cursor.fetchall()
+            ]
+
+            return detalle
+    finally:
+        if connection:
+            connection.close()
+
+
+def update_reserva(reserva_id, fecha_ingreso, hora_ingreso, fecha_salida, hora_salida, estado, monto_total, motivo, servicios):
+    connection = None
+    try:
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE RESERVA
+                SET fecha_ingreso = %s,
+                    hora_ingreso = %s,
+                    fecha_salida = %s,
+                    hora_salida = %s,
+                    estado = %s,
+                    monto_total = %s,
+                    motivo = %s
+                WHERE reserva_id = %s
+            """, (fecha_ingreso, hora_ingreso, fecha_salida, hora_salida, estado, monto_total, motivo, reserva_id))
+
+            cursor.execute("DELETE FROM RESERVA_SERVICIO WHERE reserva_id = %s", (reserva_id,))
+
+            for servicio in servicios:
+                servicio_id = servicio.get("servicio_id")
+                if not servicio_id:
+                    continue
+                cantidad = servicio.get("cantidad") or 1
+                precio_unitario = servicio.get("precio_unitario") or 0
+                cursor.execute("""
+                    INSERT INTO RESERVA_SERVICIO (reserva_id, servicio_id, cantidad, precio_unitario)
+                    VALUES (%s, %s, %s, %s)
+                """, (reserva_id, servicio_id, cantidad, precio_unitario))
+
+        connection.commit()
+        return True
+    except Exception:
+        if connection:
+            connection.rollback()
+        raise
+    finally:
+        if connection:
+            connection.close()
+

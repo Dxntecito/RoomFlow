@@ -12,13 +12,24 @@
     <!-- ===== SIDEBAR IZQUIERDA ===== -->
     <nav class="sidebar" id="nav-principal">
       <h2>Módulo Reserva</h2>
-      <a href="{{ url_for ('modulos.reserva') }}" id="nav-reservas">👤 Gestionar Reservas</a>
-      <a href="{{ url_for ('modulos.promociones') }}" id="nav-promociones">👤 Gestionar Promociones</a>
-      <a href="{{ url_for ('modulos.pisos') }}"  id="nav-pisos">👤 Gestionar Pisos</a>
-      <a href="#">Secciones a agregar</a>
+      <a href="{{ url_for('modulos.reserva_dashboard') }}" id="nav-dashboard">👤 Gestionar</a>
+      <a href="{{ url_for('modulos.categorias') }}" id="nav-categorias">👤 Gestionar Categorías</a>
+      <a href="{{ url_for('modulos.habitaciones') }}" id="nav-habitaciones">👤 Gestionar Habitaciones</a>
+      <a href="{{ url_for('modulos.reserva') }}" id="nav-reservas">👤 Gestionar Reservas</a>
+      <a href="{{ url_for('modulos.promociones') }}" id="nav-promociones">👤 Gestionar Promociones</a>
+      <a href="{{ url_for('modulos.pisos') }}" id="nav-pisos">👤 Gestionar Pisos</a>
     </nav>
 <main class="content-crud-reserva" id="main-reserva">
     <!-- ===== CONTENIDO RESERVA ===== -->
+    {% block dashboard_content %}
+
+    {% endblock %}
+    {% block categories_content %}
+
+    {% endblock %}
+    {% block rooms_content %}
+
+    {% endblock %}
     {% block booking_content %}
 
     {% endblock %}
@@ -55,6 +66,15 @@ document.addEventListener("DOMContentLoaded", () => {
             break;
         case "reservas":
             activeId = "nav-reservas";
+            break;
+        case "categorias":
+            activeId = "nav-categorias";
+            break;
+        case "habitaciones":
+            activeId = "nav-habitaciones";
+            break;
+        case "resumen":
+            activeId = "nav-dashboard";
             break;
         case "promociones":
             activeId = "nav-promociones";

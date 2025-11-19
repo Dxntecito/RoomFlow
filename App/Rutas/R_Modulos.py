@@ -1,11 +1,18 @@
-from flask import render_template, Blueprint, session, redirect, url_for, flash,request,jsonify
+from flask import render_template, Blueprint, session, redirect, url_for, flash, request, jsonify
 from functools import wraps
 from decimal import Decimal
 from datetime import date, timedelta
 
 import App.Controladores.C_Usuarios.controlador_usuario as controller_usuario
-import App.Controladores.C_Reserva.controlador_piso as controller_piso
 import App.Controladores.C_Evento.controlador_evento as controlador_evento
+import App.Controladores.C_Reserva.controlador_reserva as controller_reserva
+import App.Controladores.C_Reserva.controlador_categoria as controller_categoria
+import App.Controladores.C_Reserva.controlador_piso as controller_piso
+import App.Controladores.C_Reserva.controlador_habitacion as controller_habitacion
+import App.Controladores.C_Reserva.controlador_servicio as controller_service
+
+
+
 modulos_bp = Blueprint('modulos', __name__, url_prefix='/Cruds')
 
 def login_required(f):
@@ -34,12 +41,480 @@ def reserva():
     usuario_id = session.get('usuario_id')
     perfil = controller_usuario.get_perfil_completo(usuario_id)
     tipos_documento = controller_usuario.get_tipos_documento()
-    
+
     if not perfil:
         flash('Usuario no encontrado', 'error')
         return redirect(url_for('Index'))
-    
-    return render_template("/MODULO_RESERVA/gestionar_reserva.html", perfil=perfil, tipos_documento=tipos_documento)
+
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    offset = (page - 1) * per_page
+
+    reservas = controller_reserva.get_reservas(limit=per_page, offset=offset)
+    total_reservas = controller_reserva.count_reservas()
+    total_pages = (total_reservas + per_page - 1) // per_page
+    servicios = controller_service.get_services(limit=100)
+
+    return render_template(
+        "/MODULO_RESERVA/gestionar_reserva.html",
+        perfil=perfil,
+        tipos_documento=tipos_documento,
+        reservas=reservas,
+        servicios=servicios,
+        mode="list",
+        page=page,
+        total_pages=total_pages
+    )
+
+
+@modulos_bp.route('/modulos/Reserva-dashboard', methods=['GET'])
+@login_required
+def reserva_dashboard():
+    usuario_id = session.get('usuario_id')
+    perfil = controller_usuario.get_perfil_completo(usuario_id)
+    tipos_documento = controller_usuario.get_tipos_documento()
+
+    if not perfil:
+        flash('Usuario no encontrado', 'error')
+        return redirect(url_for('Index'))
+
+    resumen = {
+        "categorias": controller_categoria.count_categories(),
+        "habitaciones": controller_habitacion.count_rooms(),
+        "reservas": controller_reserva.count_reservas(),
+        "pisos": controller_piso.count_pisos()
+    }
+
+    return render_template(
+        "/MODULO_RESERVA/resumen_reserva.html",
+        perfil=perfil,
+        tipos_documento=tipos_documento,
+        resumen=resumen
+    )
+
+
+@modulos_bp.route('/Categorias', methods=['GET'])
+@login_required
+def categorias():
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    offset = (page - 1) * per_page
+
+    categorias = controller_categoria.get_categories(limit=per_page, offset=offset)
+    total_categorias = controller_categoria.count_categories()
+    total_pages = (total_categorias + per_page - 1) // per_page
+
+    return render_template(
+        '/MODULO_RESERVA/gestionar_categoria.html',
+        categorias=categorias,
+        mode='list',
+        page=page,
+        total_pages=total_pages
+    )
+
+
+@modulos_bp.route('/FilterCategorias/<string:field>')
+@login_required
+def filter_categorias(field):
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    order = request.args.get('order', 'asc')
+
+    categorias_all = controller_categoria.order_categories(field, order)
+    total_categorias = len(categorias_all)
+    total_pages = (total_categorias + per_page - 1) // per_page
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    categorias = categorias_all[start:end]
+
+    return render_template(
+        '/MODULO_RESERVA/gestionar_categoria.html',
+        categorias=categorias,
+        mode='list',
+        filter=field,
+        order=order,
+        page=page,
+        total_pages=total_pages
+    )
+
+
+@modulos_bp.route('/NewCategoria')
+@login_required
+def new_categoria():
+    return render_template('/MODULO_RESERVA/gestionar_categoria.html', categoria=None, mode='insert')
+
+
+@modulos_bp.route('/SaveCategoria', methods=['POST'])
+@login_required
+def save_categoria():
+    nombre = request.form.get('nombre_categoria')
+    precio = request.form.get('precio_categoria', type=float)
+    estado = request.form.get('estado', type=int)
+    capacidad = request.form.get('capacidad', type=int)
+    descripcion = request.form.get('descripcion')
+
+    try:
+        controller_categoria.insert_category(nombre, precio, estado, capacidad, descripcion)
+        flash("Categoría creada correctamente", "success")
+    except Exception as e:
+        flash(f"Error al crear la categoría: {str(e)}", "error")
+
+    return redirect(url_for('modulos.categorias'))
+
+
+@modulos_bp.route('/ViewCategoria/<int:categoria_id>')
+@login_required
+def view_categoria(categoria_id):
+    categoria = controller_categoria.get_category(categoria_id)
+    if not categoria:
+        flash("Categoría no encontrada", "error")
+        return redirect(url_for('modulos.categorias'))
+    return render_template('/MODULO_RESERVA/gestionar_categoria.html', categoria=categoria, mode='view')
+
+
+@modulos_bp.route('/EditCategoria/<int:categoria_id>')
+@login_required
+def edit_categoria(categoria_id):
+    categoria = controller_categoria.get_category(categoria_id)
+    if not categoria:
+        flash("Categoría no encontrada", "error")
+        return redirect(url_for('modulos.categorias'))
+    return render_template('/MODULO_RESERVA/gestionar_categoria.html', categoria=categoria, mode='edit')
+
+
+@modulos_bp.route('/UpdateCategoria', methods=['POST'])
+@login_required
+def update_categoria():
+    categoria_id = request.form.get('categoria_id', type=int)
+    nombre = request.form.get('nombre_categoria')
+    precio = request.form.get('precio_categoria', type=float)
+    estado = request.form.get('estado', type=int)
+    capacidad = request.form.get('capacidad', type=int)
+    descripcion = request.form.get('descripcion')
+
+    try:
+        controller_categoria.update_category(categoria_id, nombre, precio, estado, capacidad, descripcion)
+        flash("Categoría actualizada correctamente", "success")
+    except Exception as e:
+        flash(f"Error al actualizar la categoría: {str(e)}", "error")
+
+    return redirect(url_for('modulos.categorias'))
+
+
+@modulos_bp.route('/DeleteCategoria', methods=['POST'])
+@login_required
+def delete_categoria():
+    categoria_id = request.form.get('categoria_id', type=int)
+    try:
+        controller_categoria.delete_category(categoria_id)
+        return jsonify(success=True)
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
+
+
+@modulos_bp.route('/SearchCategorias')
+@login_required
+def search_categorias():
+    query = request.args.get('query', '').strip()
+    if not query:
+        categorias = controller_categoria.get_categories(limit=50, offset=0)
+    else:
+        categorias = controller_categoria.search_categories(query)
+
+    return jsonify(categorias)
+
+
+@modulos_bp.route('/Habitaciones', methods=['GET'])
+@login_required
+def habitaciones():
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    offset = (page - 1) * per_page
+
+    rooms = controller_habitacion.get_rooms(limit=per_page, offset=offset)
+    total_rooms = controller_habitacion.count_rooms()
+    total_pages = (total_rooms + per_page - 1) // per_page
+
+    return render_template(
+        '/MODULO_RESERVA/gestionar_habitacion.html',
+        habitaciones=rooms,
+        mode='list',
+        page=page,
+        total_pages=total_pages
+    )
+
+
+@modulos_bp.route('/FilterHabitaciones/<string:field>')
+@login_required
+def filter_habitaciones(field):
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    order = request.args.get('order', 'asc')
+
+    rooms_all = controller_habitacion.order_rooms(field, order)
+    total_rooms = len(rooms_all)
+    total_pages = (total_rooms + per_page - 1) // per_page
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    rooms = rooms_all[start:end]
+
+    return render_template(
+        '/MODULO_RESERVA/gestionar_habitacion.html',
+        habitaciones=rooms,
+        mode='list',
+        filter=field,
+        order=order,
+        page=page,
+        total_pages=total_pages
+    )
+
+
+@modulos_bp.route('/NewHabitacion')
+@login_required
+def new_habitacion():
+    categorias = controller_categoria.get_categories(limit=100, offset=0)
+    pisos = controller_piso.get_pisos(limit=100, offset=0)
+    return render_template(
+        '/MODULO_RESERVA/gestionar_habitacion.html',
+        habitacion=None,
+        categorias=categorias,
+        pisos=pisos,
+        mode='insert'
+    )
+
+
+@modulos_bp.route('/SaveHabitacion', methods=['POST'])
+@login_required
+def save_habitacion():
+    numero = request.form.get('numero')
+    estado = request.form.get('estado', type=int)
+    categoria_id = request.form.get('categoria_id', type=int)
+    piso_id = request.form.get('piso_id', type=int)
+
+    try:
+        controller_habitacion.insert_room(numero, estado, categoria_id, piso_id)
+        flash("Habitación creada correctamente", "success")
+    except Exception as e:
+        flash(f"Error al crear la habitación: {str(e)}", "error")
+
+    return redirect(url_for('modulos.habitaciones'))
+
+
+@modulos_bp.route('/ViewHabitacion/<int:habitacion_id>')
+@login_required
+def view_habitacion(habitacion_id):
+    habitacion = controller_habitacion.get_room(habitacion_id)
+    if not habitacion:
+        flash("Habitación no encontrada", "error")
+        return redirect(url_for('modulos.habitaciones'))
+    return render_template('/MODULO_RESERVA/gestionar_habitacion.html', habitacion=habitacion, mode='view')
+
+
+@modulos_bp.route('/EditHabitacion/<int:habitacion_id>')
+@login_required
+def edit_habitacion(habitacion_id):
+    habitacion = controller_habitacion.get_room(habitacion_id)
+    if not habitacion:
+        flash("Habitación no encontrada", "error")
+        return redirect(url_for('modulos.habitaciones'))
+    categorias = controller_categoria.get_categories(limit=100, offset=0)
+    pisos = controller_piso.get_pisos(limit=100, offset=0)
+    return render_template(
+        '/MODULO_RESERVA/gestionar_habitacion.html',
+        habitacion=habitacion,
+        categorias=categorias,
+        pisos=pisos,
+        mode='edit'
+    )
+
+
+@modulos_bp.route('/UpdateHabitacion', methods=['POST'])
+@login_required
+def update_habitacion():
+    habitacion_id = request.form.get('habitacion_id', type=int)
+    numero = request.form.get('numero')
+    estado = request.form.get('estado', type=int)
+    categoria_id = request.form.get('categoria_id', type=int)
+    piso_id = request.form.get('piso_id', type=int)
+
+    try:
+        controller_habitacion.update_room(habitacion_id, numero, estado, categoria_id, piso_id)
+        flash("Habitación actualizada correctamente", "success")
+    except Exception as e:
+        flash(f"Error al actualizar la habitación: {str(e)}", "error")
+
+    return redirect(url_for('modulos.habitaciones'))
+
+
+@modulos_bp.route('/DeleteHabitacion', methods=['POST'])
+@login_required
+def delete_habitacion():
+    habitacion_id = request.form.get('habitacion_id', type=int)
+    try:
+        controller_habitacion.delete_room(habitacion_id)
+        return jsonify(success=True)
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
+
+
+@modulos_bp.route('/SearchHabitaciones')
+@login_required
+def search_habitaciones():
+    query = request.args.get('query', '').strip()
+    if not query:
+        rooms = controller_habitacion.get_rooms(limit=50, offset=0)
+    else:
+        rooms = controller_habitacion.search_rooms(query)
+    return jsonify(rooms)
+
+
+@modulos_bp.route('/FilterReservas/<string:field>')
+@login_required
+def filter_reservas(field):
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    order = request.args.get('order', 'desc')
+
+    reservas_all = controller_reserva.order_reservas(field, order)
+    total_reservas = len(reservas_all)
+    total_pages = (total_reservas + per_page - 1) // per_page
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    reservas = reservas_all[start:end]
+
+    servicios = controller_service.get_services(limit=100)
+
+    return render_template(
+        "/MODULO_RESERVA/gestionar_reserva.html",
+        reservas=reservas,
+        servicios=servicios,
+        mode="list",
+        filter=field,
+        order=order,
+        page=page,
+        total_pages=total_pages
+    )
+
+
+@modulos_bp.route('/SearchReservas')
+@login_required
+def search_reservas():
+    query = request.args.get('query', '').strip()
+    if not query:
+        reservas = controller_reserva.get_reservas(limit=50, offset=0)
+    else:
+        reservas = controller_reserva.search_reservas(query)
+    return jsonify(reservas)
+
+
+@modulos_bp.route('/ViewReserva/<int:reserva_id>')
+@login_required
+def view_reserva(reserva_id):
+    reserva = controller_reserva.get_reserva_detalle(reserva_id)
+    if not reserva:
+        flash("Reserva no encontrada", "error")
+        return redirect(url_for('modulos.reserva'))
+
+    servicios = controller_service.get_services(limit=100)
+
+    return render_template(
+        "/MODULO_RESERVA/gestionar_reserva.html",
+        reserva=reserva,
+        servicios=servicios,
+        mode='view'
+    )
+
+
+@modulos_bp.route('/EditReserva/<int:reserva_id>')
+@login_required
+def edit_reserva(reserva_id):
+    reserva = controller_reserva.get_reserva_detalle(reserva_id)
+    if not reserva:
+        flash("Reserva no encontrada", "error")
+        return redirect(url_for('modulos.reserva'))
+
+    servicios = controller_service.get_services(limit=100)
+    servicios_asignados = {serv['servicio_id'] for serv in reserva.get('servicios', [])}
+    servicios_disponibles = [serv for serv in servicios if serv['id'] not in servicios_asignados]
+
+    return render_template(
+        "/MODULO_RESERVA/gestionar_reserva.html",
+        reserva=reserva,
+        servicios=servicios,
+        servicios_disponibles=servicios_disponibles,
+        mode='edit'
+    )
+
+
+@modulos_bp.route('/UpdateReserva', methods=['POST'])
+@login_required
+def update_reserva():
+    reserva_id = request.form.get('reserva_id', type=int)
+    fecha_ingreso = request.form.get('fecha_ingreso')
+    hora_ingreso = request.form.get('hora_ingreso')
+    fecha_salida = request.form.get('fecha_salida')
+    hora_salida = request.form.get('hora_salida')
+    estado = request.form.get('estado', type=int)
+    monto_total = request.form.get('monto_total', type=float)
+    motivo = request.form.get('motivo')
+
+    servicios_ids = request.form.getlist('servicio_id[]')
+    servicios_cantidades = request.form.getlist('servicio_cantidad[]')
+    servicios_precios = request.form.getlist('servicio_precio[]')
+
+    servicios = []
+    for idx, servicio_id in enumerate(servicios_ids):
+        if not servicio_id:
+            continue
+        cantidad = 1
+        precio = 0.0
+        if idx < len(servicios_cantidades):
+            try:
+                cantidad = int(servicios_cantidades[idx])
+            except (ValueError, TypeError):
+                cantidad = 1
+        if idx < len(servicios_precios):
+            try:
+                precio = float(servicios_precios[idx])
+            except (ValueError, TypeError):
+                precio = 0.0
+        servicios.append({
+            "servicio_id": int(servicio_id),
+            "cantidad": cantidad,
+            "precio_unitario": precio
+        })
+
+    try:
+        controller_reserva.update_reserva(
+            reserva_id,
+            fecha_ingreso,
+            hora_ingreso,
+            fecha_salida,
+            hora_salida,
+            estado,
+            monto_total,
+            motivo,
+            servicios
+        )
+        flash("Reserva actualizada correctamente", "success")
+    except Exception as e:
+        flash(f"Error al actualizar la reserva: {str(e)}", "error")
+
+    return redirect(url_for('modulos.reserva'))
+
+
+@modulos_bp.route('/DeleteReserva', methods=['POST'])
+@login_required
+def delete_reserva_modulo():
+    reserva_id = request.form.get('reserva_id', type=int)
+    try:
+        controller_reserva.eliminar_reserva_completa(reserva_id)
+        return jsonify(success=True)
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
 
 @modulos_bp.route('/modulos/Reserva-promociones', methods=['GET'])
 @login_required
