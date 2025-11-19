@@ -1352,6 +1352,11 @@ function obtenerServiciosSeleccionados() {
   
   // Interceptar botón atrás del navegador
   window.addEventListener('popstate', function(e) {
+    // Si el timer expiró, permitir la redirección sin alert
+    if (window.isTimerExpired) {
+      return;
+    }
+    
     if (isNavigatingAway) {
       return; // Permitir navegación si ya confirmamos
     }
@@ -1368,6 +1373,11 @@ function obtenerServiciosSeleccionados() {
   
   // Interceptar teclas de recarga (F5, Ctrl+R, Ctrl+F5) ANTES del beforeunload
   document.addEventListener('keydown', function(e) {
+    // Si el timer expiró, permitir la recarga sin alert
+    if (window.isTimerExpired) {
+      return;
+    }
+    
     // F5 o Ctrl+R o Ctrl+F5
     if (e.key === 'F5' || (e.ctrlKey && e.key === 'r') || (e.ctrlKey && e.key === 'R') || (e.ctrlKey && e.shiftKey && e.key === 'R')) {
       if (isInBookingFlow() && !isNavigatingAway && !isReloading) {
@@ -1384,6 +1394,11 @@ function obtenerServiciosSeleccionados() {
   
   // Interceptar recarga y cierre de página
   window.addEventListener('beforeunload', function(e) {
+    // Si el timer expiró, permitir la redirección sin alert
+    if (window.isTimerExpired) {
+      return;
+    }
+    
     if (isNavigatingAway || isReloading) {
       return; // Permitir si ya confirmamos
     }
@@ -1436,6 +1451,11 @@ function obtenerServiciosSeleccionados() {
 
     links.forEach(link => {
       link.addEventListener('click', function(e) {
+        // Si el timer expiró, permitir la navegación sin alert
+        if (window.isTimerExpired) {
+          return;
+        }
+        
         const targetUrl = this.href;
 
         if (!isInBookingFlow() || isNavigatingAway) {

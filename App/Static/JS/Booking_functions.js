@@ -350,23 +350,147 @@ function bindYoMeHospedareControls() {
     cb.addEventListener('change', handler);
   });
 }
+// Estado de navegación de huéspedes por habitación (global para acceso desde otros scripts)
+window.huespedNavigationState = window.huespedNavigationState || {};
+const huespedNavigationState = window.huespedNavigationState;
+
 //GENERACION DE CAMPOS SGEGUN CANTIDAD DE HUESPEDES
 function generarCamposHuespedes(roomId, cantidadManual = null) {
     const contenedor = document.getElementById(`huespedes_${roomId}`);
     const cantidad = cantidadManual ?? parseInt(document.getElementById(`numPersonas_${roomId}`)?.value) ?? 1;
     if (!contenedor) return;
+    
+    // Guardar datos existentes antes de regenerar
+    const datosExistentes = {};
+    const cardsExistentes = contenedor.querySelectorAll('.huesped_card');
+    cardsExistentes.forEach(card => {
+        const index = parseInt(card.dataset.huespedIndex) || 1;
+        datosExistentes[index] = {
+            nombre: card.querySelector('.nombre_huesped')?.value || '',
+            apeP: card.querySelector('.apellido_huesped')?.value || '',
+            apeM: card.querySelector('.apellido_huesped_m')?.value || '',
+            doc: card.querySelector('.doc_huesped')?.value || ''
+        };
+    });
+    
+    // Obtener cantidad anterior
+    const cantidadAnterior = cardsExistentes.length;
+    
+    // Resetear estado de navegación para esta habitación
+    huespedNavigationState[roomId] = {
+        current: 1,
+        total: cantidad
+    };
+    
+    // Remover navegación anterior si existe
+    const navAnterior = contenedor.querySelector('.huesped-navigation');
+    if (navAnterior) navAnterior.remove();
+    
+    // Limpiar contenedor
     contenedor.innerHTML = "";
     
+    // Generar todos los formularios de huéspedes
     for (let i = 1; i <= cantidad; i++) {
-        contenedor.innerHTML += `
-        <div class="huesped_card">
+        const card = document.createElement("div");
+        card.className = `huesped_card ${i === 1 ? 'active' : ''}`;
+        card.dataset.huespedIndex = i;
+        
+        // Preservar datos si existen y la cantidad aumentó o se mantuvo
+        const datos = datosExistentes[i] || {};
+        
+        card.innerHTML = `
             <h4>Huésped ${i}</h4>
-            <input class="nombre_huesped" placeholder="Nombre" oninput="validarNombreApellido(this)">
-            <input class="apellido_huesped" placeholder="Apellido Paterno" oninput="validarNombreApellido(this)">
-            <input class="apellido_huesped_m" placeholder="Apellido Materno" oninput="validarNombreApellido(this)">
-            <input class="doc_huesped" placeholder="N° Documento" maxlength="8" oninput="validarDocumento(this)">
-        </div>
+            <input class="nombre_huesped" placeholder="Nombre" oninput="validarNombreApellido(this)" value="${datos.nombre || ''}">
+            <input class="apellido_huesped" placeholder="Apellido Paterno" oninput="validarNombreApellido(this)" value="${datos.apeP || ''}">
+            <input class="apellido_huesped_m" placeholder="Apellido Materno" oninput="validarNombreApellido(this)" value="${datos.apeM || ''}">
+            <input class="doc_huesped" placeholder="N° Documento" maxlength="8" oninput="validarDocumento(this)" value="${datos.doc || ''}">
         `;
+        contenedor.appendChild(card);
+    }
+    
+    // Agregar navegación solo si hay más de 1 huésped
+    if (cantidad > 1) {
+        const nav = document.createElement("div");
+        nav.className = "huesped-navigation";
+        nav.innerHTML = `
+            <button type="button" class="huesped-navigation__button huesped-navigation__button--prev" 
+                    data-room="${roomId}" data-action="prev" disabled>
+                <i class="fas fa-chevron-left"></i> Anterior
+            </button>
+            <span class="huesped-navigation__info">
+                <span class="huesped-current">1</span> de <span class="huesped-total">${cantidad}</span>
+            </span>
+            <button type="button" class="huesped-navigation__button huesped-navigation__button--next" 
+                    data-room="${roomId}" data-action="next">
+                Siguiente <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+        contenedor.appendChild(nav);
+        
+        // Agregar event listeners a los botones
+        const prevBtn = nav.querySelector('[data-action="prev"]');
+        const nextBtn = nav.querySelector('[data-action="next"]');
+        
+        prevBtn.addEventListener('click', () => window.navigateHuesped(roomId, -1));
+        nextBtn.addEventListener('click', () => window.navigateHuesped(roomId, 1));
+    }
+}
+
+// Función para navegar entre huéspedes (global para acceso desde otros scripts)
+window.navigateHuesped = function(roomId, direction) {
+    const state = huespedNavigationState[roomId];
+    if (!state) return;
+    
+    const contenedor = document.getElementById(`huespedes_${roomId}`);
+    if (!contenedor) return;
+    
+    // Ocultar huésped actual
+    const currentCard = contenedor.querySelector(`.huesped_card[data-huesped-index="${state.current}"]`);
+    if (currentCard) {
+        currentCard.classList.remove('active');
+    }
+    
+    // Calcular nuevo índice
+    state.current += direction;
+    
+    // Asegurar que esté en rango
+    if (state.current < 1) state.current = 1;
+    if (state.current > state.total) state.current = state.total;
+    
+    // Mostrar nuevo huésped
+    const newCard = contenedor.querySelector(`.huesped_card[data-huesped-index="${state.current}"]`);
+    if (newCard) {
+        newCard.classList.add('active');
+    }
+    
+    // Actualizar botones y contador
+    updateHuespedNavigation(roomId);
+};
+
+// Función para actualizar el estado de los botones de navegación
+function updateHuespedNavigation(roomId) {
+    const contenedor = document.getElementById(`huespedes_${roomId}`);
+    if (!contenedor) return;
+    
+    const state = huespedNavigationState[roomId];
+    if (!state) return;
+    
+    const prevBtn = contenedor.querySelector('[data-action="prev"]');
+    const nextBtn = contenedor.querySelector('[data-action="next"]');
+    const currentSpan = contenedor.querySelector('.huesped-current');
+    const totalSpan = contenedor.querySelector('.huesped-total');
+    
+    if (prevBtn) {
+        prevBtn.disabled = state.current === 1;
+    }
+    if (nextBtn) {
+        nextBtn.disabled = state.current === state.total;
+    }
+    if (currentSpan) {
+        currentSpan.textContent = state.current;
+    }
+    if (totalSpan) {
+        totalSpan.textContent = state.total;
     }
 }
 
@@ -377,11 +501,57 @@ function validarNombreApellido(input) {
     input.value = valor.replace(/[0-9]/g, '');
 }
 
-// Validación para el campo de documento (solo permitir números)
+// Validación para el campo de documento (solo permitir números y verificar duplicados)
 function validarDocumento(input) {
     const valor = input.value;
     // Reemplaza cualquier letra o carácter no numérico por nada
     input.value = valor.replace(/[^0-9]/g, '');
+    
+    // Validar duplicados solo si hay un valor
+    if (input.value.trim().length > 0) {
+        validarDocumentoDuplicado(input);
+    }
+}
+
+// Función para validar documentos duplicados entre todos los huéspedes
+function validarDocumentoDuplicado(inputActual) {
+    const docActual = inputActual.value.trim();
+    if (!docActual || docActual.length === 0) return;
+    
+    // Obtener el card del huésped actual
+    const cardActual = inputActual.closest('.huesped_card');
+    if (!cardActual) return;
+    
+    const roomIdActual = cardActual.closest('.contenedorHuespedes')?.id.replace('huespedes_', '');
+    const indexActual = parseInt(cardActual.dataset.huespedIndex) || 0;
+    
+    // Buscar en todas las habitaciones
+    const todasLasHabitaciones = document.querySelectorAll('.contenedorHuespedes');
+    
+    for (const contenedor of todasLasHabitaciones) {
+        const cards = contenedor.querySelectorAll('.huesped_card');
+        
+        for (const card of cards) {
+            const docInput = card.querySelector('.doc_huesped');
+            if (!docInput || docInput === inputActual) continue;
+            
+            const docOtro = docInput.value.trim();
+            const indexOtro = parseInt(card.dataset.huespedIndex) || 0;
+            const roomIdOtro = contenedor.id.replace('huespedes_', '');
+            
+            // Si encontramos un documento duplicado
+            if (docOtro === docActual && docOtro.length > 0) {
+                // Mostrar popup
+                alert('⚠️ No se puede ingresar el mismo número de documento para dos huéspedes. El documento duplicado ha sido eliminado.');
+                
+                // Borrar el documento del input actual
+                inputActual.value = '';
+                inputActual.focus();
+                
+                return;
+            }
+        }
+    }
 }
 
 //RECOLECTAR TODOS LOS DATOS DE LA RESERVA PARA ENVIAR AL SERVIDOR

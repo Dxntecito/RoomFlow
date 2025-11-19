@@ -160,11 +160,15 @@
     stopTimer(false);
     showModal();
 
+    // Marcar que la redirección es por timer expirado (para evitar alerts de navegación)
+    window.isTimerExpired = true;
+
     redirectTimeoutId = setTimeout(() => {
       hideModal();
       clearBookingState();
       const homeUrl = window.BOOKING_HOME_URL || '/';
-      window.location.href = homeUrl;
+      // Usar replace en lugar de href para evitar que se active beforeunload
+      window.location.replace(homeUrl);
     }, 2500);
   }
 

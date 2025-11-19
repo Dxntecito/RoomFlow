@@ -57,6 +57,19 @@ def generar_pdf_boleta(reserva_id):
             """, (reserva_id,))
             huespedes = cursor.fetchall() or []
 
+            # Obtener servicios de la reserva
+            cursor.execute("""
+                SELECT
+                    rs.servicio_id,
+                    s.nombre_servicio,
+                    rs.cantidad,
+                    rs.precio_unitario
+                FROM RESERVA_SERVICIO rs
+                LEFT JOIN SERVICIO s ON s.servicio_id = rs.servicio_id
+                WHERE rs.reserva_id = %s
+            """, (reserva_id,))
+            servicios = cursor.fetchall() or []
+
     finally:
         try:
             connection.close()
@@ -151,6 +164,41 @@ def generar_pdf_boleta(reserva_id):
             y -= 14
 
         y -= 10
+
+    # Mostrar servicios adicionales si existen
+    if servicios:
+        y -= 10
+        pdf.line(x_margin, y, right_margin, y)
+        y -= 20
+        pdf.setFont("Helvetica-Bold", 11)
+        pdf.drawString(x_margin, y, "Servicios Adicionales:")
+        y -= 18
+        pdf.line(x_margin, y, right_margin, y)
+        y -= 20
+
+        pdf.setFont("Helvetica", 10)
+        subtotal_servicios = 0.0
+        for serv in servicios:
+            servicio_id, nombre_servicio, cantidad, precio_unitario = serv
+            nombre_servicio = nombre_servicio or "Servicio"
+            cantidad = int(cantidad or 1)
+            precio_unitario = float(precio_unitario or 0)
+            subtotal_servicio = cantidad * precio_unitario
+            subtotal_servicios += subtotal_servicio
+
+            pdf.setFont("Helvetica", 10)
+            pdf.drawString(x_margin + 10, y, f"{nombre_servicio}")
+            pdf.drawString(x_margin + 200, y, f"Cantidad: {cantidad}")
+            pdf.drawRightString(right_margin, y, f"S/. {subtotal_servicio:.2f}")
+            y -= 16
+
+            if y < 100:
+                pdf.showPage()
+                y = height - 60
+
+        y -= 10
+        pdf.line(x_margin, y, right_margin, y)
+        y -= 20
 
     pdf.line(x_margin, y, right_margin, y)
     y -= 22

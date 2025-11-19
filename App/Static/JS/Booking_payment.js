@@ -231,44 +231,87 @@ document.getElementById("payment_phase")?.addEventListener("click", (e) => {
 
   limpiarErrores(); // Limpia mensajes anteriores
 
-  // Seleccionamos todos los campos dinámicos de huéspedes
-  const nombres = document.querySelectorAll(".nombre_huesped");
-  const apellidosP = document.querySelectorAll(".apellido_huesped");
-  const apellidosM = document.querySelectorAll(".apellido_huesped_m");
-  const documentos = document.querySelectorAll(".doc_huesped");
+  // Validar todos los huéspedes de todas las habitaciones
+  let primerHuespedFaltante = null;
+  let primeraHabitacionFaltante = null;
+  let primerIndiceFaltante = null;
 
-  let valido = true;
+  // Obtener todas las habitaciones seleccionadas
+  const habitacionesForms = document.querySelectorAll('.habitacion_form');
+  
+  for (const habitacionForm of habitacionesForms) {
+    // Obtener el ID de la habitación desde el select de cantidad de personas
+    const numPersonasSelect = habitacionForm.querySelector('.numPersonas');
+    if (!numPersonasSelect) continue;
+    
+    const roomId = numPersonasSelect.dataset.room || numPersonasSelect.id.replace('numPersonas_', '');
+    const contenedorHuespedes = document.getElementById(`huespedes_${roomId}`);
+    if (!contenedorHuespedes) continue;
 
-  // Validar cada grupo de huésped
-  nombres.forEach((input, index) => {
-    const nombre = input.value.trim();
-    const apeP = apellidosP[index]?.value.trim();
-    const apeM = apellidosM[index]?.value.trim();
-    const doc = documentos[index]?.value.trim();
+    // Obtener todos los cards de huéspedes (incluso los ocultos)
+    const huespedCards = contenedorHuespedes.querySelectorAll('.huesped_card');
+    
+    huespedCards.forEach((card, cardIndex) => {
+      const huespedIndex = parseInt(card.dataset.huespedIndex) || (cardIndex + 1);
+      const nombre = card.querySelector('.nombre_huesped')?.value.trim() || '';
+      const apeP = card.querySelector('.apellido_huesped')?.value.trim() || '';
+      const apeM = card.querySelector('.apellido_huesped_m')?.value.trim() || '';
+      const doc = card.querySelector('.doc_huesped')?.value.trim() || '';
 
-    if (!nombre) {
-      mostrarError(input.id || agregarIdTemporal(input), "Ingrese el nombre del huésped.");
-      valido = false;
-    }
-    if (!apeP) {
-      mostrarError(apellidosP[index].id || agregarIdTemporal(apellidosP[index]), "Ingrese el apellido paterno.");
-      valido = false;
-    }
-    if (!apeM) {
-      mostrarError(apellidosM[index].id || agregarIdTemporal(apellidosM[index]), "Ingrese el apellido materno.");
-      valido = false;
-    }
-    if (!doc) {
-      mostrarError(documentos[index].id || agregarIdTemporal(documentos[index]), "Ingrese el número de documento.");
-      valido = false;
-    } else if (!/^\d{8}$/.test(doc)) {
-      mostrarError(documentos[index].id || agregarIdTemporal(documentos[index]), "El documento debe tener 8 dígitos numéricos.");
-      valido = false;
-    }
-  });
+      // Verificar si falta algún dato
+      if (!nombre || !apeP || !apeM || !doc || !/^\d{8}$/.test(doc)) {
+        // Si es el primer huésped faltante encontrado, guardarlo
+        if (!primerHuespedFaltante) {
+          primerHuespedFaltante = huespedIndex;
+          primeraHabitacionFaltante = roomId;
+          primerIndiceFaltante = huespedIndex;
+        }
+      }
+    });
+  }
 
-  // Si algo no está válido, detener el flujo
-  if (!valido) return;
+  // Si se encontró un huésped faltante, navegar a él
+  if (primerHuespedFaltante !== null && primeraHabitacionFaltante) {
+    // Navegar al huésped faltante
+    if (typeof window.navigateHuesped === 'function' && window.huespedNavigationState) {
+      const state = window.huespedNavigationState[primeraHabitacionFaltante];
+      if (state) {
+        // Calcular cuántos pasos necesitamos avanzar
+        const pasosNecesarios = primerIndiceFaltante - state.current;
+        
+        // Navegar al huésped faltante
+        if (pasosNecesarios > 0) {
+          for (let i = 0; i < pasosNecesarios; i++) {
+            window.navigateHuesped(primeraHabitacionFaltante, 1);
+          }
+        } else if (pasosNecesarios < 0) {
+          for (let i = 0; i < Math.abs(pasosNecesarios); i++) {
+            window.navigateHuesped(primeraHabitacionFaltante, -1);
+          }
+        }
+        
+        // Hacer scroll a la habitación correspondiente
+        const numPersonasSelect = document.getElementById(`numPersonas_${primeraHabitacionFaltante}`);
+        if (numPersonasSelect) {
+          const habitacionForm = numPersonasSelect.closest('.habitacion_form');
+          if (habitacionForm) {
+            habitacionForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+        
+        // Mostrar mensaje
+        const roomName = typeof roomNames !== 'undefined' && roomNames[primeraHabitacionFaltante] 
+          ? roomNames[primeraHabitacionFaltante] 
+          : primeraHabitacionFaltante;
+        alert(`⚠️ Por favor, completa los datos del Huésped ${primerIndiceFaltante} de la Habitación ${roomName} antes de continuar.`);
+        return;
+      }
+    } else {
+      // Fallback: mostrar mensaje genérico
+      alert('⚠️ Por favor, completa todos los datos de los huéspedes antes de continuar.');
+      return;
+    }
+  }
 
   // Si pasa todas las validaciones, continuar al siguiente paso
   if (step3El) step3El.style.display = "none";
