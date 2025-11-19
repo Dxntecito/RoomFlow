@@ -1189,6 +1189,39 @@
         color: #555;
     }
 
+    .reserva-actions {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .btn-descargar-boleta {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #328336 0%, #64CC4F 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-descargar-boleta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(50, 131, 54, 0.4);
+    }
+
+    .btn-descargar-boleta i {
+        font-size: 0.9rem;
+    }
+
     .no-reservas {
         text-align: center;
         padding: 60px 20px;
@@ -4129,6 +4162,11 @@
                             <strong>Motivo:</strong> ${reserva.motivo}
                         </div>
                     ` : ''}
+                    <div class="reserva-actions">
+                        <a href="/Rutas/crear_comprobante/${reserva.id}" class="btn-descargar-boleta" target="_blank" download>
+                            <i class="fas fa-download"></i> Descargar Boleta
+                        </a>
+                    </div>
                 </div>
             `;
         });
