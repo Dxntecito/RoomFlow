@@ -10,6 +10,7 @@ import App.Controladores.C_Reserva.controlador_categoria as controller_categoria
 import App.Controladores.C_Reserva.controlador_piso as controller_piso
 import App.Controladores.C_Reserva.controlador_habitacion as controller_habitacion
 import App.Controladores.C_Reserva.controlador_servicio as controller_service
+import App.Controladores.C_Evento.controlador_servicios_evento as controlador_servicios_evento
 
 
 
@@ -1228,7 +1229,7 @@ def UpdateTipoEvento():
 def NewTipoEvento():
     return render_template(
         '/MODULO_EVENTO/gestionar_tipo_evento.html',
-        tipo_evento=None,  # ✅ debe llamarse igual
+        tipo_evento=None,  #  debe llamarse igual
         mode='insert'
     )
 
@@ -1272,7 +1273,7 @@ def SearchTiposEventos():
     else:
         resultados = controlador_evento.get_tipos_eventos()
 
-    # ✅ resultados ya son diccionarios, así que devolvemos directo
+    #  resultados ya son diccionarios, así que devolvemos directo
     return jsonify(resultados)
 
 
@@ -1310,6 +1311,7 @@ def FilterEventos(filter):
     order = request.args.get('order', 'asc')
 
     eventos_all = controlador_evento.order_evento(filter, order)
+
     eventos_all = [
         dict(
             id_evento=e[0],
@@ -1336,8 +1338,8 @@ def FilterEventos(filter):
         order=order,
         page=page,
         total_pages=total_pages
-        
     )
+
 
 @modulos_bp.route('/ViewEvento/<int:id_evento>')
 def ViewEvento(id_evento):
@@ -1352,7 +1354,7 @@ def ViewEvento(id_evento):
 
 @modulos_bp.route('/EditEvento/<int:id_evento>')
 def EditEvento(id_evento):
-    evento = controlador_evento.get_evento_by_id(id_evento)   # ✅ función correcta
+    evento = controlador_evento.get_evento_by_id(id_evento)   
     tipos_eventos = controlador_evento.get_tipos_eventos2()
     return render_template(
         '/MODULO_EVENTO/gestionar_evento.html',
@@ -1377,7 +1379,7 @@ def UpdateEvento():
 
         motivo = "Cambio de monto"  # puedes cambiarlo
 
-        print("\n✅ DATOS RECIBIDOS DEL FORMULARIO:")
+        print("\n DATOS RECIBIDOS DEL FORMULARIO:")
         print("ID:", id_evento)
         print("Nombre:", nombre_evento)
         print("Fecha:", fecha)
@@ -1452,9 +1454,329 @@ def baja_evento_route():
 
         return jsonify({"success": True, "message": "Evento dado de baja correctamente"})
     except Exception as e:
-        print("❌ Error en baja_evento_route:", e)
+        print(" Error en baja_evento_route:", e)
         return jsonify({"success": False, "message": str(e)})
 
+#### Tipos de servicio en evento
 
+@modulos_bp.route('/TiposServiciosEvento')
+def tipos_servicios_evento():
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    offset = (page - 1) * per_page
+
+    tipos = controlador_servicios_evento.get_tipos_servicios(limit=per_page, offset=offset)
+    total_tipos = controlador_servicios_evento.count_tipos_servicios()
+    total_pages = (total_tipos + per_page - 1) // per_page
+
+    return render_template(
+        '/MODULO_EVENTO/gestionar_tipo_servicio_evento.html',
+        tipos=tipos,
+        mode="list",
+        filter='id_tipo_servicio_evento',
+        page=page,
+        total_pages=total_pages
+    )
+
+
+
+# ORDENAR / FILTRAR
+@modulos_bp.route('/FilterTiposServicios/<string:filter>')
+def FilterTiposServicios(filter):
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    order = request.args.get('order', 'asc')
+
+    tipos_all_tuples = controlador_servicios_evento.order_tipo_servicio(filter, order)
+
+    tipos_all = [
+        dict(
+            id_tipo_servicio_evento=t[0],
+            nombre_tipo=t[1],
+            estado=t[2]
+        )
+        for t in tipos_all_tuples
+    ]
+
+    total_tipos = len(tipos_all)
+    total_pages = (total_tipos + per_page - 1) // per_page
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    tipos = tipos_all[start:end]
+
+    return render_template(
+        '/MODULO_EVENTO/gestionar_tipo_servicio_evento.html',
+        tipos=tipos,
+        mode='list',
+        filter=filter,
+        order=order,
+        page=page,
+        total_pages=total_pages
+    )
+
+
+
+# VER DETALLE
+@modulos_bp.route('/ViewTipoServicio/<int:id_tipo_servicio_evento>')
+def ViewTipoServicio(id_tipo_servicio_evento):
+    tipo = controlador_servicios_evento.get_one_tipo_servicio(id_tipo_servicio_evento)
+    return render_template('/MODULO_EVENTO/gestionar_tipo_servicio_evento.html',
+                           tipo_servicio=tipo, mode='view')
+
+
+
+# EDITAR
+@modulos_bp.route('/EditTipoServicio/<int:id_tipo_servicio_evento>')
+def EditTipoServicio(id_tipo_servicio_evento):
+    tipo = controlador_servicios_evento.get_one_tipo_servicio(id_tipo_servicio_evento)
+    return render_template('/MODULO_EVENTO/gestionar_tipo_servicio_evento.html',
+                           tipo_servicio=tipo, mode='edit')
+
+
+
+# ACTUALIZAR
+@modulos_bp.route('/UpdateTipoServicio', methods=['POST'])
+def UpdateTipoServicio():
+    try:
+        id_tipo_servicio_evento = request.form['id_tipo_servicio_evento']
+        nombre_tipo = request.form['nombre_tipo']
+        estado = request.form['estado']
+
+        controlador_servicios_evento.update_tipo_servicio(
+            nombre_tipo, estado, id_tipo_servicio_evento
+        )
+
+        flash("Tipo de servicio actualizado correctamente", "success")
+
+    except Exception as e:
+        flash(f"Error al actualizar el tipo de servicio: {str(e)}", "error")
+
+    return redirect(url_for('modulos.FilterTiposServicios',
+                            filter='id_tipo_servicio_evento'))
+
+
+@modulos_bp.route('/NewTipoServicio')
+def NewTipoServicio():
+    return render_template(
+        '/MODULO_EVENTO/gestionar_tipo_servicio_evento.html',
+        tipo_servicio=None,
+        mode='insert'
+    )
+
+
+		
+# GUARDAR NUEVO
+@modulos_bp.route('/SaveTipoServicio', methods=['POST'])
+def SaveTipoServicio():
+    try:
+        nombre_tipo = request.form['nombre_tipo']
+        estado = request.form['estado']
+
+        controlador_servicios_evento.insert_tipo_servicio(nombre_tipo, estado)
+
+        flash("Tipo de servicio creado correctamente", "success")
+
+    except Exception as e:
+        flash(f"Error al crear el tipo de servicio: {str(e)}", "error")
+
+    return redirect(url_for('modulos.FilterTiposServicios',
+                            filter='id_tipo_servicio_evento'))
+
+
+
+# ELIMINAR
+@modulos_bp.route('/DeleteTipoServicio', methods=['POST'])
+def DeleteTipoServicio():
+    id_tipo_servicio_evento = request.form.get('id_tipo_servicio_evento')
+    try:
+        controlador_servicios_evento.delete_tipo_servicio(id_tipo_servicio_evento)
+        return jsonify(success=True)
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
+
+@modulos_bp.route('/BajaTipoServicio', methods=['POST'])
+def BajaTipoServicio():
+    id_tipo_servicio_evento = request.form.get('id_tipo_servicio_evento')
+    try:
+        controlador_servicios_evento.baja_tipo_servicio(id_tipo_servicio_evento)
+        return jsonify(success=True)
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
+
+# BUSQUEDA AJAX
+
+
+@modulos_bp.route('/SearchTiposServicios')
+def SearchTiposServicios():
+    query = request.args.get('query', '').strip()
+
+    if query:
+        resultados = controlador_servicios_evento.search_tipo_servicio(query)
+    else:
+        resultados = controlador_servicios_evento.get_tipos_servicios()
+
+    return jsonify(resultados)
+
+#Servicio evento
+
+@modulos_bp.route('/ServiciosEvento')
+def servicios_evento():
+    # --- Paginación ---
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    offset = (page - 1) * per_page
+
+    # --- Obtener servicios con JOIN (nombre del tipo) ---
+    servicios = controlador_servicios_evento.get_servicios_evento_join(
+        limit=per_page,
+        offset=offset
+    )
+
+    # --- Conteo para paginación ---
+    total_servicios = controlador_servicios_evento.count_servicios_evento()
+    total_pages = (total_servicios + per_page - 1) // per_page
+
+    # --- Renderizar con modo LIST ---
+    return render_template(
+        '/MODULO_EVENTO/gestionar_servicio_evento.html',
+        servicios=servicios,
+        mode="list",
+        filter="id_servicio_evento",
+        page=page,
+        total_pages=total_pages
+    )
+
+
+@modulos_bp.route('/FilterServiciosEvento/<string:filter>')
+def FilterServiciosEvento(filter):
+    page = int(request.args.get('page', 1))
+    per_page = 7
+    order = request.args.get('order', 'asc')
+
+    servicios_all = controlador_servicios_evento.order_servicio_evento(filter, order)
+
+    total_servicios = len(servicios_all)
+    total_pages = (total_servicios + per_page - 1) // per_page
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    servicios = servicios_all[start:end]
+
+    return render_template(
+        '/MODULO_EVENTO/gestionar_servicio_evento.html',
+        servicios=servicios,
+        mode='list',
+        filter=filter,
+        order=order,
+        page=page,
+        total_pages=total_pages
+    )
+
+
+@modulos_bp.route('/ViewServicioEvento/<int:id_servicio_evento>')
+def ViewServicioEvento(id_servicio_evento):
+    servicio = controlador_servicios_evento.get_one_servicio_evento(id_servicio_evento)
+    return render_template(
+        '/MODULO_EVENTO/gestionar_servicio_evento.html',
+        servicio=servicio,
+        mode='view'
+    )
+
+
+@modulos_bp.route('/EditServicioEvento/<int:id_servicio_evento>')
+def EditServicioEvento(id_servicio_evento):
+    servicio = controlador_servicios_evento.get_one_servicio_evento(id_servicio_evento)
+    return render_template(
+        '/MODULO_EVENTO/gestionar_servicio_evento.html',
+        servicio=servicio,
+        mode='edit'
+    )
+
+
+@modulos_bp.route('/UpdateServicioEvento', methods=['POST'])
+def UpdateServicioEvento():
+    try:
+        id_servicio_evento = request.form['id_servicio_evento']
+        tipo_id = request.form['tipo_servicio_evento_id']
+        nombre_servicio = request.form['nombre_servicio']
+        descripcion = request.form.get('descripcion', '')
+        precio = request.form['precio']
+        estado = request.form['estado']
+
+        controlador_servicios_evento.update_servicio_evento(
+            id_servicio_evento, tipo_id, nombre_servicio, descripcion, precio, estado
+        )
+
+        flash("Servicio de evento actualizado correctamente", "success")
+
+    except Exception as e:
+        flash(f"Error al actualizar el servicio: {str(e)}", "error")
+
+    return redirect(url_for('modulos.FilterServiciosEvento',
+                            filter='id_servicio_evento'))
+
+
+@modulos_bp.route('/NewServicioEvento')
+def NewServicioEvento():
+    return render_template(
+        '/MODULO_EVENTO/gestionar_servicio_evento.html',
+        servicio=None,
+        mode='insert'
+    )
+
+
+@modulos_bp.route('/SaveServicioEvento', methods=['POST'])
+def SaveServicioEvento():
+    try:
+        tipo_id = request.form['tipo_servicio_evento_id']
+        nombre_servicio = request.form['nombre_servicio']
+        descripcion = request.form.get('descripcion', '')
+        precio = request.form['precio']
+        estado = request.form['estado']
+
+        controlador_servicios_evento.insert_servicio_evento(
+            tipo_id, nombre_servicio, descripcion, precio, estado
+        )
+
+        flash("Servicio creado correctamente", "success")
+
+    except Exception as e:
+        flash(f"Error al crear el servicio: {str(e)}", "error")
+
+    return redirect(url_for('modulos.FilterServiciosEvento',
+                            filter='id_servicio_evento'))
+
+
+@modulos_bp.route('/DeleteServicioEvento', methods=['POST'])
+def DeleteServicioEvento():
+    id_servicio_evento = request.form.get('id_servicio_evento')
+    try:
+        controlador_servicios_evento.delete_servicio_evento(id_servicio_evento)
+        return jsonify(success=True)
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
+
+
+@modulos_bp.route('/BajaServicioEvento', methods=['POST'])
+def BajaServicioEvento():
+    id_servicio_evento = request.form.get('id_servicio_evento')
+    try:
+        controlador_servicios_evento.baja_servicio_evento(id_servicio_evento)
+        return jsonify(success=True)
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
+
+
+@modulos_bp.route('/SearchServiciosEvento')
+def SearchServiciosEvento():
+    query = request.args.get('query', '').strip()
+
+    if query:
+        resultados = controlador_servicios_evento.search_servicio_evento(query)
+    else:
+        resultados = controlador_servicios_evento.get_servicios_evento()
+
+    return jsonify(resultados)
 
 ###########    FIN MODULO EVENTO    ###########

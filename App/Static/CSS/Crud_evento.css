@@ -161,7 +161,7 @@ table td {
 
 /* Estilo para botones deshabilitados */
 #btn-baja:disabled,
-#btn-baja[disabled]{
+#btn-baja[disabled],#btn-baja2[disabled], #editazao2[disabled]{
     background-color: #ccc !important;
     color: #666 !important;
     cursor: not-allowed !important;
@@ -170,7 +170,7 @@ table td {
 }
 
 #btn-baja:disabled,
-#btn-baja[disabled],
+#btn-baja[disabled],#btn-baja2[disabled], #editazao2[disabled],
 #btn-editazao:disabled,
 #btn-editazao[disabled]{
     background-color: #ccc !important;
@@ -200,4 +200,10 @@ table td {
     color: #aaa;
     pointer-events: none;
     border-color: #eee;
+}
+
+
+.text-center a, th a:hover, th a:visited{ 
+    color: white;
+    text-decoration: none;
 }

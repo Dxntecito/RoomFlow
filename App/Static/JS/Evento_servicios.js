@@ -2,16 +2,13 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("✅ eventos.js cargado correctamente");
     console.log("📘 tiposEventos:", typeof tiposEventos !== "undefined" ? tiposEventos : "NO DEFINIDO");
 
-    // ==============================
-    // 🔹 VARIABLES GLOBALES
-    // ==============================
-    let totalEvento = 0;
-    let totalServicios = 0;
-    let horas = 0;
+    // Variables globales
+    window.totalEvento = 0;
+    window.totalServicios = 0;
+    window.horas = 0;   // ← será accesible desde Evento_pago.js
 
-    // ==============================
-    // 🔹 FUNCIONES DE CÁLCULO
-    // ==============================
+
+    // Cálculo
     function calcularHoras(entrada, salida) {
         if (!entrada || !salida) return 0;
         const [h1, m1] = entrada.split(":").map(Number);
@@ -33,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Validar que tiposEventos esté disponible
         if (typeof tiposEventos === "undefined") {
-            console.error("❌ tiposEventos no está definido. Verifica el orden de scripts en tu HTML.");
+            console.error(" tiposEventos no está definido. Verifica el orden de scripts en tu HTML.");
             return;
         }
 
@@ -57,13 +54,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function actualizarTotalGeneral() {
-        const totalGeneral = totalEvento + totalServicios;
-        document.getElementById("resumen-total").textContent = `S/ ${totalGeneral.toFixed(2)}`;
+        window.total = totalEvento + totalServicios;
+        document.getElementById("resumen-total").textContent = `S/ ${total.toFixed(2)}`;
+
     }
 
-    // ==============================
-    // 🔹 MODAL DE SERVICIOS
-    // ==============================
+    // Modal de servicios
     const modal = document.getElementById("modal-servicios");
     const openModalBtn = document.getElementById("btn-abrir-modal");
     const accordionContainer = modal?.querySelector(".accordion");
@@ -71,10 +67,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnCancelar = modal?.querySelector(".btn-cancelar");
     const btnCerrar = modal?.querySelector(".close-modal");
 
+
+
+    let yaRenderizado = false;
+
     function abrirModal() {
         modal.style.display = "flex";
-        cargarServicios();
+        if (!yaRenderizado) {
+            cargarServicios();
+            yaRenderizado = true;
+        }
     }
+
 
     function cerrarModal() {
         modal.style.display = "none";
@@ -88,9 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
         btn?.addEventListener("click", cerrarModal);
     });
 
-    // ==============================
-    // 🔹 CARGAR SERVICIOS (desde Flask)
-    // ==============================
+    // Carga de servicios
     async function cargarServicios() {
         try {
             const res = await fetch("/Eventos/servicios");
@@ -99,14 +101,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!data.success) throw new Error(data.error);
             renderizarAcordeon(data.data);
         } catch (err) {
-            console.error("❌ Error cargando servicios:", err);
+            console.error(" Error cargando servicios:", err);
             accordionContainer.innerHTML = `<p style="color:red;text-align:center;">Error al cargar servicios</p>`;
         }
     }
 
-    // ==============================
-    // 🔹 RENDERIZAR ACORDEÓN
-    // ==============================
+    // Acordeón
     function renderizarAcordeon(servicios) {
         accordionContainer.innerHTML = "";
 
@@ -130,6 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <p class="precio">S/ ${parseFloat(s.precio).toFixed(2)}</p>
                                 <label>
                                     <input type="checkbox"
+                                            data-id="${s.id_servicio_evento}"
                                            data-nombre="${s.nombre_servicio}"
                                            data-precio="${s.precio}">
                                     Seleccionar
@@ -145,9 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
         inicializarAcordeon();
     }
 
-    // ==============================
-    // 🔹 FUNCIONALIDAD DEL ACORDEÓN
-    // ==============================
+    // Funcionalidad de acordeón
     function inicializarAcordeon() {
         document.querySelectorAll(".accordion-header").forEach(header => {
             header.addEventListener("click", () => {
@@ -159,9 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ==============================
-    // 🔹 CONFIRMAR SERVICIOS
-    // ==============================
+    // Confirmar servicios
     btnConfirmar?.addEventListener("click", () => {
         const serviciosSeleccionados = document.querySelectorAll(".card-servicio input[type='checkbox']:checked");
         const listaServicios = document.getElementById("lista-servicios-seleccionados");
@@ -194,9 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cerrarModal();
     });
 
-    // ==============================
-    // 🔹 EVENTOS DE FORMULARIO
-    // ==============================
+    // Eventos de formulario
     document.getElementById("evento-fecha")?.addEventListener("change", actualizarResumen);
     document.getElementById("evento-hora-entrada")?.addEventListener("change", actualizarResumen);
     document.getElementById("evento-hora-salida")?.addEventListener("change", actualizarResumen);
@@ -207,9 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
         abrirModal();
     });
 
-    // ==============================
-    // 🔹 INICIALIZACIÓN FINAL
-    // ==============================
+    // Inicialización
     actualizarResumen();
 });
 
