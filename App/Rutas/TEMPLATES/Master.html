@@ -44,12 +44,14 @@
                                 <a href="{{ url_for('eventos.Eventos') }}">
                                     <i class="fas fa-calendar-alt"></i> Eventos
                                 </a>
-                                {% if session.get('rol_id') == 1 %}
+                                {% if session.get('rol_id') in [1, 2, 4] %}
                                 <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
                                 <a href="{{ url_for ('modulos.modulos') }}"><i class="fa-solid fa-cubes"></i>Modulos</a>
+                                {% if session.get('rol_id') == 1 %}
                                 <a href="{{ url_for('reportes.reportes') }}">
                                     <i class="fas fa-chart-bar"></i> Generar Reportes
                                 </a>
+                                {% endif %}
                                 {% endif %}
                             </div>
                         </div>

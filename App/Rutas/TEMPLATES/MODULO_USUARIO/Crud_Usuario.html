@@ -12,7 +12,9 @@
     <nav class="sidebar">
       <h2>Módulo Usuario</h2>
       <a href="{{ url_for('modulos.usuario') }}" class="{% if request.path == url_for('modulos.usuario') %}active{% endif %}">👤 Gestionar Usuarios</a>
+      {% if session.get('rol_id') == 4 %}
       <a href="{{ url_for('modulos.gestionar_roles') }}" class="{% if request.path == url_for('modulos.gestionar_roles') %}active{% endif %}">🔐 Roles</a>
+      {% endif %}
       <a href="{{ url_for('modulos.gestionar_paises') }}" class="{% if request.path == url_for('modulos.gestionar_paises') %}active{% endif %}">🌎 Países</a>
       <a href="{{ url_for('modulos.gestionar_tipo_documento') }}" class="{% if request.path == url_for('modulos.gestionar_tipo_documento') %}active{% endif %}">📄 Tipos de Documento</a>
       <a href="{{ url_for('modulos.gestionar_tipo_cliente') }}" class="{% if request.path == url_for('modulos.gestionar_tipo_cliente') %}active{% endif %}">👥 Tipos de Cliente</a>

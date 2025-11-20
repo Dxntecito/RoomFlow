@@ -72,6 +72,10 @@ def Login():
                 session['email'] = usuario_data['email']
                 session['rol_id'] = usuario_data['rol_id']
                 session['rol_nombre'] = usuario_data['rol_nombre']
+                session['rol_modulos'] = usuario_data.get('rol_modulos', 'SSSSSS')
+                
+                # Debug: mostrar información del login
+                print(f"[LOGIN] Usuario: {usuario_data['usuario']}, Rol ID: {usuario_data['rol_id']}, Permisos: {session['rol_modulos']}")
                 
                 flash(f'Bienvenido {usuario_data["usuario"]}!', 'success')
                 if return_url:
@@ -300,6 +304,7 @@ def Registro():
                         session['email'] = nuevo_usuario['email']
                         session['rol_id'] = nuevo_usuario['rol_id']
                         session['rol_nombre'] = nuevo_usuario['rol_nombre']
+                        session['rol_modulos'] = nuevo_usuario.get('rol_modulos', 'SSSSSS')
                         flash('¡Registro exitoso! Bienvenido a Hostal Bolívar.', 'success')
                         return redirect(return_url)
                 flash('¡Registro exitoso! Ya puedes iniciar sesión con tus credenciales.', 'success')

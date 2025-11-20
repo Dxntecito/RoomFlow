@@ -38,6 +38,54 @@
     position: relative;
     margin: auto;
 }
+
+.permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.permission-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    font-weight: 600;
+    color: #0f172a;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.permission-item:hover {
+    border-color: #cbd5f5;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.perm-checkbox {
+    transform: scale(1.5);
+    margin-right: 10px;
+    accent-color: #328336;
+}
+
+.permissions-helper {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 6px;
+}
+
+.perm-badge {
+    display: inline-flex;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #eef2ff;
+    color: #3730a3;
+    margin: 2px;
+}
 </style>
 
 <div class="section-content" id="roles">
@@ -82,6 +130,7 @@
                     <th>ID</th>
                     <th>NOMBRE</th>
                     <th>DESCRIPCIÓN</th>
+                    <th>PERMISOS</th>
                     <th>ESTADO</th>
                     <th>ACCIONES</th>
                 </tr>
@@ -122,6 +171,31 @@
                 </div>
 
                 <div class="form-group">
+                    <label>Permisos por módulo *</label>
+                    <div class="permissions-grid">
+                        <label class="permission-item">
+                            <input type="checkbox" class="perm-checkbox" data-index="0"> Reserva
+                        </label>
+                        <label class="permission-item">
+                            <input type="checkbox" class="perm-checkbox" data-index="1"> Facturación
+                        </label>
+                        <label class="permission-item">
+                            <input type="checkbox" class="perm-checkbox" data-index="2"> Incidencia
+                        </label>
+                        <label class="permission-item">
+                            <input type="checkbox" class="perm-checkbox" data-index="3"> Empleado
+                        </label>
+                        <label class="permission-item">
+                            <input type="checkbox" class="perm-checkbox" data-index="4"> Evento
+                        </label>
+                        <label class="permission-item">
+                            <input type="checkbox" class="perm-checkbox" data-index="5"> Usuario
+                        </label>
+                    </div>
+                    <p class="permissions-helper">Marca los módulos que este rol puede visualizar y gestionar.</p>
+                </div>
+
+                <div class="form-group">
                     <label for="estado">Estado *</label>
                     <select id="estado" name="estado" required>
                         <option value="1">Activo</option>
@@ -144,6 +218,7 @@
 <script>
 let roles = [];
 let rolesFiltrados = [];
+const MODULO_LABELS = ['Reserva', 'Facturación', 'Incidencia', 'Empleado', 'Evento', 'Usuario'];
 
 document.addEventListener('DOMContentLoaded', function() {
     cargarRoles();
@@ -155,7 +230,10 @@ async function cargarRoles() {
         const data = await response.json();
         
         if (data.success) {
-            roles = data.roles;
+            roles = data.roles.map(rol => ({
+                ...rol,
+                modulos: (rol.modulos || 'SSSSSS').padEnd(6, 'S').substring(0, 6)
+            }));
             rolesFiltrados = roles;
             mostrarRoles();
         }
@@ -182,6 +260,7 @@ function mostrarRoles() {
             <td>${rol.rol_id}</td>
             <td>${rol.nombre_rol}</td>
             <td>${rol.descripcion}</td>
+            <td>${formatearPermisos(rol.modulos)}</td>
             <td>
                 <span class="estado-badge ${rol.estado == 1 ? 'activo' : 'inactivo'}">
                     ${rol.estado == 1 ? 'Activo' : 'Inactivo'}
@@ -204,7 +283,9 @@ function filtrarRoles() {
     const estadoFilter = document.getElementById('estado-filter').value;
     
     rolesFiltrados = roles.filter(rol => {
-        const matchBusqueda = rol.nombre_rol.toLowerCase().includes(busqueda) || rol.descripcion.toLowerCase().includes(busqueda);
+        const nombre = (rol.nombre_rol || '').toLowerCase();
+        const descripcion = (rol.descripcion || '').toLowerCase();
+        const matchBusqueda = nombre.includes(busqueda) || descripcion.includes(busqueda);
         const matchEstado = estadoFilter === '' || rol.estado == estadoFilter;
         return matchBusqueda && matchEstado;
     });
@@ -216,6 +297,7 @@ function abrirModalCrear() {
     document.getElementById('tituloModal').textContent = 'Crear Rol';
     document.getElementById('formRol').reset();
     document.getElementById('rol_id').value = '';
+    aplicarPermisosForm('SSSSSS');
     const modal = document.getElementById('modalRol');
     modal.style.display = 'flex';
     modal.classList.add('show');
@@ -230,6 +312,7 @@ function editarRol(id) {
     document.getElementById('nombre_rol').value = rol.nombre_rol;
     document.getElementById('descripcion').value = rol.descripcion;
     document.getElementById('estado').value = rol.estado;
+    aplicarPermisosForm(rol.modulos);
     const modal = document.getElementById('modalRol');
     modal.style.display = 'flex';
     modal.classList.add('show');
@@ -246,7 +329,8 @@ async function guardarRol(event) {
     const data = {
         nombre_rol: formData.get('nombre_rol'),
         descripcion: formData.get('descripcion'),
-        estado: parseInt(formData.get('estado'))
+        estado: parseInt(formData.get('estado')),
+        modulos: obtenerPermisosCadena()
     };
     
     try {
@@ -304,6 +388,35 @@ window.onclick = function(event) {
     if (event.target == modal) {
         cerrarModal();
     }
+}
+
+function formatearPermisos(modulos) {
+    const cadena = (modulos || 'SSSSSS').padEnd(6, 'S').substring(0, 6);
+    const activos = [];
+    for (let i = 0; i < MODULO_LABELS.length; i++) {
+        if (cadena[i] === 'P') {
+            activos.push(`<span class="perm-badge">${MODULO_LABELS[i]}</span>`);
+        }
+    }
+    if (activos.length === 0) {
+        return '<span class="perm-badge" style="background:#fee2e2;color:#991b1b;">Sin acceso</span>';
+    }
+    return activos.join('');
+}
+
+function aplicarPermisosForm(modulos) {
+    const cadena = (modulos || 'SSSSSS').padEnd(6, 'S').substring(0, 6);
+    document.querySelectorAll('.perm-checkbox').forEach((checkbox, idx) => {
+        checkbox.checked = cadena[idx] === 'P';
+    });
+}
+
+function obtenerPermisosCadena() {
+    let cadena = '';
+    document.querySelectorAll('.perm-checkbox').forEach(checkbox => {
+        cadena += checkbox.checked ? 'P' : 'S';
+    });
+    return cadena;
 }
 </script>
 
