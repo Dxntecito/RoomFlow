@@ -730,7 +730,7 @@
             Total general: S/ <span id="total-general">0.00</span>
         </div>
 
-        <button  id="btn-solicitar" class="create-button" style="background:#28a745;" onclick="mostrarPago()">
+        <button id="btn-solicitar" class="create-button" style="background:#28a745;" onclick="mostrarPago()">
             Solicitar
         </button>
     </div>
@@ -813,7 +813,8 @@
     <div id="tarjeta-fields" class="form-row hidden" style="flex-direction: column; gap: 10px;">
         <div class="form-group">
             <label>Nro. de tarjeta</label>
-            <input type="text" name="num_tarjeta" maxlength="19" oninput="formatCardNumber(this)" placeholder="1234 5678 9012 3456" class="form-control">
+            <input type="text" name="num_tarjeta" maxlength="19" oninput="formatCardNumber(this)"
+                placeholder="1234 5678 9012 3456" class="form-control">
         </div>
         <div class="form-group">
             <label>Código de seguridad</label>
@@ -876,7 +877,60 @@
         <button onclick="volverProductos()">← Volver</button>
         <button class="pagar-btn" onclick="procesarPagoRoomService()">Pagar</button>
     </div>
+
+    <div id="notification-toast" class="notification-toast" style="display: none;">
+        <button class="notification-toast-close" onclick="cerrarNotificacionToast()">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="notification-toast-header">
+            <div class="notification-toast-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="notification-toast-body">
+                <h4 class="notification-toast-title">Título</h4>
+                <p class="notification-toast-message">Mensaje</p>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    function mostrarNotificacionBonita(tipo, titulo, mensaje) {
+        const toast = document.getElementById('notification-toast');
+        const icon = toast.querySelector('.notification-toast-icon i');
+        const title = toast.querySelector('.notification-toast-title');
+        const message = toast.querySelector('.notification-toast-message');
+
+        // Configurar contenido
+        title.textContent = titulo;
+        message.textContent = mensaje;
+
+        // Configurar tipo
+        toast.className = `notification-toast ${tipo}`;
+        if (tipo === 'success') {
+            icon.className = 'fas fa-check';
+        } else {
+            icon.className = 'fas fa-times';
+        }
+
+        // Mostrar notificación
+        toast.style.display = 'block';
+        toast.classList.add('show');
+
+        // Auto-cerrar después de 4 segundos
+        setTimeout(() => {
+            cerrarNotificacionToast();
+        }, 4000);
+    }
+
+    function cerrarNotificacionToast() {
+        const toast = document.getElementById('notification-toast');
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 300);
+    }
+</script>
 <script>
     async function buscarReserva() {
         const numeroComprobante = document.getElementById('numero-comprobante').value.trim();
@@ -1199,33 +1253,48 @@
 
         //  Enviar al backend vía fetch
         fetch('/Roomservice/procesar_pago_roomservice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    })
-    .then(res => res.json())
-    .then(resp => {
-        if (resp.success) {
-            // ✅ Mostrar mensaje bonito
-            alert(`✅ ${resp.message}\nComprobante: ${resp.comprobante}`);
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(res => res.json())
+            .then(resp => {
+                if (resp.success) {
 
-            // 🕒 Esperar un poco y luego redirigir
-            setTimeout(() => {
-                if (resp.redirect_url) {
-                    window.top.location.href = resp.redirect_url;
+                    // ✅ Mostrar notificación bonita en vez de alert
+                    mostrarNotificacionBonita(
+                        'success',
+                        'Pago realizado ✅',
+                        `${resp.message} — Comprobante: ${resp.comprobante}`
+                    );
+
+                    // 🕒 Esperar y redirigir
+                    setTimeout(() => {
+                        if (resp.redirect_url) {
+                            window.top.location.href = resp.redirect_url;
+                        } else {
+                            location.reload();
+                        }
+                    }, 2000);
+
                 } else {
-                    // Si no hay redirect_url, recarga la página
-                    location.reload();
+                    // ❌ Error controlado del servidor
+                    mostrarNotificacionBonita(
+                        'error',
+                        'Error',
+                        resp.error || 'No se pudo procesar el pago'
+                    );
                 }
-            }, 1200);
-        } else {
-            alert("❌ Error: " + resp.error);
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        alert("⚠️ Error al enviar los datos al servidor.");
-    });
+            })
+            .catch(err => {
+                console.error(err);
+                mostrarNotificacionBonita(
+                    'error',
+                    'Error inesperado',
+                    'Hubo un problema al comunicar con el servidor.'
+                );
+            });
+
     }
 </script>
 
@@ -1243,57 +1312,57 @@
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const selectHabitaciones = document.getElementById("habitaciones");
-    const botonAgregar = document.querySelector(".calendar-btn");
+    document.addEventListener("DOMContentLoaded", () => {
+        const selectHabitaciones = document.getElementById("habitaciones");
+        const botonAgregar = document.querySelector(".calendar-btn");
 
-    // Deshabilitar el botón al cargar la página
-    botonAgregar.disabled = true;
-    botonAgregar.style.opacity = "0.6";
-    botonAgregar.style.cursor = "not-allowed";
+        // Deshabilitar el botón al cargar la página
+        botonAgregar.disabled = true;
+        botonAgregar.style.opacity = "0.6";
+        botonAgregar.style.cursor = "not-allowed";
 
-    // Escuchar cambios en la selección de habitación
-    selectHabitaciones.addEventListener("change", () => {
-        if (selectHabitaciones.value) {
-            // ✅ Si hay una habitación seleccionada → habilitar botón
-            botonAgregar.disabled = false;
-            botonAgregar.style.opacity = "1";
-            botonAgregar.style.cursor = "pointer";
-        } else {
-            // 🚫 Si no hay selección → deshabilitar
-            botonAgregar.disabled = true;
-            botonAgregar.style.opacity = "0.6";
-            botonAgregar.style.cursor = "not-allowed";
+        // Escuchar cambios en la selección de habitación
+        selectHabitaciones.addEventListener("change", () => {
+            if (selectHabitaciones.value) {
+                // ✅ Si hay una habitación seleccionada → habilitar botón
+                botonAgregar.disabled = false;
+                botonAgregar.style.opacity = "1";
+                botonAgregar.style.cursor = "pointer";
+            } else {
+                // 🚫 Si no hay selección → deshabilitar
+                botonAgregar.disabled = true;
+                botonAgregar.style.opacity = "0.6";
+                botonAgregar.style.cursor = "not-allowed";
+            }
+        });
+
+        const btnSolicitar = document.getElementById("btn-solicitar");
+        const totalGeneralSpan = document.getElementById("total-general");
+
+        // Deshabilitar el botón al inicio
+        btnSolicitar.disabled = true;
+        btnSolicitar.style.opacity = "0.6";
+        btnSolicitar.style.cursor = "not-allowed";
+
+        // Función para habilitar o deshabilitar según el total
+        function verificarBotonSolicitar() {
+            const total = parseFloat(totalGeneralSpan.textContent);
+            if (total > 0) {
+                btnSolicitar.disabled = false;
+                btnSolicitar.style.opacity = "1";
+                btnSolicitar.style.cursor = "pointer";
+            } else {
+                btnSolicitar.disabled = true;
+                btnSolicitar.style.opacity = "0.6";
+                btnSolicitar.style.cursor = "not-allowed";
+            }
         }
+
+        // 🔹 Escuchar cambios en el total general
+        const observer = new MutationObserver(verificarBotonSolicitar);
+        observer.observe(totalGeneralSpan, { childList: true });
+
+        // 🔹 También llamar manualmente al cargar o recalcular total
+        verificarBotonSolicitar();
     });
-
-     const btnSolicitar = document.getElementById("btn-solicitar");
-    const totalGeneralSpan = document.getElementById("total-general");
-
-    // Deshabilitar el botón al inicio
-    btnSolicitar.disabled = true;
-    btnSolicitar.style.opacity = "0.6";
-    btnSolicitar.style.cursor = "not-allowed";
-
-    // Función para habilitar o deshabilitar según el total
-    function verificarBotonSolicitar() {
-        const total = parseFloat(totalGeneralSpan.textContent);
-        if (total > 0) {
-            btnSolicitar.disabled = false;
-            btnSolicitar.style.opacity = "1";
-            btnSolicitar.style.cursor = "pointer";
-        } else {
-            btnSolicitar.disabled = true;
-            btnSolicitar.style.opacity = "0.6";
-            btnSolicitar.style.cursor = "not-allowed";
-        }
-    }
-
-    // 🔹 Escuchar cambios en el total general
-    const observer = new MutationObserver(verificarBotonSolicitar);
-    observer.observe(totalGeneralSpan, { childList: true });
-
-    // 🔹 También llamar manualmente al cargar o recalcular total
-    verificarBotonSolicitar();
-});
 </script>

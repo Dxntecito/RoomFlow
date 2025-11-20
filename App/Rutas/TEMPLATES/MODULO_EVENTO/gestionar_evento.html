@@ -35,15 +35,52 @@
         <table class="eventos-table tbl-list">
             <thead>
                 <tr>
-                    <th class="text-center">ID</th>
-                    <th class="text-center">Nombre del Evento</th>
-                    <th class="text-center">Fecha</th>
-                    <th class="text-center">Hora Inicio</th>
-                    <th class="text-center">Hora Fin</th>
-                    <th class="text-center">Estado</th>
+                    <th class="text-center">
+                        <a
+                            href="{{ url_for('modulos.FilterEventos', filter='id_evento', order='asc' if order=='desc' else 'desc') }}">
+                            ID
+                        </a>
+                    </th>
+
+                    <th class="text-center">
+                        <a
+                            href="{{ url_for('modulos.FilterEventos', filter='nombre_evento', order='asc' if order=='desc' else 'desc') }}">
+                            Nombre del Evento
+                        </a>
+                    </th>
+
+                    <th class="text-center">
+                        <a
+                            href="{{ url_for('modulos.FilterEventos', filter='fecha', order='asc' if order=='desc' else 'desc') }}">
+                            Fecha
+                        </a>
+                    </th>
+
+                    <th class="text-center">
+                        <a
+                            href="{{ url_for('modulos.FilterEventos', filter='hora_inicio', order='asc' if order=='desc' else 'desc') }}">
+                            Hora Inicio
+                        </a>
+                    </th>
+
+                    <th class="text-center">
+                        <a
+                            href="{{ url_for('modulos.FilterEventos', filter='hora_fin', order='asc' if order=='desc' else 'desc') }}">
+                            Hora Fin
+                        </a>
+                    </th>
+
+                    <th class="text-center">
+                        <a
+                            href="{{ url_for('modulos.FilterEventos', filter='estado', order='asc' if order=='desc' else 'desc') }}">
+                            Estado
+                        </a>
+                    </th>
+
                     <th class="text-center">Acción</th>
                 </tr>
             </thead>
+
             <tbody id="tabla-eventos-body">
                 {% if eventos|length > 0 %}
                 {% for evento in eventos %}
@@ -91,7 +128,9 @@
         <div class="pagination-container"
             style="display: flex; justify-content: center; margin-top: 15px; margin-bottom: 15px; gap: 10px;">
             {% if page > 1 %}
-            <a href="{{ url_for('modulos.evento', page=page-1) }}" class="pagination-btn">« Anterior</a>
+            <a href="{{ url_for('modulos.FilterEventos', filter=filter, order=order, page=page-1) }}"
+                class="pagination-btn">
+                « Anterior</a>
             {% else %}
             <span class="pagination-btn disabled">« Anterior</span>
             {% endif %}
@@ -100,11 +139,14 @@
             {% if p == page %}
             <span class="pagination-btn current">{{ p }}</span>
             {% else %}
-            <a href="{{ url_for('modulos.evento', page=p) }}" class="pagination-btn">{{ p }}</a>
+            <a href="{{ url_for('modulos.FilterEventos', filter=filter, order=order, page=p) }}" class="pagination-btn">
+                {{ p }}</a>
             {% endif %}
             {% endfor %}
 
-            {% if page < total_pages %} <a href="{{ url_for('modulos.evento', page=page+1) }}" class="pagination-btn">
+            {% if page < total_pages %} <a
+                href="{{ url_for('modulos.FilterEventos', filter=filter, order=order, page=page+1) }}"
+                class="pagination-btn">
                 Siguiente »</a>
                 {% else %}
                 <span class="pagination-btn disabled">Siguiente »</span>
@@ -156,7 +198,7 @@
                         {% else %}
                         <input type="date" name="fecha" id="fecha" class="form-control"
                             value="{{ evento['fecha'] if evento else '' }}" min="{{ current_date }}" required>
-                            {% endif %}
+                        {% endif %}
                     </div>
 
                     <div class="form-group">
@@ -185,7 +227,7 @@
                         <input class="form-control bg-light" value="{{ evento['numero_horas'] }}" readonly>
                         {% else %}
                         <input type="number" step="0.5" name="numero_horas" id="numero_horas" class="form-control"
-                            value="{{ evento['numero_horas'] if evento else '' }}" required >
+                            value="{{ evento['numero_horas'] if evento else '' }}" required>
                         {% endif %}
                     </div>
 
@@ -195,7 +237,7 @@
                         <input class="form-control bg-light" value="{{ evento['precio_final'] }}" readonly>
                         {% else %}
                         <input type="number" step="0.01" name="precio_final" id="precio_final" class="form-control"
-                            value="{{ evento['precio_final'] if evento else '' }}" required >
+                            value="{{ evento['precio_final'] if evento else '' }}" required>
                         {% endif %}
                     </div>
 
@@ -375,111 +417,128 @@
     document.addEventListener("DOMContentLoaded", () => {
 
         const input = document.getElementById("search-input");
-        const tbody = document.getElementById("tabla-tipos-evento-body");
-        let tiposEventoData = []; // almacenamiento local de resultados
+        const tbody = document.getElementById("tabla-eventos-body");
+        let eventosData = []; // Cache de eventos
 
-        // Cargar todos desde backend al inicio
-        async function cargarTiposEventoInicial() {
+        // ========================================================
+        // 1. Cargar todos los eventos al inicio
+        // ========================================================
+        async function cargarEventosInicial() {
             try {
-                const response = await fetch('/Cruds/SearchTiposEventos?query=');
-                tiposEventoData = await response.json();
-                mostrarTiposEvento(tiposEventoData);
+                const response = await fetch('/Cruds/SearchEventos?query=');
+                eventosData = await response.json();
+                mostrarEventos(eventosData);
             } catch (error) {
-                console.error("Error al cargar tipos evento:", error);
+                console.error("Error al cargar eventos:", error);
             }
         }
 
-        // ✅ Mostrar en tabla
-        function mostrarTiposEvento(data) {
+        // ========================================================
+        // 2. Renderizar la tabla
+        // ========================================================
+        function mostrarEventos(data) {
             if (!data || data.length === 0) {
                 tbody.innerHTML = `
-                <tr>
-                    <td colspan="4" style="text-align:center;padding:40px;color:#999;">
-                        <i class="fas fa-search" style="font-size:24px;margin-bottom:10px;"></i>
-                        No se encontraron resultados
-                    </td>
-                </tr>
-            `;
+            <tr>
+                <td colspan="7" style="text-align:center;padding:40px;color:#999;">
+                    <i class="fas fa-search" style="font-size:24px;margin-bottom:10px;"></i>
+                    No se encontraron resultados
+                </td>
+            </tr>`;
                 return;
             }
 
-            tbody.innerHTML = data.map(evento => `
+            tbody.innerHTML = data.map(ev => `
             <tr>
-                <td class="col-id text-center">${evento.tipo_evento_id}</td>
-                <td class="col-numero text-center">${evento.nombre_tipo_evento}</td>
-                <td class="col-estado text-center">${evento.estado == 1 ? 'Activo' : 'Inactivo'}</td>
-                <td class="col-accion text-center">
+                <td class="text-center">${ev.id_evento}</td>
+                <td class="text-center">${ev.nombre_evento}</td>
+                <td class="text-center">${ev.fecha}</td>
+                <td class="text-center">${ev.hora_inicio}</td>
+                <td class="text-center">${ev.hora_fin}</td>
+                <td class="text-center">${ev.estado == 1 ? 'Activo' : 'Inactivo'}</td>
+
+                <td class="text-center">
                     <div class="action-buttons2">
-                        <button type="button" class="action-btn edit-btn" 
-                            onclick="window.location.href='/Cruds/EditTipoEvento/${evento.tipo_evento_id}'">
+
+                        <button type="button"
+                            class="action-btn edit-btn ${ev.estado == 0 ? 'disabled-btn' : ''}" id="editazao2"
+                            onclick="window.location.href='/Cruds/EditEvento/${ev.id_evento}'"
+                            ${ev.estado == 0 ? 'disabled' : ''}>
                             <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button type="button" class="action-btn view-btn" 
-                            onclick="window.location.href='/Cruds/ViewTipoEvento/${evento.tipo_evento_id}'">
+
+                        <button type="button" class="action-btn view-btn"
+                            onclick="window.location.href='/Cruds/ViewEvento/${ev.id_evento}'">
                             <i class="fa-solid fa-eye"></i>
                         </button>
-                        <button type="button" class="action-btn delete-btn" 
-                            data-id="${evento.tipo_evento_id}" onclick="eliminarTipoEvento(event)">
-                            <i class="fa-solid fa-trash"></i>
+
+                        <button type="button"
+                            class="action-btn delete-btn ${ev.estado == 0 || ev.tiene_nota_credito ? 'disabled-btn' : ''}"
+                            data-id="${ev.id_evento}" id="btn-baja2"
+                            onclick="darBaja(event)"
+                            ${ev.estado == 0 || ev.tiene_nota_credito ? 'disabled' : ''}>
+                            <i class="fas fa-minus"></i>
                         </button>
+
+
                     </div>
                 </td>
             </tr>
         `).join('');
         }
 
-        // ✅ Filtrar local mientras escribe
+        // ========================================================
+        // 3. Filtrar evento localmente
+        // ========================================================
         function filtrarLocal() {
             const search = input.value.toLowerCase().trim();
 
             if (search === "") {
-                mostrarTiposEvento(tiposEventoData);
+                mostrarEventos(eventosData);
                 return;
             }
 
-            const filtrados = tiposEventoData.filter(t => {
-                const nombre = t.nombre_tipo_evento.toLowerCase();
-                const partes = nombre.split(" ");
-
-                // Coincidencia por palabra que empieza igual
-                return partes.some(p => p.startsWith(search)) ||
-                    t.tipo_evento_id.toString().includes(search);
+            const filtrados = eventosData.filter(ev => {
+                const nombre = ev.nombre_evento.toLowerCase();
+                return nombre.includes(search) ||
+                    ev.id_evento.toString().includes(search);
             });
 
-            mostrarTiposEvento(filtrados);
+            mostrarEventos(filtrados);
         }
 
-        // ✅ Buscar en servidor (cuando presiona botón o Enter)
+        // ========================================================
+        // 4. Búsqueda en backend (solo Enter)
+        // ========================================================
         async function buscarEnServidor() {
             const query = input.value.trim();
 
             try {
-                const response = await fetch(`/Cruds/SearchTiposEventos?query=${encodeURIComponent(query)}`);
+                const response = await fetch(`/Cruds/SearchEventos?query=${encodeURIComponent(query)}`);
                 const data = await response.json();
-                tiposEventoData = data; // actualizar cache
-                mostrarTiposEvento(data);
-            } catch (e) {
-                console.error("Error backend:", e);
+                eventosData = data;
+                mostrarEventos(data);
+            } catch (error) {
+                console.error("Error buscando eventos:", error);
             }
         }
 
-        // 🎯 Eventos:
+        // Eventos:
         input.addEventListener("input", filtrarLocal);
 
-        // Enter → búsqueda servidor
         input.addEventListener("keydown", e => {
-            if (e.key === "Enter") {
-                buscarEnServidor();
-            }
+            if (e.key === "Enter") buscarEnServidor();
         });
 
-        // Hacer accesible al botón existente
-        window.buscarTiposEvento = buscarEnServidor;
+        // Hacer visible para botones externos
+        window.buscarEventos = buscarEnServidor;
 
         // Inicial
-        cargarTiposEventoInicial();
+        cargarEventosInicial();
+
     });
 </script>
+
 
 
 

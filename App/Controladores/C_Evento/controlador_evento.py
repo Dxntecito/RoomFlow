@@ -3,6 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from flask import request, jsonify
 from datetime import date
+import json
 
 
 def inactivar_eventos_vencidos():
@@ -126,7 +127,7 @@ def procesar_pago():
     cursor = conexion.cursor()
 
     try:
-        # ========= 1️⃣ OBTENER DATOS DEL FORMULARIO ==========
+        # ========= 1️ OBTENER DATOS DEL FORMULARIO ==========
         print("📥 Obteniendo datos del formulario...")
 
         tipo_cliente = request.form.get("tipo_cliente")  # 'N' o 'J'
@@ -139,6 +140,7 @@ def procesar_pago():
         ape_pat = request.form.get("ape_paterno")
         ape_mat = request.form.get("ape_materno")
         razon_social = request.form.get("razon_social")
+        capacidad = request.form.get("capacidad")
         numero_horas = request.form.get("numero_horas")
         precio_final = request.form.get("precio_final")
         tipo_evento_id = request.form.get("tipo_evento_id")
@@ -149,8 +151,10 @@ def procesar_pago():
         metodo_pago_id = request.form.get("metodo_pago_id")
         tipo_comprobante = request.form.get("tipo_comprobante")
         numero_comprobante = generar_numero_comprobante(tipo_comprobante)
+        servicios = json.loads(request.form.get("servicios", "[]"))
 
-        print("📦 Datos recibidos:")
+
+        print(" Datos recibidos:")
         print({
             "tipo_cliente": tipo_cliente,
             "nro_doc": nro_doc,
@@ -162,6 +166,7 @@ def procesar_pago():
             "ape_pat": ape_pat,
             "ape_mat": ape_mat,
             "razon_social": razon_social,
+            "capacidad":capacidad,
             "tipo_evento_id": tipo_evento_id,
             "nombre_evento": nombre_evento,
             "fecha_evento": fecha_evento,
@@ -173,15 +178,15 @@ def procesar_pago():
             "tipo_comprobante": tipo_comprobante
         })
 
-        # ========= 2️⃣ INICIAR TRANSACCIÓN ==========
+        # ========= 2️ INICIAR TRANSACCIÓN ==========
         conexion.begin()
 
-        # ========= 3️⃣ CLIENTE ==========
+        # ========= 3️ CLIENTE ==========
         cursor.execute("SELECT cliente_id FROM CLIENTE WHERE num_doc = %s", (nro_doc,))
         cliente = cursor.fetchone()
         if cliente:
             cliente_id = cliente[0]
-            print(f"✅ Cliente existente: ID {cliente_id}")
+            print(f" Cliente existente: ID {cliente_id}")
         else:
             cursor.execute("""
                 INSERT INTO CLIENTE (
@@ -191,51 +196,68 @@ def procesar_pago():
             """, (direccion, telefono, nro_doc, tipo_cliente, pais_id, tipo_doc_id,
                   ape_pat, ape_mat, nombres, razon_social))
             cliente_id = cursor.lastrowid
-            print(f"✅ Cliente insertado con ID {cliente_id}")
+            print(f" Cliente insertado con ID {cliente_id}")
 
-        # ========= 4️⃣ RESERVA ==========
+        # ========= 4️ RESERVA ==========
         cursor.execute("""
             INSERT INTO RESERVA (fecha_registro, hora_registro, monto_total, cliente_id, tipo_reserva, estado)
             VALUES (CURDATE(), CURTIME(), %s, %s, 'E', 1)
         """, (precio_final, cliente_id))
         reserva_id = cursor.lastrowid
-        print(f"✅ Reserva creada con ID {reserva_id}")
+        print(f" Reserva creada con ID {reserva_id}")
 
-        # ========= 5️⃣ EVENTO ==========
+        # ========= 5️ EVENTO ==========
         cursor.execute("""
-            INSERT INTO EVENTO (nombre_evento, fecha, hora_inicio, hora_fin, numero_horas, precio_final, tipo_evento_id, reserva_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO EVENTO (nombre_evento, fecha, hora_inicio, hora_fin, numero_horas, precio_final, tipo_evento_id, reserva_id,capacidad)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (nombre_evento, fecha_evento, hora_inicio, hora_fin, numero_horas,
-              precio_final, tipo_evento_id, reserva_id))
+              precio_final, tipo_evento_id, reserva_id,capacidad))
         evento_id = cursor.lastrowid
-        print(f"✅ Evento creado con ID {evento_id}")
+        print(f" Evento creado con ID {evento_id}")
 
-        # ========= 6️⃣ TRANSACCIÓN ==========
+        # ========= 5.1️ SERVICIOS DEL EVENTO (EVENTO_SERVICIO_EVENTO) ==========
+        servicios = json.loads(request.form.get("servicios", "[]"))
+        print(" Servicios recibidos del front:", servicios)
+
+        if servicios:
+            print(" Insertando servicios seleccionados...")
+            for s in servicios:
+                cursor.execute("""
+                    INSERT INTO EVENTO_SERVICIO_EVENTO (evento_id, servicio_evento_id, cantidad, precio_unitario)
+                    VALUES (%s, %s, 1, %s)
+                """, (evento_id, s["id"], s["precio"]))
+
+            print(f" {len(servicios)} servicios insertados.")
+        else:
+            print(" No se seleccionaron servicios para este evento.")
+
+
+        # ========= 6️ TRANSACCIÓN ==========
         cursor.execute("""
             INSERT INTO TRANSACCION (metodo_pago_id, fecha_pago, monto, estado, reserva_id)
             VALUES (%s, CURDATE(), %s, 1, %s)
         """, (metodo_pago_id, precio_final, reserva_id))
         transaccion_id = cursor.lastrowid
-        print(f"✅ Transacción creada con ID {transaccion_id}")
+        print(f" Transacción creada con ID {transaccion_id}")
 
-        # ========= 7️⃣ COMPROBANTE ==========
+        # ========= 7️ COMPROBANTE ==========
         cursor.execute("""
             INSERT INTO COMPROBANTE (tipo_comprobante, numero_comprobante, fecha_comprobante, hora_comprobante, monto_total, transaccion_id)
             VALUES (%s, %s, CURDATE(), CURTIME(), %s, %s)
         """, (tipo_comprobante, numero_comprobante, precio_final, transaccion_id))
         comprobante_id = cursor.lastrowid
-        print(f"✅ Comprobante creado con ID {comprobante_id}")
+        print(f" Comprobante creado con ID {comprobante_id}")
 
-        # ========= 8️⃣ DETALLE ==========
+        # ========= 8️ DETALLE ==========
         cursor.execute("""
             INSERT INTO DETALLE_COMPROBANTE (comprobante_id, evento_id, cantidad, precio_unitario, subtotal)
             VALUES (%s, %s, 1, %s, %s)
         """, (comprobante_id, evento_id, precio_final, precio_final))
-        print("✅ Detalle comprobante insertado correctamente.")
+        print(" Detalle comprobante insertado correctamente.")
 
-        # ========= 9️⃣ CONFIRMAR ==========
+        # ========= 9️ CONFIRMAR ==========
         conexion.commit()
-        print("✅ Transacción completada y confirmada.")
+        print(" Transacción completada y confirmada.")
 
         return jsonify({
             "success": True,
@@ -252,7 +274,7 @@ def procesar_pago():
     finally:
         cursor.close()
         conexion.close()
-        print("🔚 Cerrando conexión y cursor.")
+        print(" Cerrando conexión y cursor.")
 
 
 def get_tipos_eventos(limit=20, offset=0):
@@ -285,7 +307,7 @@ def count_tipos_eventos():
     return total
 
 
-# ✅ OBTENER UN TIPO DE EVENTO POR ID
+#  OBTENER UN TIPO DE EVENTO POR ID
 def get_one_tipo_evento(tipo_evento_id):
     connection = get_connection()
     with connection.cursor() as cursor:
@@ -305,7 +327,7 @@ def get_one_tipo_evento(tipo_evento_id):
     return None
 
 
-# ✅ INSERTAR NUEVO TIPO DE EVENTO
+#  INSERTAR NUEVO TIPO DE EVENTO
 def insert_tipo_evento(nombre_tipo_evento, estado, precio_por_hora):
     connection = get_connection()
     with connection.cursor() as cursor:
@@ -317,7 +339,7 @@ def insert_tipo_evento(nombre_tipo_evento, estado, precio_por_hora):
     connection.close()
 
 
-# ✅ ACTUALIZAR TIPO DE EVENTO EXISTENTE
+#  ACTUALIZAR TIPO DE EVENTO EXISTENTE
 def update_tipo_evento(nombre_tipo_evento, estado,precio_por_hora, tipo_evento_id):
     connection = get_connection()
     with connection.cursor() as cursor:
@@ -330,7 +352,7 @@ def update_tipo_evento(nombre_tipo_evento, estado,precio_por_hora, tipo_evento_i
     connection.close()
 
 
-# ✅ ELIMINAR TIPO DE EVENTO
+#  ELIMINAR TIPO DE EVENTO
 def delete_tipo_evento(tipo_evento_id):
     connection = get_connection()
     with connection.cursor() as cursor:
@@ -339,7 +361,7 @@ def delete_tipo_evento(tipo_evento_id):
     connection.close()
 
 
-# ✅ ORDENAR TIPOS DE EVENTO
+#  ORDENAR TIPOS DE EVENTO
 def order_tipo_evento(filter_field, order):
     allowed_fields = ['tipo_evento_id', 'nombre_tipo_evento', 'estado']
     if filter_field not in allowed_fields:
@@ -359,7 +381,7 @@ def order_tipo_evento(filter_field, order):
     return tipos
 
 
-# ✅ BUSCAR TIPO DE EVENTO POR NOMBRE
+#  BUSCAR TIPO DE EVENTO POR NOMBRE
 def search_tipo_evento(query):
     connection = get_connection()
     with connection.cursor() as cursor:
@@ -372,7 +394,7 @@ def search_tipo_evento(query):
         tipos = cursor.fetchall()
     connection.close()
 
-    # ✅ Convertir resultados a diccionarios como tu otra función
+    #  Convertir resultados a diccionarios como tu otra función
     results = []
     for t in tipos:
         results.append({
@@ -387,6 +409,19 @@ def search_tipo_evento(query):
 
 ##CONTROLADOR EVENTO
 
+from datetime import date, time, timedelta
+
+def formatear_fecha(valor):
+    if isinstance(valor, date):
+        return valor.isoformat()
+    return valor  # deja None o strings
+
+def formatear_hora(valor):
+    if valor is None:
+        return None
+    val_str = str(valor)           # convierte time o timedelta a string
+    return val_str.split('.')[0]   # elimina microsegundos si los hubiera
+
 def get_eventos(limit=20, offset=0):
     connection = get_connection()
     with connection.cursor() as cursor:
@@ -396,22 +431,25 @@ def get_eventos(limit=20, offset=0):
             LIMIT %s OFFSET %s
         """, (limit, offset))
         rows = cursor.fetchall()
+
         eventos = []
         for r in rows:
             eventos.append({
                 'id_evento': r[0],
                 'nombre_evento': r[1],
-                'fecha': r[2],
-                'hora_inicio': r[3],
-                'hora_fin': r[4],
+                'fecha': formatear_fecha(r[2]),
+                'hora_inicio': formatear_hora(r[3]),
+                'hora_fin': formatear_hora(r[4]),
                 'estado': int(r[5])
             })
+
     connection.close()
     return eventos
 
 
 
-# ✅ OBTENER UN TIPO DE EVENTO POR ID
+
+#  OBTENER UN TIPO DE EVENTO POR ID
 def get_one_evento(id_evento):
     connection = get_connection()
     with connection.cursor() as cursor:
@@ -477,7 +515,7 @@ def get_evento_by_id(id_evento):
 def update_evento(nombre_evento, fecha, hora_inicio, hora_fin, 
                   numero_horas, precio_final, tipo_evento_id, id_evento, motivo):
 
-    print("\n📌 Ejecutando update_evento()")
+    print("\n Ejecutando update_evento()")
     print("Recibido:")
     print(" -> nombre:", nombre_evento)
     print(" -> fecha:", fecha)
@@ -503,7 +541,7 @@ def update_evento(nombre_evento, fecha, hora_inicio, hora_fin,
     connection = get_connection()
     with connection.cursor() as cursor:
 
-        print("➡️ Ejecutando UPDATE en BD")
+        print(" Ejecutando UPDATE en BD")
         cursor.execute("""
             UPDATE EVENTO
             SET nombre_evento=%s, fecha=%s, hora_inicio=%s, hora_fin=%s,
@@ -542,7 +580,7 @@ def update_evento(nombre_evento, fecha, hora_inicio, hora_fin,
 
     connection.commit()
     connection.close()
-    print("✅ UPDATE COMPLETO\n")
+    print(" UPDATE COMPLETO\n")
 
 
 #id de reserva por evento
@@ -579,7 +617,7 @@ def search_evento(query):
     connection = get_connection()
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT id_evento, nombre_evento, fecha, hora_inicio, hora_fin, numero_horas, precio_final, estado
+            SELECT id_evento, nombre_evento, fecha, hora_inicio, hora_fin, estado
             FROM EVENTO
             WHERE nombre_evento LIKE %s
         """, (query_param,))
@@ -587,18 +625,37 @@ def search_evento(query):
     connection.close()
 
     results = []
+
     for r in rows:
+
+        # ---------- DEBUG PARA IDENTIFICAR EL ERROR ----------
+        print("DEBUG RAW ROW:", r)
+        print("TIPOS:", type(r[0]), type(r[1]), type(r[2]), type(r[3]), type(r[4]), type(r[5]))
+        # ------------------------------------------------------
+
+        fecha = r[2].isoformat() if r[2] is not None else None
+
+        def convertir_hora(valor):
+            if valor is None:
+                return None
+            val_str = str(valor)
+            return val_str.split('.')[0]  # Quitar microsegundos si los hay
+
+        hora_inicio = convertir_hora(r[3])
+        hora_fin = convertir_hora(r[4])
+
         results.append({
             "id_evento": r[0],
             "nombre_evento": r[1],
-            "fecha": r[2],
-            "hora_inicio": r[3],
-            "hora_fin": r[4],
-            "numero_horas": r[5],
-            "precio_final": r[6],
-            "estado": r[7]
+            "fecha": fecha,
+            "hora_inicio": hora_inicio,
+            "hora_fin": hora_fin,
+            "estado": r[5]
         })
+
     return results
+
+
 
 
 
@@ -643,8 +700,11 @@ def baja_evento(evento_id, motivo_cancelacion):
             cursor.execute("UPDATE EVENTO SET estado = 0 WHERE id_evento  = %s", (evento_id,))
 
             # 3) Cancelar reserva
-            cursor.execute("UPDATE RESERVA SET estado = 0, motivo = %s WHERE reserva_id = %s",
-                           (motivo_cancelacion, reserva_id))
+            cursor.execute("UPDATE RESERVA SET estado = 0 WHERE reserva_id = %s",
+                           (reserva_id))
+            #4) Cancelar comprobante
+            cursor.execute("UPDATE TRANSACCION SET estado = 0 WHERE reserva_id = %s",
+                           (reserva_id))
 
             # 4) Crear nota de crédito
             cursor.execute("""

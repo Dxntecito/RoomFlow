@@ -1,0 +1,94 @@
+{% extends "/MODULO_EVENTO/Crud_evento.html" %}
+
+{% block servicio_evento_content %}
+
+{% if mode == 'list' %}
+<div class="content-crud-evento section-content" id="servicios_evento">
+    <h2 class="section-title-f">Gestionar Servicios del Evento</h2>
+
+    <div class="alert alert-success" id="alert-evento-success" style="display: none;"></div>
+    <div class="alert alert-error" id="alert-evento-error" style="display: none;"></div>
+
+    <!-- Barra de búsqueda -->
+    <div class="search-filters-section">
+        <div class="search-section">
+            <label for="search-input" class="search-label">Buscar</label>
+            <div class="search-form">
+                <input type="text" id="search-input" name="search" class="search-input"
+                    placeholder="Buscar servicio...">
+                <button type="button" class="search-button" onclick="buscarServiciosEvento()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Botón Crear nuevo -->
+        <div class="actions-section">
+            <button type="button" onclick="window.location.href='{{ url_for('modulos.NewServicioEvento') }}'"
+                class="create-button">
+                <i class="fas fa-plus"></i> Crear nuevo
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-container">
+        <table class="tipos-evento-table tbl-list">
+            <thead>
+                <tr>
+                    <th class="col-id text-center">ID</th>
+                    <th class="col-nombre text-center">Servicio</th>
+                    <th class="col-nombre text-center">Tipo de Servicio</th>
+                    <th class="col-nombre text-center">Precio</th>
+                    <th class="col-estado text-center">Estado</th>
+                    <th class="col-accion text-center">Acción</th>
+                </tr>
+            </thead>
+
+            <tbody id="tabla-servicios-evento-body">
+                {% if servicios|length > 0 %}
+                {% for servicio in servicios %}
+                <tr>
+                    <td class="text-center">{{ servicio['id_servicio_evento'] }}</td>
+                    <td class="text-center">{{ servicio['nombre_servicio'] }}</td>
+                    <td class="text-center">{{ servicio['tipo_nombre'] }}</td>
+                    <td class="text-center">S/ {{ servicio['precio'] }}</td>
+                    <td class="text-center">{{ 'Activo' if servicio['estado']==1 else 'Inactivo' }}</td>
+
+                    <td class="text-center">
+                        <div class="action-buttons2">
+
+                            <!-- Editar -->
+                            <button type="button" class="action-btn edit-btn"
+                                onclick="window.location.href='{{ url_for('modulos.EditServicioEvento', id_servicio_evento=servicio['id_servicio_evento']) }}'">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+
+                            <!-- Ver -->
+                            <button type="button" class="action-btn view-btn"
+                                onclick="window.location.href='{{ url_for('modulos.ViewServicioEvento', id_servicio_evento=servicio['id_servicio_evento']) }}'">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+
+                            <!-- Eliminar (opcional) -->
+                            <!--
+                            <button class="action-btn delete-btn"
+                                data-id="{{ servicio['id_servicio_evento'] }}"
+                                onclick="eliminarServicio(event)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            -->
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center p-3">No hay servicios registrados</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+{% endblock %}

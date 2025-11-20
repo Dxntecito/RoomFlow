@@ -75,7 +75,7 @@
 
                     <div class="form-group">
                         <label>Capacidad</label>
-                        <input type="number" name="capacidad" class="form-control"
+                        <input type="number" name="capacidad" class="form-control" id="capacidad"
                             pattern="">
 
                     </div>
@@ -406,14 +406,14 @@
     const tiposEventos = {{ tipos_evento1_raw | tojson }};
 </script>
 
-
 <script src="../../Static/JS/Evento_cliente.js"></script>
 
 <script src="../../Static/JS/Evento_reserva.js"></script>
 
 <script src="../../Static/JS/Evento_metodo_pago.js"></script>
 
+<script src="../../Static/JS/Evento_servicios.js"></script>
+
 <script src="../../Static/JS/Evento_pago.js"></script>
 
-<script src="../../Static/JS/Evento_servicios.js"></script>
 {% endblock %}
