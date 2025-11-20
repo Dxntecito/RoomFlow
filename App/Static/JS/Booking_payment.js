@@ -203,29 +203,17 @@ async function waitForReservationValidation(reservaId, statusLabel) {
       return false;
     }
     attempt += 1;
-    let secondsLeft = POLL_DELAY_MS / 1000;
-    const updateLabel = () => {
-      if (!statusLabel) return;
-      const extra = attempt >= WARN_THRESHOLD ? " (seguimos insistiendo…)" : "";
-      statusLabel.textContent = `Esperando validación del pago... (verificación ${attempt}/${MAX_ATTEMPTS} | reintento en ${secondsLeft}s)${extra}`;
-    };
-    updateLabel();
-    stopCountdown();
-    countdownInterval = setInterval(() => {
-      secondsLeft -= 1;
-      if (secondsLeft <= 0) {
-        stopCountdown();
-        return;
-      }
-      updateLabel();
-    }, 1000);
+    // Solo mostrar "Se está validando tu pago..." sin detalles de intentos
+    if (statusLabel) {
+      statusLabel.textContent = "Se está validando tu pago...";
+    }
     try {
       const resp = await fetch(`/Rutas/TEMPLATES/reserva/${encodeURIComponent(reservaId)}/estado`, { cache: "no-store" });
       if (resp.ok) {
         const data = await resp.json();
         if (data && String(data.validado).trim() === "1") {
           stopCountdown();
-          if (statusLabel) statusLabel.textContent = "Pago validado. Continuando con el proceso…";
+          if (statusLabel) statusLabel.textContent = "Pago validado, reserva realizada con éxito";
           launchConfetti();
           return true;
         }
@@ -426,6 +414,8 @@ if (method === '2') {
 
 // Mostrar resumen actualizado
 populatePaymentSummary_new();
+
+// Continuar con el flujo normal directamente
 finalizarReservaBtn.click();
 
 console.groupEnd();
@@ -441,7 +431,7 @@ if (finalizarReservaBtn) {
 
     modal.style.display = "flex";
     loader.style.display = "block";
-    status.textContent = "Procesando pago...";
+    status.textContent = "Se está validando tu pago...";
     status.classList.remove("success");
 
     finalizarReservaBtn.disabled = true;
@@ -508,16 +498,43 @@ if (finalizarReservaBtn) {
     ultimaReservaId = reservaId;
 
     // Esperar validación externa
-    status.textContent = "Esperando validación del pago...";
+    status.textContent = "Se está validando tu pago...";
     const validado = await waitForReservationValidation(reservaId, status);
     if (!validado) {
       loader.style.display = "none";
-      status.textContent = "No fue posible validar el pago automáticamente. Redirigiendo al inicio…";
+      status.textContent = "El pago no se ha realizado. Serás redirigido al inicio en 5 segundos...";
+      status.classList.remove("success");
       finalizarReservaBtn.disabled = false;
       finalizarReservaBtn.textContent = "Finalizar Reserva";
+      
+      // Establecer bandera para evitar el alert de navegación
+      window.isPaymentValidationFailed = true;
+      window.isNavigatingAway = true;
+      
+      // Limpiar datos de reserva para desactivar interceptación de navegación
+      if (typeof selectedRooms !== 'undefined') {
+        selectedRooms = [];
+      }
+      if (typeof selectedServices !== 'undefined') {
+        selectedServices = [];
+      }
+      if (typeof serviceQuantities !== 'undefined') {
+        serviceQuantities = {};
+      }
+      if (typeof clientData !== 'undefined') {
+        clientData = {};
+      }
+      localStorage.removeItem('booking_pending_data');
+      
+      // Detener temporizador si está corriendo
+      if (window.bookingTimer && typeof window.bookingTimer.stop === 'function') {
+        window.bookingTimer.stop(false);
+      }
+      
+      // Redirigir después de 5 segundos
       setTimeout(() => {
-        window.location.href = window.BOOKING_HOME_URL || "/";
-      }, 3000);
+        window.location.replace(window.BOOKING_HOME_URL || "/");
+      }, 5000);
       console.groupEnd();
       return;
     }
@@ -644,7 +661,7 @@ if (finalizarReservaBtn) {
 
       // ✅ Todo salió bien: mostrar mensaje de éxito en el modal
       loader.style.display = "none";
-      status.textContent = "✅ Pago exitoso";
+      status.textContent = "Pago validado, reserva realizada con éxito";
       status.classList.add("success");
 
       await new Promise(r => setTimeout(r, 1500)); // Espera 1.5s

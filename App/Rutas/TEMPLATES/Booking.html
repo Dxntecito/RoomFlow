@@ -517,20 +517,14 @@
   <section id="qr_payment_section" class="payment-alt hidden">
     <h3>Pago por QR (Yape)</h3>
     <div class="payment-brand">
-      <img src="{{ url_for('static', filename='Img/yape.jpg') }}" alt="Logo Yape">
+      <img src="{{ url_for('static', filename='Img/yape.jpg') }}" alt="Logo Yape" style="max-width: 1200px; width: 100%; height: auto;">
     </div>
-    <p>Escanea el código con Yape para enviar tu pago al número <strong>+51 952 225 506</strong>. El monto se completa automáticamente.</p>
-    <div class="qr-box">
-      <img id="qr_payment_image" alt="Código QR de pago">
-    </div>
+    <p>Escanea el código con Yape para enviar tu pago al número <strong>+51 952 225 506</strong>.</p>
     <p class="payment-hint">Nuestro equipo verificará el pago y confirmará tu reserva.</p>
   </section>
 
   <section id="transfer_payment_section" class="payment-alt hidden">
     <h3>Transferencia bancaria</h3>
-    <div class="payment-brand">
-      <img src="{{ url_for('static', filename='Img/transferencia.jpg') }}" alt="Transferencia bancaria">
-    </div>
     <div class="transfer-info">
       <p><strong>Número de cuenta:</strong> 30570524754011</p>
       <p><strong>CCI:</strong> 0023517052475401118</p>
@@ -772,6 +766,7 @@ function filterRows() {
 
     if (show) {
       row.style.display = "";
+      row.dataset.filtered = "true"; // Marcar como no filtrada
     } else {
       // Si la fila se oculta y está marcada, desmarcarla y disparar change para limpiar selección
       if (checkbox && checkbox.checked) {
@@ -780,8 +775,12 @@ function filterRows() {
         checkbox.dispatchEvent(new Event('change'));
       }
       row.style.display = "none";
+      row.dataset.filtered = "false"; // Marcar como filtrada
     }
   });
+  
+  // Resetear a página 1 cuando se aplican filtros
+  currentRoomsPage = 1;
 }
 
 // Diccionarios generados por Jinja: id -> nombre, id -> precio
@@ -822,18 +821,36 @@ let currentRoomsPage = 1;
 const ROOMS_PER_PAGE = 5;
 
 function updateRoomsPagination() {
-  const visibleRows = Array.from(document.querySelectorAll('.room-row')).filter(row => 
-    row.style.display !== 'none'
-  );
+  // Obtener todas las filas que NO están filtradas (disponibles para mostrar)
+  const allRows = Array.from(document.querySelectorAll('.room-row'));
+  const visibleRows = allRows.filter(row => {
+    // Si no tiene el atributo filtered, asumir que está disponible
+    if (!row.dataset.filtered) {
+      return true;
+    }
+    // Solo incluir filas que no están filtradas
+    return row.dataset.filtered === 'true';
+  });
+  
   const totalPages = Math.ceil(visibleRows.length / ROOMS_PER_PAGE);
   const pagination = document.getElementById('rooms_pagination');
   const prevBtn = document.getElementById('rooms_prev_btn');
   const nextBtn = document.getElementById('rooms_next_btn');
   const infoSpan = document.getElementById('rooms_pagination_info');
   
+  // Si no hay páginas o solo hay una, ocultar paginación
   if (totalPages <= 1) {
     if (pagination) pagination.style.display = 'none';
+    // Mostrar todas las filas no filtradas
+    visibleRows.forEach(row => {
+      row.style.display = '';
+    });
     return;
+  }
+  
+  // Ajustar currentRoomsPage si es mayor que totalPages
+  if (currentRoomsPage > totalPages) {
+    currentRoomsPage = totalPages;
   }
   
   if (pagination) pagination.style.display = 'flex';
@@ -859,23 +876,43 @@ document.getElementById('rooms_prev_btn')?.addEventListener('click', () => {
   if (currentRoomsPage > 1) {
     currentRoomsPage--;
     updateRoomsPagination();
+    // Scroll suave hacia arriba de la tabla
+    const table = document.getElementById('booking_room_available');
+    if (table) {
+      table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 });
 
 document.getElementById('rooms_next_btn')?.addEventListener('click', () => {
-  const visibleRows = Array.from(document.querySelectorAll('.room-row')).filter(row => 
-    row.style.display !== 'none'
-  );
+  // Obtener filas no filtradas
+  const allRows = Array.from(document.querySelectorAll('.room-row'));
+  const visibleRows = allRows.filter(row => {
+    if (!row.dataset.filtered) return true;
+    return row.dataset.filtered === 'true';
+  });
   const totalPages = Math.ceil(visibleRows.length / ROOMS_PER_PAGE);
+  
   if (currentRoomsPage < totalPages) {
     currentRoomsPage++;
     updateRoomsPagination();
+    // Scroll suave hacia arriba de la tabla
+    const table = document.getElementById('booking_room_available');
+    if (table) {
+      table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 });
 
 // Inicializar paginación al cargar
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
+    // Marcar todas las filas como disponibles inicialmente
+    document.querySelectorAll('.room-row').forEach(row => {
+      if (!row.dataset.filtered) {
+        row.dataset.filtered = 'true';
+      }
+    });
     filterRows();
     updateRoomsPagination();
   }, 100);
@@ -1549,7 +1586,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       
       // Verificar si estamos en el flujo de reserva
-      if (!isInBookingFlow() || isNavigatingAway || isReloading) {
+      // También permitir si la validación de pago falló (redirección automática)
+      if (!isInBookingFlow() || isNavigatingAway || isReloading || window.isPaymentValidationFailed) {
         return;
       }
       
@@ -1574,6 +1612,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }, true); // Usar capture phase para interceptar antes que otros handlers
   
   // También interceptar el evento beforeunload para recargas del navegador
+  // Nota: beforeunload no puede mostrar modales personalizados de manera confiable
+  // porque la página está a punto de descargarse. Sin embargo, prevenimos la recarga
+  // y el popup personalizado se mostrará cuando el usuario intente recargar usando teclas
   window.addEventListener('beforeunload', function(e) {
     // Si el timer expiró, permitir la redirección sin alert
     if (window.isTimerExpired) {
@@ -1586,16 +1627,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     // Si ya confirmamos la navegación o recarga, permitir
-    if (isNavigatingAway || isReloading) {
+    // También permitir si la validación de pago falló (redirección automática)
+    if (isNavigatingAway || isReloading || window.isPaymentValidationFailed) {
       return;
     }
     
     // Solo interceptar si estamos en el flujo de reserva
     if (isInBookingFlow()) {
-      // Los navegadores modernos solo muestran su propio diálogo
-      // No podemos personalizar el mensaje, pero podemos prevenir la salida
+      // Prevenir la recarga/cierre
+      // El popup personalizado se mostrará cuando el usuario use F5/Ctrl+R
+      // debido a que interceptamos esas teclas antes de que se active beforeunload
       e.preventDefault();
-      e.returnValue = '¿Estás seguro de que quieres salir? Se perderán todos los datos ingresados.'; // Chrome requiere returnValue
+      e.returnValue = '¿Estás seguro de que quieres recargar la página? Se perderán todos los datos ingresados.'; // Chrome requiere returnValue
       return e.returnValue; // Algunos navegadores requieren return
     }
   });
@@ -1633,13 +1676,24 @@ document.addEventListener("DOMContentLoaded", () => {
       '.footer a',
       'header a',
       '.logo a',
-      'h1 a',
-      'header h1'
+      'h1 a'
+      // Nota: 'header h1' se maneja por separado más abajo para evitar duplicados
     ];
 
     const links = document.querySelectorAll(selectors.join(','));
 
     links.forEach(link => {
+      // Excluir el H1 del logo si no tiene enlace (se maneja por separado)
+      if (link.tagName === 'H1' && !link.querySelector('a')) {
+        return;
+      }
+      
+      // Verificar si ya tiene un listener para evitar duplicados
+      if (link.hasAttribute('data-booking-link-listener')) {
+        return;
+      }
+      
+      link.setAttribute('data-booking-link-listener', 'true');
       link.addEventListener('click', function(e) {
         // Si el timer expiró, permitir la navegación sin alert
         if (window.isTimerExpired) {
@@ -1648,7 +1702,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         const targetUrl = this.href || "{{ url_for('Index') }}";
 
-        if (!isInBookingFlow() || isNavigatingAway) {
+        if (!isInBookingFlow() || isNavigatingAway || window.isPaymentValidationFailed) {
           return;
         }
 
@@ -1665,8 +1719,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     
     // Interceptar clic en H1 logo (si no tiene enlace, redirigir al inicio)
+    // Verificar si ya tiene un listener para evitar duplicados
     const h1Logo = document.querySelector('header h1, h1.logo, .logo h1');
-    if (h1Logo && !h1Logo.querySelector('a')) {
+    if (h1Logo && !h1Logo.querySelector('a') && !h1Logo.hasAttribute('data-booking-listener')) {
+      h1Logo.setAttribute('data-booking-listener', 'true');
       h1Logo.style.cursor = 'pointer';
       h1Logo.addEventListener('click', function(e) {
         // Si el timer expiró, permitir la navegación sin alert
@@ -1675,13 +1731,14 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
         
-        if (!isInBookingFlow() || isNavigatingAway) {
+        if (!isInBookingFlow() || isNavigatingAway || window.isPaymentValidationFailed) {
           window.location.href = "{{ url_for('Index') }}";
           return;
         }
 
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation(); // Prevenir que otros listeners se ejecuten
 
         (async () => {
           const confirmed = await showBookingConfirm('¿Estás seguro de que quieres salir? Si continúas, se cancelará tu reserva.', 'Confirmar salida');
@@ -1689,7 +1746,7 @@ document.addEventListener("DOMContentLoaded", () => {
             goToHome();
           }
         })();
-      });
+      }, true); // Usar capture phase para interceptar antes que otros listeners
     }
   }
 

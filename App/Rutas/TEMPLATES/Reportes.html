@@ -959,11 +959,46 @@
         });
     }
 
+    // Función auxiliar para ordenar datos por fecha cronológicamente
+    function ordenarDatosPorFecha(datos) {
+        const meses = {
+            'Enero': 1, 'Febrero': 2, 'Marzo': 3, 'Abril': 4, 'Mayo': 5, 'Junio': 6,
+            'Julio': 7, 'Agosto': 8, 'Septiembre': 9, 'Octubre': 10, 'Noviembre': 11, 'Diciembre': 12
+        };
+        
+        // Convertir objeto a array de pares [mes, valor]
+        const entries = Object.entries(datos);
+        
+        // Ordenar por año y mes
+        entries.sort((a, b) => {
+            const [mesA, añoA] = a[0].split(' ');
+            const [mesB, añoB] = b[0].split(' ');
+            
+            // Comparar año primero
+            if (añoA !== añoB) {
+                return parseInt(añoA) - parseInt(añoB);
+            }
+            
+            // Si el año es igual, comparar mes
+            return meses[mesA] - meses[mesB];
+        });
+        
+        // Convertir de vuelta a objeto ordenado
+        const datosOrdenados = {};
+        entries.forEach(([mes, valor]) => {
+            datosOrdenados[mes] = valor;
+        });
+        
+        return datosOrdenados;
+    }
+
     // Función para crear gráfico de reservas por mes
     function crearGraficoReservasMes(datos) {
         const ctx = document.getElementById('chartReservasMes').getContext('2d');
-        const labels = Object.keys(datos);
-        const values = Object.values(datos);
+        // Ordenar datos cronológicamente
+        const datosOrdenados = ordenarDatosPorFecha(datos);
+        const labels = Object.keys(datosOrdenados);
+        const values = Object.values(datosOrdenados);
 
         new Chart(ctx, {
             type: 'line',
@@ -1008,8 +1043,10 @@
     // Función para crear gráfico de ingresos por mes
     function crearGraficoIngresosMes(datos) {
         const ctx = document.getElementById('chartIngresosMes').getContext('2d');
-        const labels = Object.keys(datos);
-        const values = Object.values(datos);
+        // Ordenar datos cronológicamente
+        const datosOrdenados = ordenarDatosPorFecha(datos);
+        const labels = Object.keys(datosOrdenados);
+        const values = Object.values(datosOrdenados);
 
         new Chart(ctx, {
             type: 'line',
