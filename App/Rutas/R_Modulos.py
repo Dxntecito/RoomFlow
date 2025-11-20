@@ -1688,7 +1688,7 @@ def servicios_evento():
     offset = (page - 1) * per_page
 
     # --- Obtener servicios con JOIN (nombre del tipo) ---
-    servicios = controlador_servicios_evento.get_servicios_evento_join(
+    servicios = controlador_servicios_evento.get_servicios_evento(
         limit=per_page,
         offset=offset
     )
@@ -1737,20 +1737,24 @@ def FilterServiciosEvento(filter):
 @modulos_bp.route('/ViewServicioEvento/<int:id_servicio_evento>')
 def ViewServicioEvento(id_servicio_evento):
     servicio = controlador_servicios_evento.get_one_servicio_evento(id_servicio_evento)
+    tipos = controlador_servicios_evento.get_tipos_servicio_evento2()
     return render_template(
         '/MODULO_EVENTO/gestionar_servicio_evento.html',
         servicio=servicio,
-        mode='view'
+        mode='view',
+        tipos_servicio=tipos
     )
 
 
 @modulos_bp.route('/EditServicioEvento/<int:id_servicio_evento>')
 def EditServicioEvento(id_servicio_evento):
     servicio = controlador_servicios_evento.get_one_servicio_evento(id_servicio_evento)
+    tipos = controlador_servicios_evento.get_tipos_servicio_evento2()
     return render_template(
         '/MODULO_EVENTO/gestionar_servicio_evento.html',
         servicio=servicio,
-        mode='edit'
+        mode='edit',
+        tipos_servicio=tipos
     )
 
 
@@ -1779,10 +1783,12 @@ def UpdateServicioEvento():
 
 @modulos_bp.route('/NewServicioEvento')
 def NewServicioEvento():
+    tipos = controlador_servicios_evento.get_tipos_servicio_evento2()
     return render_template(
         '/MODULO_EVENTO/gestionar_servicio_evento.html',
         servicio=None,
-        mode='insert'
+        mode='insert',
+        tipos_servicio=tipos
     )
 
 

@@ -219,11 +219,17 @@ def get_servicios_evento(limit=20, offset=0):
     connection = get_connection()
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT se.id_servicio_evento, se.tipo_servicio_evento_id, se.nombre_servicio,
-                   se.descripcion, se.precio, se.estado
-            FROM SERVICIO_EVENTO se INNER JOIN TIPO_SERVICIO_EVENTO tse
-            ON se.tipo_servicio_evento_id = tse.id_tipo_servicio_evento
-        LIMIT %s OFFSET %s
+            SELECT 
+                se.id_servicio_evento, 
+                se.tipo_servicio_evento_id, 
+                se.nombre_servicio,
+                se.descripcion, 
+                se.precio, 
+                se.estado,
+                tse.nombre_tipo
+            FROM SERVICIO_EVENTO se 
+            INNER JOIN TIPO_SERVICIO_EVENTO tse
+                ON se.tipo_servicio_evento_id = tse.id_tipo_servicio_evento
             LIMIT %s OFFSET %s
         """, (limit, offset))
 
@@ -237,7 +243,8 @@ def get_servicios_evento(limit=20, offset=0):
                 'nombre_servicio': r[2],
                 'descripcion': r[3],
                 'precio': float(r[4]),
-                'estado': r[5]
+                'estado': r[5],
+                'nombre_tipo': r[6]   # <-- agrego columna del join
             })
     connection.close()
     return servicios
@@ -258,9 +265,17 @@ def get_one_servicio_evento(id_servicio_evento):
     connection = get_connection()
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT id_servicio_evento, tipo_servicio_evento_id, nombre_servicio,
-                   descripcion, precio, estado
-            FROM SERVICIO_EVENTO
+            SELECT 
+                se.id_servicio_evento, 
+                se.tipo_servicio_evento_id, 
+                se.nombre_servicio,
+                se.descripcion, 
+                se.precio, 
+                se.estado,
+                tse.nombre_tipo
+            FROM SERVICIO_EVENTO se 
+            INNER JOIN TIPO_SERVICIO_EVENTO tse
+                ON se.tipo_servicio_evento_id = tse.id_tipo_servicio_evento
             WHERE id_servicio_evento = %s
         """, (id_servicio_evento,))
 
@@ -272,7 +287,8 @@ def get_one_servicio_evento(id_servicio_evento):
                 'nombre_servicio': row[2],
                 'descripcion': row[3],
                 'precio': float(row[4]),
-                'estado': row[5]
+                'estado': row[5],
+                'nombre_tipo': row[6]
             }
     connection.close()
     return None
@@ -399,3 +415,26 @@ def search_servicio_evento(query):
         })
 
     return results
+
+
+def get_tipos_servicio_evento2():
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT id_tipo_servicio_evento, nombre_tipo, estado
+            FROM TIPO_SERVICIO_EVENTO
+            ORDER BY nombre_tipo ASC
+        """)
+        
+        rows = cursor.fetchall()
+        
+        tipos = []
+        for r in rows:
+            tipos.append({
+                'id_tipo_servicio_evento': r[0],
+                'nombre_tipo': r[1],
+                'estado': r[2]
+            })
+    
+    connection.close()
+    return tipos

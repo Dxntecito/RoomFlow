@@ -90,5 +90,181 @@
             </tbody>
         </table>
     </div>
+    <div class="pagination-container"
+    style="display: flex; justify-content: center; margin-top: 15px; margin-bottom: 15px; gap: 10px;">
+
+    {# --- Botón Anterior --- #}
+    {% if page > 1 %}
+        <a href="{{ url_for('modulos.servicios_evento', page=page-1) }}" class="pagination-btn">
+            « Anterior
+        </a>
+    {% else %}
+        <span class="pagination-btn disabled">« Anterior</span>
+    {% endif %}
+
+    {# --- Números de páginas --- #}
+    {% for p in range(1, total_pages + 1) %}
+        {% if p == page %}
+            <span class="pagination-btn current">{{ p }}</span>
+        {% else %}
+            <a href="{{ url_for('modulos.servicios_evento', page=p) }}" class="pagination-btn">{{ p }}</a>
+        {% endif %}
+    {% endfor %}
+
+    {# --- Botón Siguiente --- #}
+    {% if page < total_pages %}
+        <a href="{{ url_for('modulos.servicios_evento', page=page+1) }}" class="pagination-btn">
+            Siguiente »
+        </a>
+    {% else %}
+        <span class="pagination-btn disabled">Siguiente »</span>
+    {% endif %}
+</div>
+
+{% else %}
+<!-- Formulario Insert / Edit / View -->
+<div class="content-crud-evento section-content" id="form-evento-section">
+    <div class="form-promocion-f"
+         style="background: #f9f9f9; padding: 25px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #328336;">
+
+        <h3 style="color: #328336; margin-top: 0;">
+            {% if mode=='insert' %}
+            Crear Nuevo Servicio de Evento
+            {% elif mode=='edit' %}
+            Editar Servicio {{ servicio['id_servicio_evento'] }}
+            {% else %}
+            Ver Servicio {{ servicio['id_servicio_evento'] }}
+            {% endif %}
+        </h3>
+
+        <form id="form-servicio-evento" style="margin-bottom: 0;"
+              action="{{ url_for('modulos.SaveServicioEvento') if mode=='insert' else url_for('modulos.UpdateServicioEvento') }}"
+              method="POST">
+
+            <input type="hidden" name="id_servicio_evento" value="{{ servicio['id_servicio_evento'] }}">
+
+            <div class="form-grid" style="margin-bottom: 25px;">
+
+                <!-- Nombre -->
+                <div class="form-group">
+                    <label for="nombre-servicio">Nombre del Servicio *</label>
+                    {% if mode=='view' %}
+                    <input type="text" class="form-control bg-light"
+                           value="{{ servicio['nombre_servicio'] }}" readonly>
+                    {% else %}
+                    <input type="text" name="nombre_servicio" class="form-control"
+                           value="{{ servicio['nombre_servicio'] if servicio else '' }}" required>
+                    {% endif %}
+                </div>
+
+                <!-- Tipo Servicio -->
+                <div class="form-group">
+                    <label for="tipo-servicio">Tipo de Servicio *</label>
+                    {% if mode=='view' %}
+                    <input type="text" class="form-control bg-light"
+                           value="{{ servicio['nombre_tipo'] }}" readonly>
+                    {% else %}
+                    <select name="tipo_servicio_evento_id" class="form-control" required>
+                        <option value="">-- Seleccione --</option>
+                        {% for t in tipos_servicio %}
+                        <option value="{{ t['id_tipo_servicio_evento'] }}"
+                                {% if servicio and servicio['tipo_servicio_evento_id']==t['id_tipo_servicio_evento'] %}selected{% endif %}>
+                            {{ t['nombre_tipo'] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                </div>
+
+                <!-- Precio -->
+                <div class="form-group">
+                    <label for="precio-servicio">Precio *</label>
+                    {% if mode=='view' %}
+                    <input type="number" class="form-control bg-light"
+                           value="{{ servicio['precio'] }}" readonly>
+                    {% else %}
+                    <input type="number" name="precio" class="form-control"
+                           value="{{ servicio['precio'] if servicio else '' }}" required>
+                    {% endif %}
+                </div>
+
+                <!-- Estado -->
+                <div class="form-group">
+                    <label for="estado-servicio">Estado *</label>
+                    {% if mode=='view' %}
+                    <input type="text" class="form-control bg-light"
+                           value="{{ 'Activo' if servicio['estado']==1 else 'Inactivo' }}" readonly>
+                    {% else %}
+                    <select name="estado" class="form-control">
+                        <option value="1" {% if servicio and servicio['estado']==1 %}selected{% endif %}>Activo</option>
+                        <option value="0" {% if servicio and servicio['estado']==0 %}selected{% endif %}>Inactivo</option>
+                    </select>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Descripción -->
+            <div class="form-group" style="margin-bottom: 25px;">
+                <label for="descripcion-servicio">Descripción</label>
+                {% if mode=='view' %}
+                <textarea class="form-control bg-light" rows="4" readonly>{{ servicio['descripcion'] }}</textarea>
+                {% else %}
+                <textarea name="descripcion" class="form-control" rows="4">{{ servicio['descripcion'] if servicio else '' }}</textarea>
+                {% endif %}
+            </div>
+
+            <!-- Acciones -->
+            <div class="form-actions" style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #f0f0f0;">
+                <a href="{{ url_for('modulos.servicios_evento') }}" class="btn btn-light btn-volver">Volver</a>
+                {% if mode != 'view' %}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+                {% endif %}
+            </div>
+
+        </form>
+
+    </div>
+</div>
 {% endif %}
+<input type="hidden" id="tipoEventoIdToDelete">
+
+    <div id="modal-confirm" class="modal-confirm" style="display: none;">
+        <div class="modal-confirm-content">
+            <div class="modal-confirm-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="modal-confirm-title">Confirmar Acción</h3>
+            <p class="modal-confirm-message">¿Estás seguro?</p>
+            <div class="modal-confirm-buttons">
+                <button class="btn-confirm btn-confirm-danger" onclick="confirmarAccion()">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+                <button class="btn-confirm btn-confirm-secondary" onclick="cancelarAccion()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificación toast -->
+    <div id="notification-toast" class="notification-toast" style="display: none;">
+        <button class="notification-toast-close" onclick="cerrarNotificacionToast()">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="notification-toast-header">
+            <div class="notification-toast-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="notification-toast-body">
+                <h4 class="notification-toast-title">Título</h4>
+                <p class="notification-toast-message">Mensaje</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 {% endblock %}
