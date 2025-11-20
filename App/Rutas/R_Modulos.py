@@ -69,14 +69,6 @@ def modulos():
     """
     Página principal de modulos
     """
-    return render_template("Modulos.html")
-
-@modulos_bp.route('/modulos', methods=['GET'])
-@login_required
-def modulos():
-    """
-    Página principal de modulos
-    """
     # Solo roles 1, 2 y 4 pueden acceder a la página de módulos
     rol_id = session.get('rol_id')
     if rol_id not in (1, 2, 4):
