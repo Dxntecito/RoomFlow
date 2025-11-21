@@ -45,6 +45,28 @@ def obtener_cliente_id_usuario():
         if conexion:
             conexion.close()
 
+def obtener_empleado_id_usuario():
+    """Obtiene el empleado_id asociado al usuario_id de la sesión."""
+    usuario_id = session.get('usuario_id')
+    if not usuario_id:
+        return None
+    
+    conexion = None
+    try:
+        conexion = get_connection() 
+        with conexion.cursor(pymysql.cursors.DictCursor) as cursor: 
+            sql = "SELECT empleado_id FROM USUARIO WHERE usuario_id = %s LIMIT 1"
+            cursor.execute(sql, (usuario_id,))
+            resultado = cursor.fetchone()
+            return resultado['empleado_id'] if (resultado and resultado['empleado_id']) else None 
+    except Exception as e:
+        print(f"Error al obtener empleado_id desde USUARIO: {e}")
+        traceback.print_exc()
+        return None
+    finally:
+        if conexion:
+            conexion.close()
+
 # --- Función Helper de Permisos ---
 def _get_and_check_permission(incidencia_id):
     """Obtiene una incidencia y verifica el permiso del usuario actual."""
@@ -54,9 +76,11 @@ def _get_and_check_permission(incidencia_id):
     
     rol_id = session.get('rol_id')
     
-    if rol_id == ADMIN_ROLE:
+    # Roles 1, 2 y 4 pueden ver cualquier incidencia
+    if rol_id in [ADMIN_ROLE, EMPLEADO_ROLE, 4]:
         return incidencia, None
     
+    # Clientes solo pueden ver sus propias incidencias
     cliente_id_actual = obtener_cliente_id_usuario()
     if rol_id == CLIENTE_ROLE and incidencia['cliente_id'] == cliente_id_actual:
         return incidencia, None
@@ -100,12 +124,29 @@ def obtener_mis_incidencias():
 @incidentes_bp.route('/todas', methods=['GET'])
 @login_required
 def obtener_todas_incidencias():
-    """Obtiene TODAS las incidencias (solo para administradores)"""
+    """Obtiene TODAS las incidencias (solo para administradores/empleados/rol 4)"""
     try:
-        if session.get('rol_id') != ADMIN_ROLE:
+        rol_id = session.get('rol_id')
+        if rol_id not in [ADMIN_ROLE, EMPLEADO_ROLE, 4]:
             return jsonify({'success': False, 'message': 'No tiene permisos para ver todas las incidencias'}), 403
         
         incidencias = ControladorIncidencia.obtener_todas_incidencias()
+        return jsonify({'success': True, 'incidencias': incidencias})
+            
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@incidentes_bp.route('/pendientes', methods=['GET'])
+@login_required
+def obtener_incidencias_pendientes():
+    """Obtiene solo las incidencias pendientes (estado = 3) para empleados/administradores/rol 4"""
+    try:
+        rol_id = session.get('rol_id')
+        if rol_id not in [ADMIN_ROLE, EMPLEADO_ROLE, 4]:
+            return jsonify({'success': False, 'message': 'No tiene permisos para ver incidencias'}), 403
+        
+        incidencias = ControladorIncidencia.obtener_incidencias_pendientes()
         return jsonify({'success': True, 'incidencias': incidencias})
             
     except Exception as e:
@@ -159,7 +200,7 @@ def crear_incidencia():
 @incidentes_bp.route('/<int:incidencia_id>', methods=['GET'])
 @login_required
 def obtener_incidencia(incidencia_id):
-    """Obtiene una incidencia específica (dueño o admin)"""
+    """Obtiene una incidencia específica (dueño, admin, empleado o rol 4)"""
     try:
         incidencia, error = _get_and_check_permission(incidencia_id) 
         if error:
@@ -205,10 +246,10 @@ def actualizar_incidencia(incidencia_id):
 @incidentes_bp.route('/<int:incidencia_id>/responder', methods=['POST'])
 @login_required
 def responder_incidencia(incidencia_id):
-    """Responde y actualiza el estado (solo para admin/empleado)"""
+    """Responde y actualiza el estado (solo para admin/empleado/rol 4)"""
     try:
         rol_id = session.get('rol_id')
-        if rol_id not in [ADMIN_ROLE, EMPLEADO_ROLE]:
+        if rol_id not in [ADMIN_ROLE, EMPLEADO_ROLE, 4]:
             return jsonify({'success': False, 'message': 'No tiene permisos para responder incidencias'}), 403
         
         respuesta = request.form.get('respuesta')
@@ -217,9 +258,13 @@ def responder_incidencia(incidencia_id):
         if not respuesta or not estado:
             return jsonify({'success': False, 'message': 'Faltan campos (respuesta, estado)'}), 400
         
+        # Obtener empleado_id del usuario actual
+        empleado_id = obtener_empleado_id_usuario()
+        
         datos = {
             'respuesta': respuesta,
-            'estado': int(estado)
+            'estado': int(estado),
+            'empleado_id': empleado_id
         }
         
         resultado = ControladorIncidencia.actualizar_incidencia(incidencia_id, datos)

@@ -747,17 +747,10 @@ def facturacion():
 
 ###########    INICIO MODULO INCIDENCIA    ###########
 @modulos_bp.route('/modulos/Incidencia', methods=['GET'])
-@login_required
+@module_permission_required('incidencia')
 def incidencia():
-    usuario_id = session.get('usuario_id')
-    perfil = controller_usuario.get_perfil_completo(usuario_id)
-    tipos_documento = controller_usuario.get_tipos_documento()
-    
-    if not perfil:
-        flash('Usuario no encontrado', 'error')
-        return redirect(url_for('Index'))
-    
-    return render_template("/MODULO_INCIDENCIA/gestionar_incidencias.html", perfil=perfil, tipos_documento=tipos_documento)
+    """Página del módulo de incidencias para empleados/administradores"""
+    return render_template("/MODULO_INCIDENCIA/gestionar_incidencias.html")
 
 ###########    FIN MODULO INCIDENCIA    ###########
 

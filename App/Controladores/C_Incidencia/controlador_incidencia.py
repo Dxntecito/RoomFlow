@@ -62,9 +62,66 @@ class ControladorIncidencia:
                     ORDER BY i.fecha_envio DESC
                 """
                 cursor.execute(sql) # Sin parámetros, por eso se usa un solo %
-                return cursor.fetchall()
+                incidencias = cursor.fetchall()
+                # Agregar alias 'titulo' para compatibilidad
+                for inc in incidencias:
+                    inc['titulo'] = inc.get('nombre_incidencia', '')
+                return incidencias
         except Exception as e:
             print(f"Error al obtener todas las incidencias: {e}")
+            traceback.print_exc()
+            return []
+        finally:
+            if conexion:
+                conexion.close()
+    
+    @staticmethod
+    def obtener_incidencias_pendientes():
+        """Obtiene solo las incidencias pendientes (estado = 3) para empleados/administradores"""
+        conexion = None
+        try:
+            conexion = get_connection()
+            with conexion.cursor(pymysql.cursors.DictCursor) as cursor:
+                sql = """
+                    SELECT 
+                        i.incidencia_id,
+                        i.nombre_incidencia AS titulo,
+                        i.mensaje AS descripcion,
+                        DATE_FORMAT(i.fecha_envio, '%d/%m/%Y') AS fecha_envio,
+                        DATE_FORMAT(i.fecha_resolucion, '%d/%m/%Y') AS fecha_resolucion,
+                        i.estado,
+                        CASE i.estado
+                            WHEN 1 THEN 'Aprobado'
+                            WHEN 2 THEN 'Rechazado'
+                            ELSE 'En proceso'
+                        END AS estado_texto,
+                        i.respuesta,
+                        i.tipo_incidencia_id,
+                        t.nombre as tipo_incidencia,
+                        CONCAT(c.nombres, ' ', c.ape_paterno) as cliente_nombre,
+                        i.cliente_id,
+                        i.empleado_id,
+                        i.prueba
+                    FROM INCIDENCIA i
+                    INNER JOIN TIPO_INCIDENCIA t ON i.tipo_incidencia_id = t.id_tipo
+                    LEFT JOIN CLIENTE c ON i.cliente_id = c.cliente_id
+                    WHERE i.estado = 3
+                    ORDER BY i.fecha_envio DESC
+                """
+                cursor.execute(sql)
+                incidencias = cursor.fetchall()
+                
+                # Convertir BLOB a base64 para cada incidencia
+                for inc in incidencias:
+                    if inc['prueba']:
+                        inc['imagen'] = base64.b64encode(inc['prueba']).decode('utf-8')
+                    else:
+                        inc['imagen'] = None
+                    del inc['prueba']
+                
+                return incidencias
+        except Exception as e:
+            print(f"Error al obtener incidencias pendientes: {e}")
             traceback.print_exc()
             return []
         finally:
@@ -198,6 +255,9 @@ class ControladorIncidencia:
                 if 'respuesta' in datos:
                     campos.append("respuesta = %s")
                     valores.append(datos['respuesta'])
+                if 'empleado_id' in datos:
+                    campos.append("empleado_id = %s")
+                    valores.append(datos['empleado_id'])
                 
                 if not campos:
                     return {'success': False, 'message': 'No hay datos para actualizar'}
@@ -247,10 +307,12 @@ class ControladorIncidencia:
                         i.respuesta,
                         i.tipo_incidencia_id,
                         t.nombre as tipo_incidencia,
+                        CONCAT(c.nombres, ' ', c.ape_paterno) as cliente_nombre,
                         i.prueba,
                         i.cliente_id
                     FROM INCIDENCIA i
                     INNER JOIN TIPO_INCIDENCIA t ON i.tipo_incidencia_id = t.id_tipo
+                    LEFT JOIN CLIENTE c ON i.cliente_id = c.cliente_id
                     WHERE i.incidencia_id = %s
                 """
                 cursor.execute(sql, (incidencia_id,)) # Con parámetros, '%%' está bien
