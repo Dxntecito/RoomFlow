@@ -277,7 +277,7 @@ def procesar_pago():
         print(" Cerrando conexión y cursor.")
 
 
-def get_tipos_eventos(limit=20, offset=0):
+def get_tipos_eventos(limit=8, offset=0):
     connection = get_connection()
     with connection.cursor() as cursor:
         cursor.execute("""
@@ -422,7 +422,7 @@ def formatear_hora(valor):
     val_str = str(valor)           # convierte time o timedelta a string
     return val_str.split('.')[0]   # elimina microsegundos si los hubiera
 
-def get_eventos(limit=20, offset=0):
+def get_eventos(limit=8, offset=0):
     connection = get_connection()
     with connection.cursor() as cursor:
         cursor.execute("""
@@ -651,7 +651,7 @@ def search_evento(query):
             "fecha": fecha,
             "hora_inicio": hora_inicio,
             "hora_fin": hora_fin,
-            "estado": r[5]
+            "estado": int(r[5]) if r[5] is not None else 0
         })
 
     return results

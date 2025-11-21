@@ -234,6 +234,22 @@ def actualizar_incidencia(incidencia_id):
             if archivo and archivo.filename != '':
                 datos['evidencia'] = archivo.read()
         
+        # Si es admin y está respondiendo, incluir estado y respuesta
+        rol_id = session.get('rol_id')
+        if rol_id in [ADMIN_ROLE, 4]:  # Admin o rol 4
+            if 'estado' in request.form:
+                estado = request.form.get('estado')
+                if estado:
+                    datos['estado'] = int(estado)
+                    # Si se aprueba o rechaza, agregar empleado_id y fecha_resolucion se actualiza automáticamente
+                    if datos['estado'] in [1, 2]:
+                        empleado_id = obtener_empleado_id_usuario()
+                        if empleado_id:
+                            datos['empleado_id'] = empleado_id
+            
+            if 'respuesta' in request.form:
+                datos['respuesta'] = request.form.get('respuesta')
+        
         if not datos:
             return jsonify({'success': False, 'message': 'No se enviaron datos para actualizar'}), 400
 

@@ -315,13 +315,13 @@
         color: white;
     }
 
-    .btn-estado[data-estado="3"] {
+    .btn-estado[data-estado="0"] {
         border-color: #ffc107;
         color: #ffc107;
     }
 
-    .btn-estado[data-estado="3"]:hover,
-    .btn-estado[data-estado="3"].active {
+    .btn-estado[data-estado="0"]:hover,
+    .btn-estado[data-estado="0"].active {
         background: #ffc107;
         color: white;
     }
@@ -1497,7 +1497,7 @@
                                     </th>
                                     <th style="padding: 15px; text-align: left; font-weight: 600;">Título</th>
                                     <th style="padding: 15px; text-align: left; font-weight: 600;">Estado</th>
-                                    <th style="padding: 15px; text-align: center; font-weight: 600;">Acciones</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: 600;">Ver</th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-incidencias">
@@ -1512,12 +1512,34 @@
                         </table>
                     </div>
 
-                    <!-- Botón crear incidencia -->
-                    <div style="text-align: right; margin-top: 20px;">
+                    <!-- Controles de paginación -->
+                    <div id="paginacion-incidencias" style="display: none; margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px; justify-content: space-between; align-items: center;">
+                        <div id="info-paginacion-incidencias" style="color: #666; font-size: 14px;">
+                            Mostrando 0 de 0 incidencias
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button id="btn-prev-incidencias" onclick="cambiarPaginaIncidencias(-1)" 
+                                class="btn btn-secondary" style="padding: 8px 16px; font-size: 14px;" disabled>
+                                <i class="fas fa-chevron-left"></i> Anterior
+                            </button>
+                            <div id="numeros-pagina-incidencias" style="display: flex; gap: 5px;">
+                                <!-- Los números de página se generarán dinámicamente -->
+                            </div>
+                            <button id="btn-next-incidencias" onclick="cambiarPaginaIncidencias(1)" 
+                                class="btn btn-secondary" style="padding: 8px 16px; font-size: 14px;">
+                                Siguiente <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Botón crear incidencia (solo para clientes y empleados, no para admins) -->
+                    <div id="btn-crear-incidencia-container" style="text-align: right; margin-top: 20px;">
+                        {% if session.get('rol_id') not in [1, 4] %}
                         <button class="btn btn-primary" onclick="mostrarFormularioIncidencia()"
                             style="padding: 12px 24px; font-size: 16px;">
                             <i class="fas fa-plus"></i> Crear Incidencia
                         </button>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -1575,6 +1597,18 @@
                                     accept="image/*"
                                     style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
                                 <small style="color: #666; font-size: 12px;">Formatos: JPG, PNG, GIF (Máx. 5MB)</small>
+                                
+                                <!-- Contenedor para mostrar imagen existente -->
+                                <div id="evidencia-imagen-container" style="margin-top: 15px; display: none;">
+                                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #328336;">
+                                        <i class="fas fa-image"></i> Imagen de Evidencia:
+                                    </label>
+                                    <div style="padding: 15px; background: white; border: 2px solid #e0e0e0; border-radius: 8px; text-align: center;">
+                                        <img id="evidencia-imagen-preview" src="" alt="Evidencia" 
+                                            style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer;"
+                                            onclick="ampliarImagen(this.src)">
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1585,46 +1619,43 @@
                                 <i class="fas fa-cogs"></i> Evaluación y Respuesta
                             </h4>
 
-                            <!-- Estado de la incidencia -->
+                            <!-- Decisión de la incidencia (Aprobar o Rechazar) -->
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #328336;">
-                                    Estado de la Incidencia
+                                    <i class="fas fa-gavel"></i> Decisión sobre la Incidencia *
                                 </label>
                                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                                     <label
-                                        style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                                        <input type="radio" name="estado_incidencia" value="3" id="estado-proceso"
-                                            style="margin: 0;">
-                                        <span style="color: #ffc107; font-weight: 600;">
-                                            <i class="fas fa-clock"></i> En Proceso
+                                        style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 20px; border: 2px solid #28a745; border-radius: 8px; background: #f0fff4; transition: all 0.3s;"
+                                        onmouseover="this.style.background='#e8f5e9'" onmouseout="this.style.background='#f0fff4'">
+                                        <input type="radio" name="estado_incidencia" value="1" id="estado-aprobado" required
+                                            style="margin: 0; width: 18px; height: 18px; cursor: pointer;">
+                                        <span style="color: #28a745; font-weight: 600; font-size: 15px;">
+                                            <i class="fas fa-check-circle"></i> Aprobar
                                         </span>
                                     </label>
                                     <label
-                                        style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                                        <input type="radio" name="estado_incidencia" value="1" id="estado-aprobado"
-                                            style="margin: 0;">
-                                        <span style="color: #28a745; font-weight: 600;">
-                                            <i class="fas fa-check-circle"></i> Aprobado
-                                        </span>
-                                    </label>
-                                    <label
-                                        style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                                        <input type="radio" name="estado_incidencia" value="2" id="estado-rechazado"
-                                            style="margin: 0;">
-                                        <span style="color: #dc3545; font-weight: 600;">
-                                            <i class="fas fa-times-circle"></i> Rechazado
+                                        style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 20px; border: 2px solid #dc3545; border-radius: 8px; background: #fff5f5; transition: all 0.3s;"
+                                        onmouseover="this.style.background='#ffebee'" onmouseout="this.style.background='#fff5f5'">
+                                        <input type="radio" name="estado_incidencia" value="2" id="estado-rechazado" required
+                                            style="margin: 0; width: 18px; height: 18px; cursor: pointer;">
+                                        <span style="color: #dc3545; font-weight: 600; font-size: 15px;">
+                                            <i class="fas fa-times-circle"></i> Rechazar
                                         </span>
                                     </label>
                                 </div>
+                                <small style="color: #666; font-size: 12px; margin-top: 8px; display: block;">
+                                    <i class="fas fa-info-circle"></i> Debe seleccionar Aprobar o Rechazar para poder guardar la respuesta
+                                </small>
                             </div>
 
                             <!-- Respuesta del hotel -->
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label for="incidencia-respuesta"
                                     style="display: block; margin-bottom: 10px; font-weight: 600; color: #328336;">
-                                    <i class="fas fa-reply"></i> Respuesta del Hotel
+                                    <i class="fas fa-reply"></i> Respuesta del Hotel *
                                 </label>
-                                <textarea id="incidencia-respuesta" name="respuesta" class="form-control" rows="4"
+                                <textarea id="incidencia-respuesta" name="respuesta" class="form-control" rows="4" required
                                     style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; resize: vertical;"
                                     placeholder="Escriba la respuesta del hotel..."></textarea>
                                 <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
@@ -2998,6 +3029,8 @@
     let incidenciaActual = null;
     let todasLasIncidencias = [];
     let esAdministrador = false; // Variable para detectar si es administrador
+    let paginaActualIncidencias = 1; // Página actual de incidencias
+    const incidenciasPorPagina = 6; // Incidencias por página
 
     // Cargar tipos de incidencia al inicio
     async function cargarTiposIncidencia() {
@@ -3025,9 +3058,9 @@
     // Cargar incidencias del cliente o todas si es administrador
     async function cargarIncidencias() {
         try {
-            // Detectar si es administrador (rol_id = 1)
+            // Detectar si es administrador (rol_id = 1 o 4)
             const rolId = parseInt('{{ session.get("rol_id", 0) }}');
-            esAdministrador = (rolId === 1);
+            esAdministrador = (rolId === 1 || rolId === 4);
 
             console.log('🔍 Debug cargarIncidencias:');
             console.log('- rolId:', rolId);
@@ -3050,6 +3083,7 @@
 
             if (data.success) {
                 todasLasIncidencias = data.incidencias;
+                paginaActualIncidencias = 1; // Resetear a la primera página
                 mostrarTablaIncidencias(data.incidencias);
 
                 // Actualizar título si es administrador
@@ -3068,7 +3102,7 @@
         }
     }
 
-    // Mostrar tabla de incidencias
+    // Mostrar tabla de incidencias con paginación
     function mostrarTablaIncidencias(incidencias) {
         const tbody = document.getElementById('tabla-incidencias');
 
@@ -3082,17 +3116,43 @@
                     </td>
                 </tr>
             `;
+            // Ocultar paginación si no hay incidencias
+            document.getElementById('paginacion-incidencias').style.display = 'none';
             return;
         }
 
+        // Calcular paginación
+        const totalPaginas = Math.ceil(incidencias.length / incidenciasPorPagina);
+        
+        // Asegurar que la página actual sea válida
+        if (paginaActualIncidencias > totalPaginas) {
+            paginaActualIncidencias = totalPaginas || 1;
+        }
+        if (paginaActualIncidencias < 1) {
+            paginaActualIncidencias = 1;
+        }
+
+        // Obtener incidencias de la página actual
+        const inicio = (paginaActualIncidencias - 1) * incidenciasPorPagina;
+        const fin = inicio + incidenciasPorPagina;
+        const incidenciasPagina = incidencias.slice(inicio, fin);
+
+        // Detectar si es administrador
+        const rolId = parseInt('{{ session.get("rol_id", 0) }}');
+        const esAdmin = (rolId === 1 || rolId === 4);
+
         let html = '';
-        incidencias.forEach(inc => {
+        incidenciasPagina.forEach(inc => {
             // Determinar color del estado
             let estadoColor = '#ffc107';
             let estadoIcon = 'fa-clock';
-            let estadoTexto = 'En proceso';
+            let estadoTexto = 'Pendiente';
 
-            if (inc.estado === 1) {
+            if (inc.estado === 3) {
+                estadoColor = '#ffc107';
+                estadoIcon = 'fa-clock';
+                estadoTexto = 'Pendiente';
+            } else if (inc.estado === 1) {
                 estadoColor = '#28a745';
                 estadoIcon = 'fa-check-circle';
                 estadoTexto = 'Aprobado';
@@ -3102,29 +3162,154 @@
                 estadoTexto = 'Rechazado';
             }
 
+            // Verificar si la incidencia ya tiene respuesta o está aprobada/rechazada
+            const tieneRespuesta = inc.respuesta && inc.respuesta.trim() !== '';
+            const estaResuelta = inc.estado === 1 || inc.estado === 2; // Aprobado o Rechazado (no pendiente)
+
+            // Botón responder (solo para admins)
+            let botonResponder = '';
+            if (esAdmin) {
+                const disabled = (tieneRespuesta || estaResuelta) ? 'disabled' : '';
+                const estiloDisabled = (tieneRespuesta || estaResuelta) ? 'opacity: 0.5; cursor: not-allowed;' : '';
+                let tituloBtn = 'Responder incidencia';
+                if (estaResuelta) {
+                    tituloBtn = 'Incidencia ya resuelta';
+                } else if (tieneRespuesta) {
+                    tituloBtn = 'Ya respondida';
+                }
+                botonResponder = `
+                    <button onclick="responderIncidencia(${inc.incidencia_id})" ${disabled}
+                        style="background: #28a745; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin-left: 5px; ${estiloDisabled}"
+                        title="${tituloBtn}">
+                        <i class="fas fa-reply"></i>
+                    </button>
+                `;
+            }
+
             html += `
                 <tr style="border-bottom: 1px solid #e0e0e0;">
-                    <td style="padding: 15px;">${inc.fecha_envio}</td>
+                    <td style="padding: 15px;">${inc.fecha_envio || '-'}</td>
                     <td style="padding: 15px;">${inc.fecha_resolucion || '-'}</td>
-                    <td style="padding: 15px; font-weight: 600;">${inc.titulo}</td>
+                    <td style="padding: 15px; font-weight: 600;">${inc.nombre_incidencia || inc.titulo || '-'}</td>
                     <td style="padding: 15px;">
                         <span style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: ${estadoColor}20; color: ${estadoColor};">
-                            <i class="fas ${estadoIcon}"></i> ${estadoTexto}
+                            <i class="fas ${estadoIcon}"></i> ${inc.estado_texto || estadoTexto}
                         </span>
                     </td>
                     <td style="padding: 15px; text-align: center;">
-                        <button onclick="verIncidencia(${inc.incidencia_id})" style="background: #17a2b8; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; margin-right: 5px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;" title="Ver incidencia">
+                        <button onclick="verIncidencia(${inc.incidencia_id})" style="background: #17a2b8; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;" title="Ver incidencia">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button onclick="console.log('🔧 Botón editar clickeado para ID:', ${inc.incidencia_id}); console.log('🔍 Función editarIncidencia existe:', typeof editarIncidencia); if (typeof editarIncidencia === 'function') { editarIncidencia(${inc.incidencia_id}); } else { console.error('❌ Función editarIncidencia no encontrada'); }" style="background: #ffc107; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;" title="Editar incidencia">
-                            <i class="fas fa-edit"></i>
-                        </button>
+                        ${botonResponder}
                     </td>
                 </tr>
             `;
         });
 
         tbody.innerHTML = html;
+        
+        // Actualizar controles de paginación
+        actualizarPaginacionIncidencias(incidencias.length, totalPaginas);
+    }
+
+    // Actualizar controles de paginación
+    function actualizarPaginacionIncidencias(totalIncidencias, totalPaginas) {
+        const paginacionDiv = document.getElementById('paginacion-incidencias');
+        const infoPaginacion = document.getElementById('info-paginacion-incidencias');
+        const btnPrev = document.getElementById('btn-prev-incidencias');
+        const btnNext = document.getElementById('btn-next-incidencias');
+        const numerosPagina = document.getElementById('numeros-pagina-incidencias');
+
+        if (totalPaginas <= 1) {
+            // Ocultar paginación si hay una página o menos
+            paginacionDiv.style.display = 'none';
+            return;
+        }
+
+        // Mostrar paginación
+        paginacionDiv.style.display = 'flex';
+
+        // Actualizar información
+        const inicio = (paginaActualIncidencias - 1) * incidenciasPorPagina + 1;
+        const fin = Math.min(paginaActualIncidencias * incidenciasPorPagina, totalIncidencias);
+        infoPaginacion.textContent = `Mostrando ${inicio}-${fin} de ${totalIncidencias} incidencias`;
+
+        // Habilitar/deshabilitar botones
+        btnPrev.disabled = paginaActualIncidencias === 1;
+        btnNext.disabled = paginaActualIncidencias === totalPaginas;
+
+        // Generar números de página
+        numerosPagina.innerHTML = '';
+        const maxBotones = 5; // Máximo de botones de página a mostrar
+        let inicioPagina = Math.max(1, paginaActualIncidencias - Math.floor(maxBotones / 2));
+        let finPagina = Math.min(totalPaginas, inicioPagina + maxBotones - 1);
+
+        // Ajustar si estamos cerca del final
+        if (finPagina - inicioPagina < maxBotones - 1) {
+            inicioPagina = Math.max(1, finPagina - maxBotones + 1);
+        }
+
+        // Botón primera página
+        if (inicioPagina > 1) {
+            const btn = document.createElement('button');
+            btn.textContent = '1';
+            btn.className = 'btn btn-secondary';
+            btn.style.cssText = 'padding: 8px 12px; font-size: 14px; min-width: 40px;';
+            btn.onclick = () => cambiarPaginaIncidencias(1 - paginaActualIncidencias);
+            numerosPagina.appendChild(btn);
+            if (inicioPagina > 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.textContent = '...';
+                ellipsis.style.cssText = 'padding: 8px 4px; color: #666;';
+                numerosPagina.appendChild(ellipsis);
+            }
+        }
+
+        // Botones de página
+        for (let i = inicioPagina; i <= finPagina; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            btn.className = 'btn ' + (i === paginaActualIncidencias ? 'btn-primary' : 'btn-secondary');
+            btn.style.cssText = 'padding: 8px 12px; font-size: 14px; min-width: 40px;';
+            if (i === paginaActualIncidencias) {
+                btn.style.fontWeight = 'bold';
+            }
+            btn.onclick = () => cambiarPaginaIncidencias(i - paginaActualIncidencias);
+            numerosPagina.appendChild(btn);
+        }
+
+        // Botón última página
+        if (finPagina < totalPaginas) {
+            if (finPagina < totalPaginas - 1) {
+                const ellipsis = document.createElement('span');
+                ellipsis.textContent = '...';
+                ellipsis.style.cssText = 'padding: 8px 4px; color: #666;';
+                numerosPagina.appendChild(ellipsis);
+            }
+            const btn = document.createElement('button');
+            btn.textContent = totalPaginas;
+            btn.className = 'btn btn-secondary';
+            btn.style.cssText = 'padding: 8px 12px; font-size: 14px; min-width: 40px;';
+            btn.onclick = () => cambiarPaginaIncidencias(totalPaginas - paginaActualIncidencias);
+            numerosPagina.appendChild(btn);
+        }
+    }
+
+    // Cambiar página de incidencias
+    function cambiarPaginaIncidencias(direccion) {
+        const totalPaginas = Math.ceil(todasLasIncidencias.length / incidenciasPorPagina);
+        const nuevaPagina = paginaActualIncidencias + direccion;
+
+        if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
+            paginaActualIncidencias = nuevaPagina;
+            mostrarTablaIncidencias(todasLasIncidencias);
+            
+            // Scroll suave hacia arriba de la tabla
+            const tabla = document.getElementById('tabla-incidencias');
+            if (tabla) {
+                tabla.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
     }
 
     // Mostrar error en tabla
@@ -3144,10 +3329,11 @@
     function buscarIncidencias() {
         const termino = document.getElementById('buscar-incidencias').value.toLowerCase();
         const incidenciasFiltradas = todasLasIncidencias.filter(inc =>
-            inc.titulo.toLowerCase().includes(termino) ||
-            inc.descripcion.toLowerCase().includes(termino) ||
-            inc.tipo_incidencia.toLowerCase().includes(termino)
+            (inc.titulo || inc.nombre_incidencia || '').toLowerCase().includes(termino) ||
+            (inc.descripcion || inc.mensaje || '').toLowerCase().includes(termino) ||
+            (inc.tipo_incidencia || '').toLowerCase().includes(termino)
         );
+        paginaActualIncidencias = 1; // Resetear a la primera página al buscar
         mostrarTablaIncidencias(incidenciasFiltradas);
     }
 
@@ -3159,10 +3345,13 @@
 
         incidencias.forEach(inc => {
             // Determinar color según estado
-            let estadoColor = '#ffc107'; // En proceso (amarillo)
+            let estadoColor = '#ffc107'; // Pendiente (amarillo)
             let estadoIcon = 'fa-clock';
 
-            if (inc.estado === 1) {
+            if (inc.estado === 3) {
+                estadoColor = '#ffc107'; // Pendiente (amarillo)
+                estadoIcon = 'fa-clock';
+            } else if (inc.estado === 1) {
                 estadoColor = '#28a745'; // Aprobado (verde)
                 estadoIcon = 'fa-check-circle';
             } else if (inc.estado === 2) {
@@ -3230,6 +3419,46 @@
         document.getElementById('form-nueva-incidencia').reset();
         document.getElementById('incidencia_id_edit').value = '';
 
+        // HABILITAR campos para editar
+        const tituloField = document.getElementById('incidencia-titulo');
+        const descripcionField = document.getElementById('incidencia-descripcion');
+        const tipoField = document.getElementById('incidencia-tipo');
+        const comprobanteField = document.getElementById('incidencia-comprobante');
+        const evidenciaField = document.getElementById('incidencia-evidencia');
+        
+        if (tituloField) {
+            tituloField.readOnly = false;
+            tituloField.disabled = false;
+        }
+        if (descripcionField) {
+            descripcionField.readOnly = false;
+            descripcionField.disabled = false;
+        }
+        if (tipoField) {
+            tipoField.disabled = false;
+        }
+        if (comprobanteField) {
+            comprobanteField.readOnly = false;
+            comprobanteField.disabled = false;
+        }
+        if (evidenciaField) {
+            evidenciaField.disabled = false;
+        }
+
+        // Ocultar contenedor de imagen existente (para nueva incidencia)
+        const evidenciaContainer = document.getElementById('evidencia-imagen-container');
+        if (evidenciaContainer) {
+            evidenciaContainer.style.display = 'none';
+        }
+
+        // Mostrar botón guardar
+        const btnGuardar = document.getElementById('btn-guardar-incidencia');
+        if (btnGuardar) {
+            btnGuardar.style.display = 'inline-flex';
+            btnGuardar.disabled = false;
+            btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar';
+        }
+
         // Configurar estado por defecto
         actualizarEstadoVisual(3);
 
@@ -3238,16 +3467,24 @@
         if (respuesta) {
             respuesta.value = '';
             respuesta.placeholder = 'Aún no hay respuesta del hotel...';
+            respuesta.readOnly = true; // Solo lectura para clientes/empleados
+            respuesta.disabled = true;
+        }
+
+        // Ocultar sección de evaluación para clientes/empleados
+        const seccionEvaluacion = document.getElementById('seccion-evaluacion');
+        if (seccionEvaluacion) {
+            seccionEvaluacion.style.display = 'none';
         }
 
         // Cargar tipos de incidencia
         cargarTiposIncidencia();
     }
 
-    // Ver incidencia (solo lectura)
+    // Ver incidencia (solo lectura, pero admins pueden responder)
     async function verIncidencia(incidenciaId) {
         try {
-            const response = await fetch(`/incidentes/obtener/${incidenciaId}`);
+            const response = await fetch(`/incidentes/${incidenciaId}`);
             const data = await response.json();
 
             if (data.success) {
@@ -3259,35 +3496,371 @@
                 // Mostrar formulario
                 document.getElementById('formulario-incidencia').style.display = 'block';
 
+                // Detectar si es administrador
+                const rolId = parseInt('{{ session.get("rol_id", 0) }}');
+                const esAdmin = (rolId === 1 || rolId === 4);
+                
+                console.log('🔍 DEBUG verIncidencia:');
+                console.log('- rolId:', rolId);
+                console.log('- esAdmin:', esAdmin);
+                console.log('- incidencia_id:', incidenciaId);
+
                 // Configurar para ver
                 incidenciaActual = inc;
                 document.getElementById('form-titulo').textContent = 'Ver Incidencia';
+                document.getElementById('incidencia_id_edit').value = inc.incidencia_id || incidenciaId;
 
-                // Llenar campos (solo lectura)
-                document.getElementById('incidencia-titulo').value = inc.titulo;
-                document.getElementById('incidencia-descripcion').value = inc.descripcion;
-                document.getElementById('incidencia-tipo').value = inc.tipo_incidencia_id;
-                document.getElementById('incidencia-comprobante').value = inc.numero_comprobante || '';
-                document.getElementById('incidencia-respuesta').value = inc.respuesta || '';
+                // Cargar tipos de incidencia primero para que el select funcione
+                await cargarTiposIncidencia();
 
-                // Hacer campos de solo lectura
+                // Llenar campos
+                document.getElementById('incidencia-titulo').value = inc.titulo || inc.nombre_incidencia || '';
+                document.getElementById('incidencia-descripcion').value = inc.descripcion || inc.mensaje || '';
+                document.getElementById('incidencia-tipo').value = inc.tipo_incidencia_id || '';
+                
+                // El campo comprobante no existe en la BD, dejarlo vacío
+                const comprobanteField = document.getElementById('incidencia-comprobante');
+                if (comprobanteField) {
+                    comprobanteField.value = '';
+                }
+                
+                const respuestaField = document.getElementById('incidencia-respuesta');
+                if (respuestaField) {
+                    respuestaField.value = inc.respuesta || '';
+                }
+
+                // Mostrar imagen de evidencia si existe
+                const evidenciaContainer = document.getElementById('evidencia-imagen-container');
+                const evidenciaImagen = document.getElementById('evidencia-imagen-preview');
+                if (inc.imagen) {
+                    evidenciaImagen.src = `data:image/jpeg;base64,${inc.imagen}`;
+                    evidenciaContainer.style.display = 'block';
+                } else {
+                    evidenciaContainer.style.display = 'none';
+                }
+
+                // Configurar campos - TODO EN SOLO LECTURA (tanto admin como no admin en modo VER)
+                console.log('👁️ Modo VER - todo en solo lectura');
+                
+                // Todos los campos básicos en solo lectura
                 document.getElementById('incidencia-titulo').readOnly = true;
                 document.getElementById('incidencia-descripcion').readOnly = true;
                 document.getElementById('incidencia-tipo').disabled = true;
-                document.getElementById('incidencia-comprobante').readOnly = true;
-                document.getElementById('incidencia-evidencia').disabled = true;
+                
+                if (comprobanteField) {
+                    comprobanteField.readOnly = true;
+                    comprobanteField.disabled = true;
+                }
+                
+                const evidenciaField = document.getElementById('incidencia-evidencia');
+                if (evidenciaField) {
+                    evidenciaField.disabled = true;
+                }
 
-                // Mostrar estado actual
-                actualizarEstadoVisual(inc.estado);
+                // Mostrar sección de evaluación pero en modo solo lectura
+                const seccionEvaluacion = document.getElementById('seccion-evaluacion');
+                if (seccionEvaluacion) {
+                    // Mostrar la sección pero con contenido de solo lectura
+                    const estado = inc.estado !== undefined ? inc.estado : 3;
+                    // Pasar también la respuesta para mostrarla
+                    actualizarEstadoVisual(estado, inc.respuesta || '');
+                }
+
+                // Deshabilitar todos los radios si existen
+                const radioAprobar = document.getElementById('estado-aprobado');
+                const radioRechazar = document.getElementById('estado-rechazado');
+                if (radioAprobar) {
+                    radioAprobar.disabled = true;
+                    radioAprobar.readOnly = true;
+                }
+                if (radioRechazar) {
+                    radioRechazar.disabled = true;
+                    radioRechazar.readOnly = true;
+                }
+
+                // Asegurar que el campo de respuesta esté en solo lectura y deshabilitado
+                if (respuestaField) {
+                    respuestaField.readOnly = true;
+                    respuestaField.disabled = true;
+                    respuestaField.required = false;
+                }
 
                 // Ocultar botón guardar
-                document.getElementById('btn-guardar-incidencia').style.display = 'none';
+                const btnGuardar = document.getElementById('btn-guardar-incidencia');
+                if (btnGuardar) {
+                    btnGuardar.style.display = 'none';
+                    btnGuardar.disabled = true;
+                }
+                
+                // Si es admin, mostrar mensaje informativo
+                if (esAdmin) {
+                    console.log('✅ Admin en modo VER - use el botón Responder para editar');
+                } else {
+                    // Si no es admin, todo en solo lectura - MODO VER SOLO
+                    console.log('👁️ Usuario no admin - modo solo lectura');
+                    
+                    document.getElementById('incidencia-titulo').readOnly = true;
+                    document.getElementById('incidencia-descripcion').readOnly = true;
+                    document.getElementById('incidencia-tipo').disabled = true;
+                    
+                    if (comprobanteField) {
+                        comprobanteField.readOnly = true;
+                        comprobanteField.disabled = true;
+                    }
+                    
+                    const evidenciaField = document.getElementById('incidencia-evidencia');
+                    if (evidenciaField) {
+                        evidenciaField.disabled = true;
+                    }
+
+                    // Mostrar imagen de evidencia si existe (para usuarios no admin)
+                    const evidenciaContainer = document.getElementById('evidencia-imagen-container');
+                    const evidenciaImagen = document.getElementById('evidencia-imagen-preview');
+                    if (inc.imagen) {
+                        evidenciaImagen.src = `data:image/jpeg;base64,${inc.imagen}`;
+                        evidenciaContainer.style.display = 'block';
+                    } else {
+                        evidenciaContainer.style.display = 'none';
+                    }
+
+                    // Ocultar completamente la sección de evaluación
+                    const seccionEvaluacion = document.getElementById('seccion-evaluacion');
+                    if (seccionEvaluacion) {
+                        seccionEvaluacion.style.display = 'none';
+                        seccionEvaluacion.style.visibility = 'hidden';
+                    }
+
+                    // Deshabilitar todos los radios si existen
+                    const radioAprobar = document.getElementById('estado-aprobado');
+                    const radioRechazar = document.getElementById('estado-rechazado');
+                    if (radioAprobar) {
+                        radioAprobar.disabled = true;
+                        radioAprobar.readOnly = true;
+                    }
+                    if (radioRechazar) {
+                        radioRechazar.disabled = true;
+                        radioRechazar.readOnly = true;
+                    }
+
+                    // Asegurar que el campo de respuesta esté en solo lectura y deshabilitado
+                    if (respuestaField) {
+                        respuestaField.readOnly = true;
+                        respuestaField.disabled = true;
+                        respuestaField.required = false;
+                    }
+
+                    // Mostrar estado actual de forma informativa (solo lectura)
+                    const estado = inc.estado !== undefined ? inc.estado : 3;
+                    // NO llamar a actualizarEstadoVisual porque muestra controles editables
+                    // En su lugar, mostrar solo información de estado si es necesario
+                    // (pero sin controles de edición)
+
+                    // Ocultar botón guardar
+                    const btnGuardar = document.getElementById('btn-guardar-incidencia');
+                    if (btnGuardar) {
+                        btnGuardar.style.display = 'none';
+                        btnGuardar.disabled = true;
+                    }
+                }
 
             } else {
                 mostrarAlertaIncidencia('Error al cargar la incidencia', 'error');
             }
         } catch (error) {
             console.error('Error al cargar incidencia:', error);
+            mostrarAlertaIncidencia('Error al cargar la incidencia', 'error');
+        }
+    }
+
+    // Responder incidencia (solo para admins)
+    async function responderIncidencia(incidenciaId) {
+        try {
+            // Verificar si es administrador
+            const rolId = parseInt('{{ session.get("rol_id", 0) }}');
+            const esAdmin = (rolId === 1 || rolId === 4);
+
+            if (!esAdmin) {
+                mostrarAlertaIncidencia('No tiene permisos para responder incidencias', 'error');
+                return;
+            }
+
+            // Cargar la incidencia
+            const response = await fetch(`/incidentes/${incidenciaId}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                mostrarAlertaIncidencia('Error al cargar la incidencia', 'error');
+                return;
+            }
+
+            const inc = data.incidencia;
+
+            // Verificar si ya tiene respuesta o está resuelta (aprobada o rechazada)
+            if (inc.respuesta && inc.respuesta.trim() !== '') {
+                mostrarAlertaIncidencia('Esta incidencia ya tiene respuesta', 'error');
+                return;
+            }
+            
+            // Verificar si ya está resuelta (aprobada o rechazada)
+            // Solo permitir responder si está pendiente (estado 3)
+            if (inc.estado === 1 || inc.estado === 2) {
+                mostrarAlertaIncidencia('Esta incidencia ya está resuelta (Aprobada o Rechazada)', 'error');
+                return;
+            }
+            
+            // Si no tiene estado o tiene un estado diferente a 3, 1, 2, establecerlo como 3 (pendiente)
+            if (inc.estado === undefined || inc.estado === null || (inc.estado !== 3 && inc.estado !== 1 && inc.estado !== 2)) {
+                inc.estado = 3;
+            }
+
+            // Ocultar panel principal
+            document.getElementById('panel-incidencias').style.display = 'none';
+
+            // Mostrar formulario
+            document.getElementById('formulario-incidencia').style.display = 'block';
+
+            // Configurar para responder
+            incidenciaActual = inc;
+            document.getElementById('form-titulo').textContent = 'Responder Incidencia';
+            document.getElementById('incidencia_id_edit').value = inc.incidencia_id || incidenciaId;
+
+            // Cargar tipos de incidencia primero para que el select funcione
+            await cargarTiposIncidencia();
+
+            // Llenar campos (solo lectura para admin al responder)
+            document.getElementById('incidencia-titulo').value = inc.titulo || inc.nombre_incidencia || '';
+            document.getElementById('incidencia-descripcion').value = inc.descripcion || inc.mensaje || '';
+            document.getElementById('incidencia-tipo').value = inc.tipo_incidencia_id || '';
+
+            // El campo comprobante no existe en la BD, dejarlo vacío
+            const comprobanteField = document.getElementById('incidencia-comprobante');
+            if (comprobanteField) {
+                comprobanteField.value = '';
+                comprobanteField.readOnly = true;
+            }
+
+            // Hacer campos básicos de solo lectura
+            document.getElementById('incidencia-titulo').readOnly = true;
+            document.getElementById('incidencia-descripcion').readOnly = true;
+            document.getElementById('incidencia-tipo').disabled = true;
+
+            const evidenciaField = document.getElementById('incidencia-evidencia');
+            if (evidenciaField) {
+                evidenciaField.disabled = true;
+            }
+
+            // Mostrar imagen de evidencia si existe
+            const evidenciaContainer = document.getElementById('evidencia-imagen-container');
+            const evidenciaImagen = document.getElementById('evidencia-imagen-preview');
+            if (inc.imagen) {
+                evidenciaImagen.src = `data:image/jpeg;base64,${inc.imagen}`;
+                evidenciaContainer.style.display = 'block';
+            } else {
+                evidenciaContainer.style.display = 'none';
+            }
+
+            // Mostrar sección de evaluación para que pueda responder
+            const seccionEvaluacion = document.getElementById('seccion-evaluacion');
+            if (!seccionEvaluacion) {
+                console.error('❌ No se encontró la sección de evaluación');
+                return;
+            }
+
+            // Obtener estado actual
+            const estadoActual = inc.estado !== undefined ? inc.estado : 3;
+            
+            // Crear controles editables para responder (NO usar actualizarEstadoVisual que es solo lectura)
+            const htmlControlesEditables = `
+                <h4 style="color: #328336; margin-bottom: 20px; font-size: 18px; border-bottom: 2px solid #328336; padding-bottom: 10px;">
+                    <i class="fas fa-cogs"></i> Evaluación y Respuesta
+                </h4>
+
+                <!-- Decisión de la incidencia (Aprobar o Rechazar) -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #328336;">
+                        <i class="fas fa-gavel"></i> Decisión sobre la Incidencia *
+                    </label>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 20px; border: 2px solid #28a745; border-radius: 8px; background: #f0fff4; transition: all 0.3s;" onmouseover="this.style.background='#e8f5e9'" onmouseout="this.style.background='#f0fff4'">
+                            <input type="radio" name="estado_incidencia" value="1" id="estado-aprobado" required style="margin: 0; width: 18px; height: 18px; cursor: pointer;" ${estadoActual === 1 ? 'checked' : ''}>
+                            <span style="color: #28a745; font-weight: 600; font-size: 15px;">
+                                <i class="fas fa-check-circle"></i> Aprobar
+                            </span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 20px; border: 2px solid #dc3545; border-radius: 8px; background: #fff5f5; transition: all 0.3s;" onmouseover="this.style.background='#ffebee'" onmouseout="this.style.background='#fff5f5'">
+                            <input type="radio" name="estado_incidencia" value="2" id="estado-rechazado" required style="margin: 0; width: 18px; height: 18px; cursor: pointer;" ${estadoActual === 2 ? 'checked' : ''}>
+                            <span style="color: #dc3545; font-weight: 600; font-size: 15px;">
+                                <i class="fas fa-times-circle"></i> Rechazar
+                            </span>
+                        </label>
+                    </div>
+                    <small style="color: #666; font-size: 12px; margin-top: 8px; display: block;">
+                        <i class="fas fa-info-circle"></i> Debe seleccionar Aprobar o Rechazar para poder guardar la respuesta
+                    </small>
+                </div>
+
+                <!-- Respuesta del hotel -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="incidencia-respuesta" style="display: block; margin-bottom: 10px; font-weight: 600; color: #328336;">
+                        <i class="fas fa-reply"></i> Respuesta del Hotel *
+                    </label>
+                    <textarea id="incidencia-respuesta" name="respuesta" class="form-control" rows="4" required style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; resize: vertical;" placeholder="Escriba la respuesta del hotel...">${inc.respuesta || ''}</textarea>
+                    <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                        <i class="fas fa-info-circle"></i> Esta respuesta será visible para el cliente
+                    </small>
+                </div>
+            `;
+
+            // Reemplazar el contenido de la sección con controles editables
+            seccionEvaluacion.innerHTML = htmlControlesEditables;
+            seccionEvaluacion.style.display = 'block';
+            seccionEvaluacion.style.visibility = 'visible';
+
+            // Obtener referencias a los controles recién creados
+            const radioAprobar = document.getElementById('estado-aprobado');
+            const radioRechazar = document.getElementById('estado-rechazado');
+            const respuestaField = document.getElementById('incidencia-respuesta');
+
+            // Asegurarse de que los radios estén habilitados
+            if (radioAprobar) {
+                radioAprobar.disabled = false;
+                radioAprobar.required = true;
+            }
+            if (radioRechazar) {
+                radioRechazar.disabled = false;
+                radioRechazar.required = true;
+            }
+
+            // Asegurarse de que el campo de respuesta esté habilitado
+            if (respuestaField) {
+                respuestaField.readOnly = false;
+                respuestaField.disabled = false;
+                respuestaField.required = true;
+                respuestaField.style.display = 'block';
+                respuestaField.style.visibility = 'visible';
+                
+                // Enfocar el campo de respuesta después de un pequeño delay
+                setTimeout(() => {
+                    respuestaField.focus();
+                }, 100);
+            }
+
+            // Mostrar botón guardar para que pueda guardar la respuesta
+            const btnGuardar = document.getElementById('btn-guardar-incidencia');
+            if (btnGuardar) {
+                btnGuardar.style.display = 'inline-flex';
+                btnGuardar.disabled = false;
+                btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Respuesta';
+            }
+
+            console.log('✅ Formulario de respuesta configurado correctamente');
+            console.log('- Sección evaluación visible:', seccionEvaluacion ? seccionEvaluacion.style.display : 'no encontrada');
+            console.log('- Campo respuesta:', respuestaField ? 'configurado' : 'no encontrado');
+            console.log('- Radio Aprobar:', radioAprobar ? 'encontrado' : 'no encontrado');
+            console.log('- Radio Rechazar:', radioRechazar ? 'encontrado' : 'no encontrado');
+
+        } catch (error) {
+            console.error('Error al cargar incidencia para responder:', error);
             mostrarAlertaIncidencia('Error al cargar la incidencia', 'error');
         }
     }
@@ -3309,9 +3882,9 @@
             const inc = data.incidencia;
             console.log('✅ Incidencia cargada:', inc);
 
-            // Detectar si es administrador
+            // Detectar si es administrador (rol 1 o 4)
             const rolId = parseInt('{{ session.get("rol_id", 0) }}');
-            const esAdmin = (rolId === 1);
+            const esAdmin = (rolId === 1 || rolId === 4);
             console.log('🔍 Rol detectado:', rolId, '- Es admin:', esAdmin);
 
             // Ocultar panel de lista y mostrar formulario
@@ -3344,14 +3917,23 @@
                 }
 
                 // Configurar estado actual
-                const estadoActual = inc.estado || 3;
+                const estadoActual = inc.estado !== undefined ? inc.estado : 3;
                 console.log('📊 Estado actual:', estadoActual);
 
-                // Marcar el radio button correspondiente
-                const radioEstado = document.querySelector(`input[name="estado_incidencia"][value="${estadoActual}"]`);
-                if (radioEstado) {
-                    radioEstado.checked = true;
-                    console.log('✅ Radio button marcado para estado:', estadoActual);
+                // Marcar el radio button correspondiente solo si es 1 o 2
+                // Si está pendiente (3), no marcar ninguno
+                if (estadoActual === 1 || estadoActual === 2) {
+                    const radioEstado = document.querySelector(`input[name="estado_incidencia"][value="${estadoActual}"]`);
+                    if (radioEstado) {
+                        radioEstado.checked = true;
+                        console.log('✅ Radio button marcado para estado:', estadoActual);
+                    }
+                } else {
+                    // Si está pendiente, no marcar ningún radio
+                    document.querySelectorAll('input[name="estado_incidencia"]').forEach(radio => {
+                        radio.checked = false;
+                    });
+                    console.log('📝 Estado pendiente - sin radio preseleccionado');
                 }
 
                 // Llenar respuesta del hotel
@@ -3461,19 +4043,13 @@
                     </label>
                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; transition: all 0.3s;">
-                            <input type="radio" name="estado_incidencia" value="3" ${estadoActual == 3 ? 'checked' : ''} style="margin: 0;">
-                            <span style="color: #ffc107; font-weight: 600;">
-                                <i class="fas fa-clock"></i> En Proceso
-                            </span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; transition: all 0.3s;">
-                            <input type="radio" name="estado_incidencia" value="1" ${estadoActual == 1 ? 'checked' : ''} style="margin: 0;">
+                            <input type="radio" name="estado_incidencia" id="estado-aprobado" value="1" ${estadoActual == 1 ? 'checked' : ''} required style="margin: 0;">
                             <span style="color: #28a745; font-weight: 600;">
                                 <i class="fas fa-check-circle"></i> Aprobado
                             </span>
                         </label>
                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; transition: all 0.3s;">
-                            <input type="radio" name="estado_incidencia" value="2" ${estadoActual == 2 ? 'checked' : ''} style="margin: 0;">
+                            <input type="radio" name="estado_incidencia" id="estado-rechazado" value="2" ${estadoActual == 2 ? 'checked' : ''} required style="margin: 0;">
                             <span style="color: #dc3545; font-weight: 600;">
                                 <i class="fas fa-times-circle"></i> Rechazado
                             </span>
@@ -3541,59 +4117,86 @@
     }
 
     // Función para actualizar el estado visual (solo lectura)
-    function actualizarEstadoVisual(estado) {
+    // Esta función SIEMPRE muestra solo lectura, incluso para admins
+    // Solo responderIncidencia() configura controles editables
+    function actualizarEstadoVisual(estado, respuesta = '') {
         const seccionEvaluacion = document.getElementById('seccion-evaluacion');
-        if (seccionEvaluacion) {
-            // Mostrar la sección de evaluación
-            seccionEvaluacion.style.display = 'block';
+        if (!seccionEvaluacion) {
+            return;
+        }
 
-            // Crear contenido de solo lectura
-            const contenidoHTML = `
-                <h4 style="color: #328336; margin-bottom: 20px; font-size: 18px; border-bottom: 2px solid #328336; padding-bottom: 10px;">
-                    <i class="fas fa-info-circle"></i> Evaluación
-                </h4>
-                
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label>Estado Actual</label>
-                    <div id="estado-actual" style="padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e0e0e0; text-align: center; font-weight: 600; font-size: 16px;">
-                        ${estado === 1 ? '<i class="fas fa-check-circle"></i> Aprobado' :
-                    estado === 2 ? '<i class="fas fa-times-circle"></i> Rechazado' :
-                        '<i class="fas fa-clock"></i> En proceso'}
-                    </div>
+        // Verificar si es admin
+        const rolId = parseInt('{{ session.get("rol_id", 0) }}');
+        const esAdmin = (rolId === 1 || rolId === 4);
+        
+        if (!esAdmin) {
+            // Si no es admin, NO mostrar la sección de evaluación
+            seccionEvaluacion.style.display = 'none';
+            seccionEvaluacion.style.visibility = 'hidden';
+            return;
+        }
+
+        // Verificar si ya tiene los controles de admin (radioboxes editables)
+        // Si los tiene, NO reemplazar el contenido (está en modo responder)
+        const tieneRadios = seccionEvaluacion.querySelector('input[name="estado_incidencia"]');
+        
+        if (tieneRadios && !tieneRadios.disabled) {
+            // Si ya tiene los radioboxes habilitados, significa que está en modo responder
+            // No reemplazar el HTML
+            console.log('⚠️ Sección ya tiene controles editables - modo responder activo');
+            return;
+        }
+        
+        // Mostrar la sección de evaluación en modo solo lectura (incluso para admins)
+        seccionEvaluacion.style.display = 'block';
+
+        // Crear contenido de solo lectura (solo si no tiene los controles de admin)
+        const contenidoHTML = `
+            <h4 style="color: #328336; margin-bottom: 20px; font-size: 18px; border-bottom: 2px solid #328336; padding-bottom: 10px;">
+                <i class="fas fa-info-circle"></i> Evaluación
+            </h4>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Estado Actual</label>
+                <div id="estado-actual" style="padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e0e0e0; text-align: center; font-weight: 600; font-size: 16px;">
+                    ${estado === 1 ? '<i class="fas fa-check-circle"></i> Aprobado' :
+                estado === 2 ? '<i class="fas fa-times-circle"></i> Rechazado' :
+                estado === 3 ? '<i class="fas fa-clock"></i> Pendiente' :
+                    '<i class="fas fa-clock"></i> Pendiente'}
                 </div>
+            </div>
 
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label for="incidencia-respuesta">Respuesta del Hotel</label>
-                    <textarea id="incidencia-respuesta" name="respuesta" class="form-control" rows="4" readonly style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; resize: vertical; background: #f8f9fa;" placeholder="Aún no hay respuesta del hotel..."></textarea>
-                    <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
-                        <i class="fas fa-info-circle"></i> Esta respuesta será proporcionada por el personal del hotel
-                    </small>
-                </div>
-            `;
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="incidencia-respuesta">Respuesta del Hotel</label>
+                <textarea id="incidencia-respuesta" name="respuesta" class="form-control" rows="4" readonly style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; resize: vertical; background: #f8f9fa;" placeholder="Aún no hay respuesta del hotel...">${respuesta || ''}</textarea>
+                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                    <i class="fas fa-info-circle"></i> Esta respuesta será proporcionada por el personal del hotel
+                </small>
+            </div>
+        `;
 
-            seccionEvaluacion.innerHTML = contenidoHTML;
+        seccionEvaluacion.innerHTML = contenidoHTML;
 
-            // Aplicar estilos al estado
-            const estadoActual = document.getElementById('estado-actual');
-            if (estadoActual) {
-                let estadoColor = '';
-                let backgroundColor = '';
+        // Aplicar estilos al estado
+        const estadoActual = document.getElementById('estado-actual');
+        if (estadoActual) {
+            let estadoColor = '';
+            let backgroundColor = '';
 
-                if (estado === 1) {
-                    estadoColor = '#28a745';
-                    backgroundColor = '#d4edda';
-                } else if (estado === 2) {
-                    estadoColor = '#dc3545';
-                    backgroundColor = '#f8d7da';
-                } else {
-                    estadoColor = '#ffc107';
-                    backgroundColor = '#fff3cd';
-                }
-
-                estadoActual.style.color = estadoColor;
-                estadoActual.style.borderColor = estadoColor;
-                estadoActual.style.backgroundColor = backgroundColor;
+            if (estado === 1) {
+                estadoColor = '#28a745';
+                backgroundColor = '#d4edda';
+            } else if (estado === 2) {
+                estadoColor = '#dc3545';
+                backgroundColor = '#f8d7da';
+            } else {
+                estadoColor = '#ffc107';
+                backgroundColor = '#fff3cd';
             }
+
+            estadoActual.style.color = estadoColor;
+            estadoActual.style.borderColor = estadoColor;
+            estadoActual.style.backgroundColor = backgroundColor;
         }
     }
 
@@ -3690,6 +4293,27 @@
         }
     }
 
+    // Función para ampliar imagen
+    function ampliarImagen(srcImagen) {
+        // Crear overlay para mostrar imagen ampliada
+        const overlay = document.createElement('div');
+        overlay.id = 'imagen-overlay';
+        overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; cursor: pointer;';
+        overlay.onclick = function() {
+            document.body.removeChild(overlay);
+        };
+        
+        const img = document.createElement('img');
+        img.src = srcImagen;
+        img.style.cssText = 'max-width: 90%; max-height: 90%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);';
+        img.onclick = function(e) {
+            e.stopPropagation();
+        };
+        
+        overlay.appendChild(img);
+        document.body.appendChild(overlay);
+    }
+
     function cerrarDetalleIncidencia() {
         const overlay = document.getElementById('detalle-overlay');
         if (overlay) {
@@ -3735,9 +4359,9 @@
         const incidenciaId = document.getElementById('incidencia_id_edit').value;
         const btnGuardar = document.getElementById('btn-guardar-incidencia');
 
-        // Detectar si es administrador
+        // Detectar si es administrador (rol 1 o 4)
         const rolId = parseInt('{{ session.get("rol_id", 0) }}');
-        const esAdmin = (rolId === 1);
+        const esAdmin = (rolId === 1 || rolId === 4);
 
         console.log('💾 Preparando guardado - Es admin:', esAdmin, '- ID incidencia:', incidenciaId);
 
@@ -3751,18 +4375,38 @@
             if (esAdmin) {
                 console.log('🔧 Guardando como administrador');
 
-                // Obtener el estado seleccionado
+                // Obtener el estado seleccionado (debe ser 1 o 2 - Aprobar o Rechazar)
                 const estadoSeleccionado = document.querySelector('input[name="estado_incidencia"]:checked');
-                if (estadoSeleccionado) {
-                    formData.set('estado', estadoSeleccionado.value);
-                    console.log('📊 Estado a guardar:', estadoSeleccionado.value);
+                if (!estadoSeleccionado) {
+                    mostrarAlertaIncidencia('Debe seleccionar Aprobar o Rechazar antes de guardar', 'error');
+                    btnGuardar.disabled = false;
+                    btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Respuesta';
+                    return;
                 }
+
+                const estadoValue = parseInt(estadoSeleccionado.value);
+                if (estadoValue !== 1 && estadoValue !== 2) {
+                    mostrarAlertaIncidencia('Debe seleccionar Aprobar (1) o Rechazar (2)', 'error');
+                    btnGuardar.disabled = false;
+                    btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Respuesta';
+                    return;
+                }
+
+                formData.set('estado', estadoValue);
+                console.log('📊 Estado a guardar:', estadoValue);
 
                 // Obtener la respuesta del hotel
                 const campoRespuesta = document.getElementById('incidencia-respuesta');
                 if (campoRespuesta) {
-                    formData.set('respuesta', campoRespuesta.value);
-                    console.log('💬 Respuesta a guardar:', campoRespuesta.value.substring(0, 50) + '...');
+                    const respuestaValue = campoRespuesta.value.trim();
+                    if (!respuestaValue) {
+                        mostrarAlertaIncidencia('Debe escribir una respuesta antes de guardar', 'error');
+                        btnGuardar.disabled = false;
+                        btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Respuesta';
+                        return;
+                    }
+                    formData.set('respuesta', respuestaValue);
+                    console.log('💬 Respuesta a guardar:', respuestaValue.substring(0, 50) + '...');
                 }
             } else {
                 console.log('👤 Usuario normal - sin estado ni respuesta');
@@ -3779,7 +4423,7 @@
             let method = 'POST';
 
             if (incidenciaId) {
-                url = `/incidentes/actualizar/${incidenciaId}`;
+                url = `/incidentes/${incidenciaId}/actualizar`;
                 method = 'POST';
             }
 
@@ -3791,9 +4435,32 @@
             const data = await response.json();
 
             if (data.success) {
-                mostrarAlertaIncidencia(data.message || 'Incidencia guardada exitosamente', 'success');
+                // Determinar mensaje según el estado si es admin
+                let mensaje = data.message || 'Incidencia guardada exitosamente';
+                if (esAdmin && incidenciaId) {
+                    const estadoSeleccionado = document.querySelector('input[name="estado_incidencia"]:checked');
+                    if (estadoSeleccionado) {
+                        const estadoValue = parseInt(estadoSeleccionado.value);
+                        if (estadoValue === 1) {
+                            mensaje = 'Incidencia aprobada exitosamente';
+                        } else if (estadoValue === 2) {
+                            mensaje = 'Incidencia rechazada exitosamente';
+                        }
+                    }
+                }
+                
+                mostrarAlertaIncidencia(mensaje, 'success');
+                
+                // Cerrar el formulario
                 volverALista();
-                cargarIncidencias();
+                
+                // Esperar un momento para asegurar que la BD se actualizó
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                // Recargar las incidencias para mostrar el estado actualizado
+                await cargarIncidencias();
+                
+                console.log('✅ Incidencias recargadas después de actualizar');
             } else {
                 mostrarAlertaIncidencia(data.message || 'Error al guardar la incidencia', 'error');
             }

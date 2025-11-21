@@ -96,9 +96,9 @@
 
                     <td class="text-center">
                         <div class="action-buttons2">
-                            <button type="button" class="action-btn edit-btn" id="btn-editazao"
+                            <button type="button" class="action-btn edit-btn{% if evento['estado']==0 or evento['estado']=='0' %} disabled-btn{% endif %}" id="btn-editazao"
                                 onclick="window.location.href='{{ url_for('modulos.EditEvento', id_evento=evento['id_evento']) }}'"
-                                {% if evento['estado']==0 %} disabled class="disabled-btn" {% endif %}>
+                                {% if evento['estado']==0 or evento['estado']=='0' %} disabled {% endif %}>
                                 <i class="fa-solid fa-pen"></i>
                             </button>
 
@@ -107,9 +107,10 @@
                                 <i class="fa-solid fa-eye"></i>
                             </button>
 
-                            <button class="action-btn delete-btn" data-id="{{ evento['id_evento'] }}" id="btn-baja"
-                                title="Dar de baja evento" onclick="darBaja(event)" {% if evento['estado']==0 or
-                                evento['tiene_nota_credito'] %} disabled class="disabled-btn" {% endif %}>
+                            <button class="action-btn delete-btn{% if evento['estado']==0 or evento['estado']=='0' or evento.get('tiene_nota_credito') %} disabled-btn{% endif %}" 
+                                data-id="{{ evento['id_evento'] }}" id="btn-baja"
+                                title="Dar de baja evento" onclick="darBaja(event)" 
+                                {% if evento['estado']==0 or evento['estado']=='0' or evento.get('tiene_nota_credito') %} disabled {% endif %}>
                                 <i class="fas fa-minus"></i>
                             </button>
 
@@ -419,14 +420,22 @@
         const input = document.getElementById("search-input");
         const tbody = document.getElementById("tabla-eventos-body");
         let eventosData = []; // Cache de eventos
+        let modoBusqueda = false; // Flag para saber si estamos en modo búsqueda
 
         // ========================================================
-        // 1. Cargar todos los eventos al inicio
+        // 1. Cargar todos los eventos solo cuando se busca
         // ========================================================
         async function cargarEventosInicial() {
+            // Solo cargar si hay eventos en la tabla (modo búsqueda activo)
+            // No cargar si la tabla ya tiene eventos del servidor (paginación)
+            if (tbody.children.length > 0 && !modoBusqueda) {
+                return; // Ya hay eventos renderizados desde el servidor, no sobrescribir
+            }
+            
             try {
                 const response = await fetch('/Cruds/SearchEventos?query=');
                 eventosData = await response.json();
+                modoBusqueda = true;
                 mostrarEventos(eventosData);
             } catch (error) {
                 console.error("Error al cargar eventos:", error);
@@ -448,22 +457,30 @@
                 return;
             }
 
-            tbody.innerHTML = data.map(ev => `
+            tbody.innerHTML = data.map(ev => {
+                // Normalizar estado (puede ser número o string)
+                const estado = parseInt(ev.estado) || 0;
+                const esInactivo = estado === 0;
+                const tieneNotaCredito = ev.tiene_nota_credito === true || ev.tiene_nota_credito === 1;
+                const deshabilitarEditar = esInactivo;
+                const deshabilitarBaja = esInactivo || tieneNotaCredito;
+
+                return `
             <tr>
                 <td class="text-center">${ev.id_evento}</td>
                 <td class="text-center">${ev.nombre_evento}</td>
                 <td class="text-center">${ev.fecha}</td>
                 <td class="text-center">${ev.hora_inicio}</td>
                 <td class="text-center">${ev.hora_fin}</td>
-                <td class="text-center">${ev.estado == 1 ? 'Activo' : 'Inactivo'}</td>
+                <td class="text-center">${estado == 1 ? 'Activo' : 'Inactivo'}</td>
 
                 <td class="text-center">
                     <div class="action-buttons2">
 
                         <button type="button"
-                            class="action-btn edit-btn ${ev.estado == 0 ? 'disabled-btn' : ''}" id="editazao2"
+                            class="action-btn edit-btn ${deshabilitarEditar ? 'disabled-btn' : ''}" id="editazao2"
                             onclick="window.location.href='/Cruds/EditEvento/${ev.id_evento}'"
-                            ${ev.estado == 0 ? 'disabled' : ''}>
+                            ${deshabilitarEditar ? 'disabled' : ''}>
                             <i class="fa-solid fa-pen"></i>
                         </button>
 
@@ -473,10 +490,11 @@
                         </button>
 
                         <button type="button"
-                            class="action-btn delete-btn ${ev.estado == 0 || ev.tiene_nota_credito ? 'disabled-btn' : ''}"
+                            class="action-btn delete-btn ${deshabilitarBaja ? 'disabled-btn' : ''}"
                             data-id="${ev.id_evento}" id="btn-baja2"
+                            title="Dar de baja evento"
                             onclick="darBaja(event)"
-                            ${ev.estado == 0 || ev.tiene_nota_credito ? 'disabled' : ''}>
+                            ${deshabilitarBaja ? 'disabled' : ''}>
                             <i class="fas fa-minus"></i>
                         </button>
 
@@ -484,7 +502,8 @@
                     </div>
                 </td>
             </tr>
-        `).join('');
+        `;
+            }).join('');
         }
 
         // ========================================================
@@ -494,7 +513,22 @@
             const search = input.value.toLowerCase().trim();
 
             if (search === "") {
-                mostrarEventos(eventosData);
+                // Si se limpia la búsqueda, recargar la página para volver a la paginación normal
+                if (modoBusqueda) {
+                    window.location.reload();
+                    return;
+                }
+                if (eventosData.length > 0) {
+                    mostrarEventos(eventosData);
+                }
+                return;
+            }
+
+            // Si no estamos en modo búsqueda, activarlo
+            if (!modoBusqueda && eventosData.length === 0) {
+                cargarEventosInicial().then(() => {
+                    filtrarLocal(); // Volver a filtrar después de cargar
+                });
                 return;
             }
 
@@ -512,6 +546,7 @@
         // ========================================================
         async function buscarEnServidor() {
             const query = input.value.trim();
+            modoBusqueda = true;
 
             try {
                 const response = await fetch(`/Cruds/SearchEventos?query=${encodeURIComponent(query)}`);
@@ -533,8 +568,7 @@
         // Hacer visible para botones externos
         window.buscarEventos = buscarEnServidor;
 
-        // Inicial
-        cargarEventosInicial();
+        // NO cargar eventos al inicio - dejar que el servidor renderice la paginación
 
     });
 </script>

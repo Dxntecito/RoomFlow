@@ -1369,16 +1369,18 @@ def FilterEventos(filter):
 
     eventos_all = controlador_evento.order_evento(filter, order)
 
-    eventos_all = [
-        dict(
-            id_evento=e[0],
-            nombre_evento=e[1],
-            fecha=e[2],
-            hora_inicio=e[3],
-            hora_fin=e[4],
-            estado=e[5]
-        ) for e in eventos_all
-    ]
+    # Formatear eventos igual que en get_eventos
+    eventos_formateados = []
+    for e in eventos_all:
+        eventos_formateados.append({
+            'id_evento': e[0],
+            'nombre_evento': e[1],
+            'fecha': controlador_evento.formatear_fecha(e[2]),
+            'hora_inicio': controlador_evento.formatear_hora(e[3]),
+            'hora_fin': controlador_evento.formatear_hora(e[4]),
+            'estado': int(e[7])  # estado está en índice 7 (id_evento, nombre_evento, fecha, hora_inicio, hora_fin, numero_horas, precio_final, estado)
+        })
+    eventos_all = eventos_formateados
 
     total_eventos = len(eventos_all)
     total_pages = (total_eventos + per_page - 1) // per_page
@@ -1386,6 +1388,9 @@ def FilterEventos(filter):
     start = (page - 1) * per_page
     end = start + per_page
     eventos = eventos_all[start:end]
+
+    # Marcar eventos con nota de crédito
+    controlador_evento.marcar_eventos_con_nota_credito_por_id(eventos)
 
     return render_template(
         '/MODULO_EVENTO/gestionar_evento.html',
@@ -1496,6 +1501,9 @@ def SearchEventos():
         resultados = controlador_evento.search_evento(query)
     else:
         resultados = controlador_evento.get_eventos()
+
+    # Marcar eventos con nota de crédito
+    controlador_evento.marcar_eventos_con_nota_credito_por_id(resultados)
 
     return jsonify(resultados)
 
