@@ -235,9 +235,6 @@
         }
     }
 
-    // Asignar el evento de submit al formulario de promociones
-    document.getElementById('form-promocion').addEventListener('submit', guardarPromocion);
-
     // Mostrar alertas de promociones
      function mostrarAlertaPromo(mensaje, tipo) {
          const alertSuccess = document.getElementById('alert-promo-success');
@@ -254,7 +251,19 @@
             alertError.style.display = 'block';
          }
      }
-     cargarPromociones();
+
+    // Inicializar cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function() {
+        // Asignar el evento de submit al formulario de promociones
+        const formPromocion = document.getElementById('form-promocion');
+        if (formPromocion) {
+            formPromocion.addEventListener('submit', guardarPromocion);
+        }
+        
+        // Cargar tipos de promoción y promociones al cargar la página
+        cargarTiposPromocion();
+        cargarPromociones();
+    });
 </script>
 
 {% endblock %}

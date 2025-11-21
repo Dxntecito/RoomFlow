@@ -7,15 +7,17 @@ promocion_bp = Blueprint('promociones', __name__, url_prefix='/promociones')
 
 # --- Roles (para legibilidad) ---
 ADMIN_ROLE = 1
+ADMIN_ROLE_ALT = 4  # Rol alternativo de administrador
 
 # --- Decorador de Administrador ---
 def admin_required(f):
     """
-    Decorador que verifica que el usuario sea Administrador (rol_id == 1)
+    Decorador que verifica que el usuario sea Administrador (rol_id == 1 o rol_id == 4)
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'usuario_id' not in session or session.get('rol_id') != ADMIN_ROLE:
+        rol_id = session.get('rol_id')
+        if 'usuario_id' not in session or rol_id not in [ADMIN_ROLE, ADMIN_ROLE_ALT]:
             return jsonify({'success': False, 'message': 'Acceso denegado. Se requieren permisos de administrador.'}), 403
         return f(*args, **kwargs)
     return decorated_function
