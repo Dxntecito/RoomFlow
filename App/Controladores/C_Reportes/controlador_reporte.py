@@ -22,8 +22,9 @@ def get_todas_estadisticas():
             cursor.execute("""
                 SELECT 
                     CASE 
-                        WHEN estado = 1 THEN 'Activa'
-                        WHEN estado = 0 THEN 'Cancelada'
+                        WHEN estado = 1 THEN 'Activo'
+                        WHEN estado = 2 THEN 'Pasado'
+                        WHEN estado = 3 THEN 'Cancelado'
                         ELSE 'Desconocida'
                     END as estado_reserva,
                     COUNT(*) as cantidad
@@ -259,6 +260,7 @@ def get_reservas_por_estado():
     """
     Obtener el conteo de reservas por estado
     Retorna un diccionario con {estado: cantidad}
+    Estados: 1 = Activo, 2 = Pasado, 3 = Cancelado
     """
     connection = get_connection()
     try:
@@ -266,8 +268,9 @@ def get_reservas_por_estado():
             cursor.execute("""
                 SELECT 
                     CASE 
-                        WHEN estado = 1 THEN 'Activa'
-                        WHEN estado = 0 THEN 'Cancelada'
+                        WHEN estado = 1 THEN 'Activo'
+                        WHEN estado = 2 THEN 'Pasado'
+                        WHEN estado = 3 THEN 'Cancelado'
                         ELSE 'Desconocida'
                     END as estado_reserva,
                     COUNT(*) as cantidad
