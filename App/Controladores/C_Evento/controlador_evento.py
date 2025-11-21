@@ -116,7 +116,7 @@ def generar_numero_comprobante(tipo):
     serie = "001"
     
     # Generar el formato realista: B001-00000001
-    return f"{tipo}{serie}-{nuevo_numero:08d}"
+    return f"{tipo}{serie}-{nuevo_numero:06d}"
 
 
 

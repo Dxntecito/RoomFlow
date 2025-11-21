@@ -215,7 +215,7 @@ def search_tipo_servicio(query):
 ######### MODULO SERVICIO EVENTO ###############
 
 # OBTENER LISTA DE SERVICIOS
-def get_servicios_evento(limit=20, offset=0):
+def get_servicios_evento(limit=8, offset=0):
     connection = get_connection()
     with connection.cursor() as cursor:
         cursor.execute("""
@@ -394,9 +394,16 @@ def search_servicio_evento(query):
     connection = get_connection()
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT id_servicio_evento, tipo_servicio_evento_id, nombre_servicio,
-                   descripcion, precio, estado
-            FROM SERVICIO_EVENTO
+            SELECT 
+                se.id_servicio_evento, 
+                se.tipo_servicio_evento_id, 
+                se.nombre_servicio,
+                se.precio, 
+                se.estado,
+                tse.nombre_tipo
+            FROM SERVICIO_EVENTO se 
+            INNER JOIN TIPO_SERVICIO_EVENTO tse
+                ON se.tipo_servicio_evento_id = tse.id_tipo_servicio_evento
             WHERE REPLACE(LOWER(nombre_servicio), ' ', '') LIKE REPLACE(%s, ' ', '')
         """, ('%' + query.lower() + '%',))
 
@@ -409,9 +416,9 @@ def search_servicio_evento(query):
             'id_servicio_evento': s[0],
             'tipo_servicio_evento_id': s[1],
             'nombre_servicio': s[2],
-            'descripcion': s[3],
-            'precio': float(s[4]),
-            'estado': s[5]
+            'precio': float(s[3]),
+            'estado': s[4],
+            "nombre_tipo":s[5]
         })
 
     return results

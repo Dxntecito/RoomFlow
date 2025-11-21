@@ -16,7 +16,7 @@
             <div class="search-form">
                 <input type="text" id="search-input" name="search" class="search-input"
                     placeholder="Buscar servicio...">
-                <button type="button" class="search-button" onclick="buscarServiciosEvento()">
+                <button type="button" class="search-button" onclick="buscarServicios()">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
@@ -51,7 +51,7 @@
                 <tr>
                     <td class="text-center">{{ servicio['id_servicio_evento'] }}</td>
                     <td class="text-center">{{ servicio['nombre_servicio'] }}</td>
-                    <td class="text-center">{{ servicio['tipo_nombre'] }}</td>
+                    <td class="text-center">{{ servicio['nombre_tipo'] }}</td>
                     <td class="text-center">S/ {{ servicio['precio'] }}</td>
                     <td class="text-center">{{ 'Activo' if servicio['estado']==1 else 'Inactivo' }}</td>
 
@@ -265,6 +265,127 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const input = document.getElementById("search-input");
+    const tbody = document.getElementById("tabla-servicios-evento-body");
+    let serviciosData = [];
+
+    // ---------------------------------------------
+    //   Cargar todos los servicios al iniciar
+    // ---------------------------------------------
+    async function cargarServiciosInicial() {
+        try {
+            const response = await fetch('/Cruds/SearchServiciosEvento?query=');
+            serviciosData = await response.json();
+            mostrarServicios(serviciosData);
+        } catch (error) {
+            console.error("Error al cargar servicios:", error);
+        }
+    }
+
+    // ---------------------------------------------
+    //   Renderizar tabla de servicios
+    // ---------------------------------------------
+    function mostrarServicios(data) {
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align:center;padding:40px;color:#999;">
+                        <i class="fas fa-search" style="font-size:24px;margin-bottom:10px;"></i>
+                        No se encontraron resultados
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = data.map(s => `
+            <tr>
+                <td class="text-center">${s.id_servicio_evento}</td>
+                <td class="text-center">${s.nombre_servicio}</td>
+                <td class="text-center">${s.nombre_tipo}</td>
+                <td class="text-center">S/ ${s.precio}</td>
+                <td class="text-center">${s.estado == 1 ? 'Activo' : 'Inactivo'}</td>
+                <td class="text-center">
+                    <div class="action-buttons2">
+                        <button class="action-btn edit-btn"
+                                onclick="window.location.href='/Cruds/EditServicio/${s.id_servicio}'">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="action-btn view-btn"
+                                onclick="window.location.href='/Cruds/ViewServicio/${s.id_servicio}'">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                       
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // ---------------------------------------------
+    //   Filtrado local mientras escribe
+    // ---------------------------------------------
+    function filtrarLocalServicios() {
+        const search = input.value.toLowerCase().trim();
+
+        if (search === "") {
+            mostrarServicios(serviciosData);
+            return;
+        }
+
+        const filtrados = serviciosData.filter(s => {
+
+            const nombre = s.nombre_servicio.toLowerCase();
+            const partes = nombre.split(" ");
+
+            return partes.some(p => p.startsWith(search)) ||
+                   s.id_servicio_evento.toString().includes(search) ||
+                   s.precio.toString().includes(search);
+        });
+
+        mostrarServicios(filtrados);
+    }
+
+    // ---------------------------------------------
+    //   Búsqueda real en servidor (Enter o botón)
+    // ---------------------------------------------
+    async function buscarServiciosServidor() {
+        const query = input.value.trim();
+
+        try {
+            const response = await fetch(`/Cruds/SearchServiciosEvento?query=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            serviciosData = data; // actualiza cache
+            mostrarServicios(data);
+        } catch (error) {
+            console.error("Error en búsqueda de servicios:", error);
+        }
+    }
+
+    // ----------------------------------------------------
+    // Eventos
+    // ----------------------------------------------------
+    input.addEventListener("input", filtrarLocalServicios);
+
+    // Enter → búsqueda en servidor
+    input.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+            buscarServiciosServidor();
+        }
+    });
+
+    // Para el botón Buscar
+    window.buscarServicios = buscarServiciosServidor;
+
+    // Carga inicial
+    cargarServiciosInicial();
+});
+</script>
+
 
 
 {% endblock %}
