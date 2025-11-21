@@ -8,7 +8,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 120px 20px 40px 20px;
+        padding: 140px 20px 40px 20px;
         background: linear-gradient(135deg, #328336 0%, #64CC4F 100%);
     }
 
@@ -157,7 +157,7 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
-        margin-top: 15px;
+        margin-top: 25px;
     }
 
     .btn-registro:hover {
@@ -246,6 +246,48 @@
 
     .password-toggle .toggle-icon:hover {
         color: #328336;
+    }
+
+    /* Estilos para checkbox de términos */
+    .form-group input[type="checkbox"] {
+        width: auto;
+        margin-right: 8px;
+        cursor: pointer;
+        accent-color: #328336;
+    }
+
+    .form-group input[type="checkbox"].input-error {
+        outline: 2px solid #c33;
+        outline-offset: 2px;
+    }
+
+    .form-group label a {
+        color: #328336;
+        text-decoration: underline;
+        font-weight: 600;
+    }
+
+    .form-group label a:hover {
+        color: #64CC4F;
+    }
+
+    /* Estilos específicos para el contenedor de términos */
+    .terminos-container {
+        transition: all 0.3s ease;
+    }
+
+    .terminos-container:hover {
+        background: #f0f4f0 !important;
+        border-color: #328336 !important;
+    }
+
+    .terminos-container label {
+        padding: 0;
+    }
+
+    /* Asegurar que el checkbox esté bien alineado */
+    .terminos-container input[type="checkbox"] {
+        margin-top: 2px !important;
     }
 </style>
 {% endblock %}
@@ -455,6 +497,27 @@
             <div class="alert alert-error">{{ errors.get('general') }}</div>
             {% endif %}
 
+            <!-- Checkbox de Términos y Condiciones -->
+            <div class="form-group terminos-container" style="margin-top: 30px; margin-bottom: 25px; padding: 15px; background: #f8f9fa; border-radius: 10px; border: 1px solid #e0e0e0;">
+                <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; font-weight: normal; margin: 0;">
+                    <input 
+                        type="checkbox" 
+                        id="aceptar_terminos" 
+                        name="aceptar_terminos" 
+                        value="1" 
+                        required
+                        style="width: auto; margin-top: 2px; cursor: pointer; flex-shrink: 0;"
+                        class="{{ 'input-error' if errors.get('aceptar_terminos') else '' }}"
+                    >
+                    <span style="font-size: 14px; line-height: 1.6; color: #333;">
+                        Acepto los <a href="#" onclick="mostrarTerminos(); return false;" style="color: #328336; text-decoration: underline; font-weight: 600;">términos y condiciones</a> de uso del servicio
+                    </span>
+                </label>
+                <div class="validation-message {{ 'error' if errors.get('aceptar_terminos') }}" id="terminos-message" style="display: {{ 'block' if errors.get('aceptar_terminos') else 'none' }}; margin-top: 8px; margin-left: 0;">
+                    {{ errors.get('aceptar_terminos', '') }}
+                </div>
+            </div>
+
             <button type="submit" class="btn-registro" id="btnSubmit">
                 <i class="fas fa-user-plus"></i> Crear Cuenta
             </button>
@@ -536,6 +599,41 @@
             setTimeout(() => alert.remove(), 500);
         });
     }, 5000);
+
+    // Validación de términos y condiciones
+    const terminosCheckbox = document.getElementById('aceptar_terminos');
+    const terminosMessage = document.getElementById('terminos-message');
+    const formulario = document.querySelector('form');
+
+    if (terminosCheckbox && formulario) {
+        // Validar al hacer submit
+        formulario.addEventListener('submit', function(e) {
+            if (!terminosCheckbox.checked) {
+                e.preventDefault();
+                terminosMessage.textContent = 'Debes aceptar los términos y condiciones para continuar';
+                terminosMessage.className = 'validation-message error';
+                terminosMessage.style.display = 'block';
+                terminosCheckbox.classList.add('input-error');
+                terminosCheckbox.focus();
+                return false;
+            }
+        });
+
+        // Limpiar error al marcar el checkbox
+        terminosCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                terminosMessage.style.display = 'none';
+                this.classList.remove('input-error');
+            }
+        });
+    }
+
+    // Función para mostrar términos (debe estar disponible desde Master.html)
+    if (typeof mostrarTerminos === 'undefined') {
+        window.mostrarTerminos = function() {
+            alert('Por favor, revisa los términos y condiciones en el footer de la página.');
+        };
+    }
 </script>
 
 <!-- Script de validaciones completas -->

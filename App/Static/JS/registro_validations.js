@@ -484,6 +484,20 @@ document.addEventListener('DOMContentLoaded', function() {
             let formularioValido = true;
             let primerCampoInvalido = null;
             
+            // Validar términos y condiciones
+            const terminosCheckbox = document.getElementById('aceptar_terminos');
+            if (terminosCheckbox && !terminosCheckbox.checked) {
+                const terminosMessage = document.getElementById('terminos-message');
+                if (terminosMessage) {
+                    terminosMessage.textContent = '✗ Debes aceptar los términos y condiciones';
+                    terminosMessage.className = 'validation-message error';
+                    terminosMessage.style.display = 'block';
+                }
+                terminosCheckbox.classList.add('input-error');
+                formularioValido = false;
+                if (!primerCampoInvalido) primerCampoInvalido = terminosCheckbox;
+            }
+            
             // Validar usuario
             const resultadoUsuario = validarUsuario(usuarioInput.value);
             if (!resultadoUsuario.valido) {

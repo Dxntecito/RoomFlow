@@ -197,6 +197,13 @@ def Registro():
             form_data['telefono'] = request.form.get('telefono', '').strip()
             form_data['sexo'] = request.form.get('sexo', 'M')
             form_data['direccion'] = request.form.get('direccion', '').strip()
+            
+            # Validar aceptación de términos y condiciones
+            aceptar_terminos = request.form.get('aceptar_terminos')
+            if not aceptar_terminos or aceptar_terminos != '1':
+                errors['aceptar_terminos'] = 'Debes aceptar los términos y condiciones para continuar'
+                flash('Debes aceptar los términos y condiciones para continuar', 'error')
+                return render_registro_template()
 
             # Validar campos requeridos básicos
             if not form_data['usuario']:

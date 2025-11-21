@@ -428,6 +428,7 @@ def get_eventos(limit=20, offset=0):
         cursor.execute("""
             SELECT id_evento, nombre_evento, fecha, hora_inicio, hora_fin, estado
             FROM EVENTO
+            ORDER BY id_evento DESC
             LIMIT %s OFFSET %s
         """, (limit, offset))
         rows = cursor.fetchall()

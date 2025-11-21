@@ -1200,6 +1200,7 @@ def evento():
     return render_template("/MODULO_EVENTO/gestionar_evento.html", perfil=perfil, tipos_documento=tipos_documento,eventos=eventos,
         mode="list",
         filter='id_evento',
+        order='desc',
         page=page,
         total_pages=total_pages)
 
@@ -1368,7 +1369,7 @@ def SearchTiposEventos():
 def FilterEventos(filter):
     page = int(request.args.get('page', 1))
     per_page = 7
-    order = request.args.get('order', 'asc')
+    order = request.args.get('order', 'desc')
 
     eventos_all = controlador_evento.order_evento(filter, order)
 
@@ -1490,7 +1491,7 @@ def SaveEvento():
     except Exception as e:
         flash(f"Error al crear el evento: {str(e)}", "error")
 
-    return redirect(url_for('modulos.FilterEventos', filter='id_evento'))
+    return redirect(url_for('modulos.FilterEventos', filter='id_evento', order='desc'))
 @modulos_bp.route('/SearchEventos')
 def SearchEventos():
     query = request.args.get('query', '').strip()
