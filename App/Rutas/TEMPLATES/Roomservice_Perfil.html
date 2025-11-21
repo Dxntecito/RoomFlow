@@ -623,6 +623,7 @@
 
 
 
+
     @media (max-width: 768px) {
         .main-content {
             grid-template-columns: 1fr;
@@ -642,13 +643,13 @@
     <div class="search-filters-section">
         <!-- 🔍 Buscar reserva -->
         <div class="search-section">
-            <label for="numero-comprobante" class="search-label">Ingresa el número de comprobante</label>
+            <label for="fecha-busqueda" class="search-label">Ingresa la fecha de ingreso</label>
             <div class="search-form">
-                <input type="text" id="numero-comprobante" class="search-input" placeholder="Ejemplo: B001-000123">
+                <input type="date" id="fecha-busqueda" class="search-input">
                 <button type="button" class="search-button" onclick="buscarReserva()">
                     <i class="fas fa-search"></i>
                 </button>
-            </div>
+    </div>
         </div>
 
         <!-- 📋 Aquí se mostrarán los resultados -->
@@ -741,60 +742,12 @@
 <div id="vista-pago" style="display:none;">
     <h2>DATOS PARA PAGO FINAL</h2>
 
-    <div id="formNatural">
-        <div class="form-row">
-            <div class="form-group">
-                <label>Apellido paterno</label>
-                <input type="text" name="ape_paterno" pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{3,50}">
-            </div>
-            <div class="form-group">
-                <label>Apellido materno</label>
-                <input type="text" name="ape_materno" pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{3,50}">
-            </div>
-
+    <div id="formNatural" style="margin-bottom: 20px;">
+        <div class="alert-info" style="background:#f0f4ff; border:1px solid #c8d7ff; padding:15px; border-radius:8px;">
+            Los datos del cliente se completan automáticamente con la cuenta que inició sesión.
         </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Nombres</label>
-                <input type="text" name="nombres" pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{3,50}">
-            </div>
-
-            <div class="form-group">
-                <label>País</label>
-                <select id="pais_select" name="pais_id">
-                    <option value="">-- Seleccione país --</option>
-                    {% for country in countries %}
-                    <option value="{{ country[0] }}">{{ country[1] }}</option>
-                    {% endfor %}
-                    <!-- si tienes la lista desde el backend, reemplaza estas opciones dinamicamente -->
-                </select>
-            </div>
-
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>Teléfono</label>
-                <input type="tel" name="telefono" maxlength="9" pattern="^9[0-9]{8}$">
-            </div>
-            <div class="form-group">
-                <label>Tipo de documento</label>
-                <select id="tipo_doc_id" name="tipo_doc_id">
-                    <option value="">-- Seleccione tipo --</option>
-                    {% for doc in tipo_doc %}
-                    <option value="{{ doc[0] }}">{{ doc[1] }}</option>
-                    {% endfor %}
-                    <!-- si tienes la lista desde el backend, reemplaza estas opciones dinamicamente -->
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Nro. de documento</label>
-                <input type="text" name="nro_doc">
-            </div>
-        </div>
-
-
     </div>
+
 
     <h3>MÉTODO DE PAGO</h3>
     <div class="radio-group" style="margin-bottom: 20px;">
@@ -878,74 +831,59 @@
         <button class="pagar-btn" onclick="procesarPagoRoomService()">Pagar</button>
     </div>
 
-    <div id="notification-toast" class="notification-toast" style="display: none;">
-        <button class="notification-toast-close" onclick="cerrarNotificacionToast()">
-            <i class="fas fa-times"></i>
-        </button>
-        <div class="notification-toast-header">
-            <div class="notification-toast-icon">
-                <i class="fas fa-check"></i>
-            </div>
-            <div class="notification-toast-body">
-                <h4 class="notification-toast-title">Título</h4>
-                <p class="notification-toast-message">Mensaje</p>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
     function mostrarNotificacionBonita(tipo, titulo, mensaje) {
-        const toast = document.getElementById('notification-toast');
-        const icon = toast.querySelector('.notification-toast-icon i');
-        const title = toast.querySelector('.notification-toast-title');
-        const message = toast.querySelector('.notification-toast-message');
-
-        // Configurar contenido
-        title.textContent = titulo;
-        message.textContent = mensaje;
-
-        // Configurar tipo
-        toast.className = `notification-toast ${tipo}`;
-        if (tipo === 'success') {
-            icon.className = 'fas fa-check';
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'ROOMSERVICE_TOAST',
+                payload: { tipo, titulo, mensaje }
+            }, window.location.origin);
         } else {
-            icon.className = 'fas fa-times';
+            alert(`${titulo}\n${mensaje}`);
         }
-
-        // Mostrar notificación
-        toast.style.display = 'block';
-        toast.classList.add('show');
-
-        // Auto-cerrar después de 4 segundos
-        setTimeout(() => {
-            cerrarNotificacionToast();
-        }, 4000);
     }
 
     function cerrarNotificacionToast() {
-        const toast = document.getElementById('notification-toast');
-        toast.classList.remove('show');
-        setTimeout(() => {
-            toast.style.display = 'none';
-        }, 300);
+        // Controlado desde el perfil principal. Aquí no se requiere ninguna acción.
     }
 </script>
 <script>
     async function buscarReserva() {
-        const numeroComprobante = document.getElementById('numero-comprobante').value.trim();
+        const fechaBusqueda = document.getElementById('fecha-busqueda').value;
 
-        if (!numeroComprobante) {
-            alert("⚠️ Por favor, ingresa un número de comprobante.");
+        if (!fechaBusqueda) {
+            mostrarNotificacionBonita('warning', 'Fecha requerida', 'Por favor, selecciona una fecha de ingreso.');
             return;
         }
 
         try {
-            const response = await fetch(`/Roomservice/buscar_reserva/${numeroComprobante}`);
+            const response = await fetch(`/Roomservice/buscar_reserva?fecha_ingreso=${encodeURIComponent(fechaBusqueda)}`);
             const data = await response.json();
 
+            if (data?.status === 'pending') {
+                mostrarNotificacionBonita(
+                    'warning',
+                    'Reserva pendiente',
+                    data?.message || 'Aún no inicia tu reserva.'
+                );
+                limpiarCampos();
+                return;
+            }
+
+            if (!response.ok) {
+                mostrarNotificacionBonita(
+                    'error',
+                    'Error al buscar',
+                    data?.error || '❌ Ocurrió un error al buscar la reserva.'
+                );
+                limpiarCampos();
+                return;
+            }
+
             if (!data) {
-                alert('❌ No se encontró ninguna reserva con ese comprobante.');
+                mostrarNotificacionBonita('warning', 'Sin reservas', 'No se encontró ninguna reserva para esa fecha.');
                 limpiarCampos();
                 return;
             }
@@ -956,8 +894,6 @@
             document.getElementById('hora-entrada').value = data.hora_ingreso;
             document.getElementById('hora-salida').value = data.hora_salida;
 
-            // Llenar el combo de habitaciones
-            // Llenar el combo de habitaciones
             const select = document.getElementById('habitaciones');
             select.innerHTML = '<option value="">Seleccione</option>';
             if (data.habitaciones && data.habitaciones.length > 0) {
@@ -971,7 +907,7 @@
 
         } catch (err) {
             console.error("Error al buscar reserva:", err);
-            alert("❌ Ocurrió un error al buscar la reserva.");
+            mostrarNotificacionBonita('error', 'Error inesperado', '❌ Ocurrió un error al buscar la reserva.');
         }
     }
 
@@ -1206,17 +1142,6 @@
             return;
         }
 
-        //  Capturar los datos del cliente desde los inputs
-        const cliente_data = {
-            tipo_doc_id: document.querySelector('select[name="tipo_doc_id"]').value,
-            nro_doc: document.querySelector('input[name="nro_doc"]').value,
-            pais_id: document.querySelector('select[name="pais_id"]').value,
-            telefono: document.querySelector('input[name="telefono"]').value,
-            nombres: document.querySelector('input[name="nombres"]').value,
-            ape_paterno: document.querySelector('input[name="ape_paterno"]').value,
-            ape_materno: document.querySelector('input[name="ape_materno"]').value
-        };
-
         //  Capturar los productos de la tabla
         const productos = [];
         const filas = document.querySelectorAll("#productos-body tr");
@@ -1240,8 +1165,6 @@
 
         //  Construir el objeto completo que espera el backend
         const data = {
-            tipo_cliente: 'N', // Natural por ahora
-            cliente: cliente_data,
             metodo_pago_id,
             tipo_comprobante,
             total_general,

@@ -277,6 +277,80 @@
 
                 </div>
 
+                <div class="servicios-section">
+                    <h4>Servicios adicionales</h4>
+
+                    {% set servicios_evento_lista = servicios_evento | default([]) %}
+                    {% if mode == 'view' %}
+                    <div class="servicios-wrapper servicios-view">
+                        {% if servicios_evento_lista %}
+                        {% set tipos_vistos = [] %}
+                        {% for servicio in servicios_evento_lista %}
+                            {% if servicio['nombre_tipo'] not in tipos_vistos %}
+                                {% set _ = tipos_vistos.append(servicio['nombre_tipo']) %}
+                                <div class="servicios-tipo-group">
+                                    <h5 class="servicios-tipo-title">{{ servicio['nombre_tipo'] }}</h5>
+                                    <ul class="servicios-list">
+                                        {% for srv in servicios_evento_lista %}
+                                            {% if srv['nombre_tipo'] == servicio['nombre_tipo'] %}
+                                            <li class="servicio-list-item">
+                                                <div>
+                                                    <span class="servicio-nombre">{{ srv['nombre_servicio'] }}</span>
+                                                </div>
+                                                <span class="servicio-precio">S/ {{ '%.2f'|format(srv['precio_unitario']) }}</span>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        {% else %}
+                        <p class="servicios-empty">Este evento no tiene servicios asociados.</p>
+                        {% endif %}
+                    </div>
+                    {% elif mode == 'edit' %}
+                    {% set servicios_catalogo_lista = servicios_catalogo | default([]) %}
+                    {% set servicios_seleccionados = servicios_evento_ids | default([]) %}
+                    <div class="servicios-wrapper">
+                        {% if servicios_catalogo_lista %}
+                        {% set tipos_vistos = [] %}
+                        {% for servicio in servicios_catalogo_lista %}
+                            {% if servicio['nombre_tipo'] not in tipos_vistos %}
+                                {% set _ = tipos_vistos.append(servicio['nombre_tipo']) %}
+                                <div class="servicios-tipo-group">
+                                    <h5 class="servicios-tipo-title">{{ servicio['nombre_tipo'] }}</h5>
+                                    <div class="servicios-grid">
+                                        {% for srv in servicios_catalogo_lista %}
+                                            {% if srv['nombre_tipo'] == servicio['nombre_tipo'] %}
+                                            <label class="servicio-card">
+                                                <div class="servicio-card-header">
+                                                    <input type="checkbox" name="servicios" value="{{ srv['id_servicio_evento'] }}"
+                                                        data-precio="{{ '%.2f'|format(srv['precio']) }}"
+                                                        {% if srv['id_servicio_evento'] in servicios_seleccionados %}checked{% endif %}>
+                                                    <div>
+                                                        <span class="servicio-nombre">{{ srv['nombre_servicio'] }}</span>
+                                                    </div>
+                                                </div>
+                                                <p class="servicio-descripcion">{{ srv['descripcion'] }}</p>
+                                                <span class="servicio-precio">S/ {{ '%.2f'|format(srv['precio']) }}</span>
+                                            </label>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        <p class="servicios-hint">Marca o desmarca para agregar o quitar servicios del evento.</p>
+                        {% else %}
+                        <p class="servicios-empty">No hay servicios activos disponibles para asignar.</p>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class="servicios-empty">La gestión de servicios estará disponible después de crear el evento.</p>
+                    {% endif %}
+                </div>
+
                 <div class="form-actions" style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #f0f0f0;">
                     <a href="{{ url_for('modulos.evento') }}" class="btn btn-light btn-volver">Volver</a>
                     {% if mode != 'view' %}
@@ -416,49 +490,41 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-
         const input = document.getElementById("search-input");
         const tbody = document.getElementById("tabla-eventos-body");
-        let eventosData = []; // Cache de eventos
-        let modoBusqueda = false; // Flag para saber si estamos en modo búsqueda
+        const searchButton = document.querySelector(".search-button");
+        let debounceTimer = null;
+        let lastRequestId = 0;
 
-        // ========================================================
-        // 1. Cargar todos los eventos solo cuando se busca
-        // ========================================================
-        async function cargarEventosInicial() {
-            // Solo cargar si hay eventos en la tabla (modo búsqueda activo)
-            // No cargar si la tabla ya tiene eventos del servidor (paginación)
-            if (tbody.children.length > 0 && !modoBusqueda) {
-                return; // Ya hay eventos renderizados desde el servidor, no sobrescribir
-            }
-            
-            try {
-                const response = await fetch('/Cruds/SearchEventos?query=');
-                eventosData = await response.json();
-                modoBusqueda = true;
-                mostrarEventos(eventosData);
-            } catch (error) {
-                console.error("Error al cargar eventos:", error);
-            }
+        if (!input || !tbody) return;
+
+        function renderLoading() {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align:center;padding:40px;color:#328336;">
+                        <i class="fas fa-spinner fa-spin" style="font-size:22px;margin-bottom:10px;"></i>
+                        Buscando eventos...
+                    </td>
+                </tr>`;
         }
 
-        // ========================================================
-        // 2. Renderizar la tabla
-        // ========================================================
-        function mostrarEventos(data) {
+        function renderEmpty() {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align:center;padding:40px;color:#999;">
+                        <i class="fas fa-search" style="font-size:24px;margin-bottom:10px;"></i>
+                        No se encontraron resultados
+                    </td>
+                </tr>`;
+        }
+
+        function renderEventos(data) {
             if (!data || data.length === 0) {
-                tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align:center;padding:40px;color:#999;">
-                    <i class="fas fa-search" style="font-size:24px;margin-bottom:10px;"></i>
-                    No se encontraron resultados
-                </td>
-            </tr>`;
+                renderEmpty();
                 return;
             }
 
             tbody.innerHTML = data.map(ev => {
-                // Normalizar estado (puede ser número o string)
                 const estado = parseInt(ev.estado) || 0;
                 const esInactivo = estado === 0;
                 const tieneNotaCredito = ev.tiene_nota_credito === true || ev.tiene_nota_credito === 1;
@@ -466,110 +532,101 @@
                 const deshabilitarBaja = esInactivo || tieneNotaCredito;
 
                 return `
-            <tr>
-                <td class="text-center">${ev.id_evento}</td>
-                <td class="text-center">${ev.nombre_evento}</td>
-                <td class="text-center">${ev.fecha}</td>
-                <td class="text-center">${ev.hora_inicio}</td>
-                <td class="text-center">${ev.hora_fin}</td>
-                <td class="text-center">${estado == 1 ? 'Activo' : 'Inactivo'}</td>
-
-                <td class="text-center">
-                    <div class="action-buttons2">
-
-                        <button type="button"
-                            class="action-btn edit-btn ${deshabilitarEditar ? 'disabled-btn' : ''}" id="editazao2"
-                            onclick="window.location.href='/Cruds/EditEvento/${ev.id_evento}'"
-                            ${deshabilitarEditar ? 'disabled' : ''}>
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-
-                        <button type="button" class="action-btn view-btn"
-                            onclick="window.location.href='/Cruds/ViewEvento/${ev.id_evento}'">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-
-                        <button type="button"
-                            class="action-btn delete-btn ${deshabilitarBaja ? 'disabled-btn' : ''}"
-                            data-id="${ev.id_evento}" id="btn-baja2"
-                            title="Dar de baja evento"
-                            onclick="darBaja(event)"
-                            ${deshabilitarBaja ? 'disabled' : ''}>
-                            <i class="fas fa-minus"></i>
-                        </button>
-
-
-                    </div>
-                </td>
-            </tr>
-        `;
-            }).join('');
+                <tr>
+                    <td class="text-center">${ev.id_evento}</td>
+                    <td class="text-center">${ev.nombre_evento}</td>
+                    <td class="text-center">${ev.fecha}</td>
+                    <td class="text-center">${ev.hora_inicio}</td>
+                    <td class="text-center">${ev.hora_fin}</td>
+                    <td class="text-center">${estado === 1 ? 'Activo' : 'Inactivo'}</td>
+                    <td class="text-center">
+                        <div class="action-buttons2">
+                            <button type="button"
+                                class="action-btn edit-btn ${deshabilitarEditar ? 'disabled-btn' : ''}"
+                                onclick="window.location.href='/Cruds/EditEvento/${ev.id_evento}'"
+                                ${deshabilitarEditar ? 'disabled' : ''}>
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button type="button" class="action-btn view-btn"
+                                onclick="window.location.href='/Cruds/ViewEvento/${ev.id_evento}'">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <button type="button"
+                                class="action-btn delete-btn ${deshabilitarBaja ? 'disabled-btn' : ''}"
+                                data-id="${ev.id_evento}"
+                                title="Dar de baja evento"
+                                onclick="darBaja(event)"
+                                ${deshabilitarBaja ? 'disabled' : ''}>
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join("");
         }
 
-        // ========================================================
-        // 3. Filtrar evento localmente
-        // ========================================================
-        function filtrarLocal() {
-            const search = input.value.toLowerCase().trim();
-
-            if (search === "") {
-                // Si se limpia la búsqueda, recargar la página para volver a la paginación normal
-                if (modoBusqueda) {
-                    window.location.reload();
-                    return;
-                }
-                if (eventosData.length > 0) {
-                    mostrarEventos(eventosData);
-                }
-                return;
-            }
-
-            // Si no estamos en modo búsqueda, activarlo
-            if (!modoBusqueda && eventosData.length === 0) {
-                cargarEventosInicial().then(() => {
-                    filtrarLocal(); // Volver a filtrar después de cargar
-                });
-                return;
-            }
-
-            const filtrados = eventosData.filter(ev => {
-                const nombre = ev.nombre_evento.toLowerCase();
-                return nombre.includes(search) ||
-                    ev.id_evento.toString().includes(search);
-            });
-
-            mostrarEventos(filtrados);
-        }
-
-        // ========================================================
-        // 4. Búsqueda en backend (solo Enter)
-        // ========================================================
-        async function buscarEnServidor() {
-            const query = input.value.trim();
-            modoBusqueda = true;
-
+        async function realizarBusqueda(query, requestId) {
             try {
+                renderLoading();
                 const response = await fetch(`/Cruds/SearchEventos?query=${encodeURIComponent(query)}`);
+                if (!response.ok) throw new Error("Error al buscar eventos");
                 const data = await response.json();
-                eventosData = data;
-                mostrarEventos(data);
+
+                if (requestId !== lastRequestId) return; // se inició otra búsqueda
+                renderEventos(data);
             } catch (error) {
                 console.error("Error buscando eventos:", error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align:center;padding:35px;color:#c0392b;">
+                            <i class="fas fa-triangle-exclamation" style="font-size:22px;margin-bottom:10px;"></i>
+                            Ocurrió un problema al buscar eventos.
+                        </td>
+                    </tr>`;
             }
         }
 
-        // Eventos:
-        input.addEventListener("input", filtrarLocal);
+        function resetToPaginatedList() {
+            window.location.href = window.location.pathname;
+        }
 
+        function handleSearch(immediate = false) {
+            const query = input.value.trim();
+
+            if (query === "") {
+                clearTimeout(debounceTimer);
+                if (immediate) {
+                    resetToPaginatedList();
+                } else {
+                    debounceTimer = setTimeout(resetToPaginatedList, 150);
+                }
+                return;
+            }
+
+            clearTimeout(debounceTimer);
+            const requestId = ++lastRequestId;
+            const executeSearch = () => realizarBusqueda(query, requestId);
+
+            if (immediate) {
+                executeSearch();
+            } else {
+                debounceTimer = setTimeout(executeSearch, 350);
+            }
+        }
+
+        input.addEventListener("input", () => handleSearch(false));
         input.addEventListener("keydown", e => {
-            if (e.key === "Enter") buscarEnServidor();
+            if (e.key === "Enter") {
+                e.preventDefault();
+                handleSearch(true);
+            }
         });
 
-        // Hacer visible para botones externos
-        window.buscarEventos = buscarEnServidor;
+        if (searchButton) {
+            searchButton.addEventListener("click", () => handleSearch(true));
+        }
 
-        // NO cargar eventos al inicio - dejar que el servidor renderice la paginación
-
+        window.buscarEventos = () => handleSearch(true);
     });
 </script>
 
@@ -599,80 +656,106 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // --- Cálculo automático de horas y precio ---
-        const tiposEventos = {
-        {% for t in tipos_eventos %}
-        { { t['tipo_evento_id'] } }: { { t['precio_por_hora'] if t.get('precio_por_hora') is not none else 0 } },
-        {% endfor %}
-    };
-
-    function actualizarHorasYPrecio() {
         const horaInicioInput = document.getElementById('hora_inicio');
         const horaFinInput = document.getElementById('hora_fin');
         const numeroHorasInput = document.getElementById('numero_horas');
         const precioFinalInput = document.getElementById('precio_final');
         const tipoEventoSelect = document.getElementById('tipo_evento_id');
+        const servicioCheckboxes = document.querySelectorAll('.servicio-card input[type="checkbox"]');
 
-        const horaInicio = horaInicioInput.value;
-        const horaFin = horaFinInput.value;
-        const tipoEventoId = tipoEventoSelect.value;
+        const preciosPorTipo = {
+            {% for t in tipos_eventos %}
+            "{{ t['tipo_evento_id'] }}": {{ t.get('precio_por_hora', 0) or 0 }}{% if not loop.last %},{% endif %}
+            {% endfor %}
+        };
 
-        if (horaInicio && horaFin && tipoEventoId) {
-            const [h1, m1] = horaInicio.split(':').map(Number);
-            const [h2, m2] = horaFin.split(':').map(Number);
-
-            let diffHoras = (h2 + m2 / 60) - (h1 + m1 / 60);
-            if (diffHoras < 0) diffHoras += 24; // Manejo de eventos que pasan medianoche
-
-            numeroHorasInput.value = diffHoras.toFixed(1);
-
-            const precioBase = tiposEventos[tipoEventoId] || 0;
-            precioFinalInput.value = (precioBase * diffHoras).toFixed(2);
-        }
-    }
-
-    // Escuchar cambios
-    document.getElementById('hora_inicio').addEventListener('change', actualizarHorasYPrecio);
-    document.getElementById('hora_fin').addEventListener('change', actualizarHorasYPrecio);
-    document.getElementById('tipo_evento_id').addEventListener('change', actualizarHorasYPrecio);
-
-    // Inicializar cálculo al cargar
-    actualizarHorasYPrecio();
-
-    // --- Validación antes de enviar ---
-    const form = document.getElementById('form-evento');
-    form.addEventListener('submit', function (e) {
-        const fecha = document.getElementById('fecha').value;
-        const horaInicio = document.getElementById('hora_inicio').value;
-        const horaFin = document.getElementById('hora_fin').value;
-
-        if (!fecha || !horaInicio || !horaFin) return; // Ya requiere HTML5
-
-        // Convertir a Date locales
-        const [hInicio, mInicio] = horaInicio.split(':').map(Number);
-        const [hFin, mFin] = horaFin.split(':').map(Number);
-
-        const inicio = new Date(fecha);
-        inicio.setHours(hInicio, mInicio, 0, 0);
-
-        const fin = new Date(fecha);
-        fin.setHours(hFin, mFin, 0, 0);
-
-        const ahora = new Date();
-
-        if (fin <= inicio) {
-            e.preventDefault();
-            mostrarNotificacionBonita('error', 'Error de validación', 'La hora de fin debe ser posterior a la hora de inicio.');
-            return;
+        function toNumber(value) {
+            const num = parseFloat(value);
+            return isNaN(num) ? 0 : num;
         }
 
-        if (inicio < ahora) {
-            e.preventDefault();
-            mostrarNotificacionBonita('error', 'Error de validación', 'La fecha y hora de inicio no pueden ser anteriores a la fecha y hora actual.');
-            return;
+        function calcularHorasDesdeCampos() {
+            if (!horaInicioInput || !horaFinInput || !numeroHorasInput) return 0;
+            const horaInicio = horaInicioInput.value;
+            const horaFin = horaFinInput.value;
+
+            if (horaInicio && horaFin) {
+                const [h1, m1] = horaInicio.split(':').map(Number);
+                const [h2, m2] = horaFin.split(':').map(Number);
+
+                let diffHoras = (h2 + m2 / 60) - (h1 + m1 / 60);
+                if (diffHoras < 0) diffHoras += 24;
+
+                numeroHorasInput.value = diffHoras.toFixed(1);
+                return diffHoras;
+            }
+
+            return toNumber(numeroHorasInput.value);
         }
+
+        function calcularServiciosSeleccionados() {
+            let total = 0;
+            servicioCheckboxes.forEach(chk => {
+                if (chk.checked) total += toNumber(chk.dataset.precio);
+            });
+            return total;
+        }
+
+        function calcularPrecioTotal() {
+            if (!precioFinalInput || !numeroHorasInput || !tipoEventoSelect) return;
+            const horas = calcularHorasDesdeCampos();
+            const precioHora = toNumber(preciosPorTipo[tipoEventoSelect.value]);
+            const total = (horas * precioHora) + calcularServiciosSeleccionados();
+            precioFinalInput.value = total.toFixed(2);
+        }
+
+        function actualizarYRecalcular() {
+            calcularHorasDesdeCampos();
+            calcularPrecioTotal();
+        }
+
+        horaInicioInput && horaInicioInput.addEventListener('change', actualizarYRecalcular);
+        horaFinInput && horaFinInput.addEventListener('change', actualizarYRecalcular);
+        tipoEventoSelect && tipoEventoSelect.addEventListener('change', calcularPrecioTotal);
+        numeroHorasInput && numeroHorasInput.addEventListener('input', calcularPrecioTotal);
+        servicioCheckboxes.forEach(chk => chk.addEventListener('change', calcularPrecioTotal));
+
+        calcularPrecioTotal();
+
+        const form = document.getElementById('form-evento');
+        if (!form) return;
+
+        form.addEventListener('submit', function (e) {
+            const fecha = document.getElementById('fecha').value;
+            const horaInicio = horaInicioInput ? horaInicioInput.value : '';
+            const horaFin = horaFinInput ? horaFinInput.value : '';
+
+            if (!fecha || !horaInicio || !horaFin) return;
+
+            const [hInicio, mInicio] = horaInicio.split(':').map(Number);
+            const [hFin, mFin] = horaFin.split(':').map(Number);
+
+            const inicio = new Date(fecha);
+            inicio.setHours(hInicio, mInicio, 0, 0);
+
+            const fin = new Date(fecha);
+            fin.setHours(hFin, mFin, 0, 0);
+
+            const ahora = new Date();
+
+            if (fin <= inicio) {
+                e.preventDefault();
+                mostrarNotificacionBonita('error', 'Error de validación', 'La hora de fin debe ser posterior a la hora de inicio.');
+                return;
+            }
+
+            if (inicio < ahora) {
+                e.preventDefault();
+                mostrarNotificacionBonita('error', 'Error de validación', 'La fecha y hora de inicio no pueden ser anteriores a la fecha y hora actual.');
+                return;
+            }
+        });
     });
-
 </script>
 
 

@@ -65,6 +65,121 @@ def get_servicios_por_tipo(tipo_id):
     return servicios
 
 
+def get_servicios_por_evento(evento_id):
+    connection = get_connection()
+    servicios = []
+    with connection.cursor(DictCursor) as cursor:
+        cursor.execute("""
+            SELECT 
+                ese.servicio_evento_id,
+                ese.cantidad,
+                ese.precio_unitario,
+                se.nombre_servicio,
+                se.descripcion,
+                se.tipo_servicio_evento_id,
+                tse.nombre_tipo
+            FROM EVENTO_SERVICIO_EVENTO ese
+            INNER JOIN SERVICIO_EVENTO se 
+                ON ese.servicio_evento_id = se.id_servicio_evento
+            INNER JOIN TIPO_SERVICIO_EVENTO tse
+                ON se.tipo_servicio_evento_id = tse.id_tipo_servicio_evento
+            WHERE ese.evento_id = %s
+            ORDER BY tse.nombre_tipo, se.nombre_servicio
+        """, (evento_id,))
+        rows = cursor.fetchall()
+
+    connection.close()
+
+    for row in rows:
+        servicios.append({
+            "servicio_evento_id": row["servicio_evento_id"],
+            "cantidad": row["cantidad"],
+            "precio_unitario": float(row["precio_unitario"]) if row["precio_unitario"] is not None else 0.0,
+            "nombre_servicio": row["nombre_servicio"],
+            "descripcion": row.get("descripcion"),
+            "tipo_servicio_evento_id": row["tipo_servicio_evento_id"],
+            "nombre_tipo": row["nombre_tipo"]
+        })
+
+    return servicios
+
+
+def _normalizar_servicios_ids(servicios_ids):
+    if servicios_ids is None:
+        return []
+
+    normalizados = []
+    for valor in servicios_ids:
+        try:
+            sid = int(valor)
+            if sid not in normalizados:
+                normalizados.append(sid)
+        except (TypeError, ValueError):
+            continue
+    return normalizados
+
+
+def calcular_total_servicios(servicios_ids):
+    normalizados = _normalizar_servicios_ids(servicios_ids)
+    if not normalizados:
+        return Decimal('0')
+
+    total = Decimal('0')
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            placeholders = ','.join(['%s'] * len(normalizados))
+            cursor.execute(f"""
+                SELECT precio
+                FROM SERVICIO_EVENTO
+                WHERE id_servicio_evento IN ({placeholders})
+            """, tuple(normalizados))
+
+            rows = cursor.fetchall()
+            for row in rows:
+                precio = row[0] if isinstance(row, (list, tuple)) else row.get('precio')
+                if precio is None:
+                    continue
+                total += Decimal(str(precio))
+    finally:
+        connection.close()
+
+    return total
+
+
+def reemplazar_servicios_evento(evento_id, servicios_ids):
+    normalizados = _normalizar_servicios_ids(servicios_ids)
+
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM EVENTO_SERVICIO_EVENTO WHERE evento_id = %s", (evento_id,))
+
+            if not normalizados:
+                connection.commit()
+                return
+
+            placeholders = ','.join(['%s'] * len(normalizados))
+            cursor.execute(f"""
+                SELECT id_servicio_evento, precio
+                FROM SERVICIO_EVENTO
+                WHERE id_servicio_evento IN ({placeholders})
+            """, tuple(normalizados))
+
+            precios = {row[0]: float(row[1]) if row[1] is not None else 0.0 for row in cursor.fetchall()}
+
+            for servicio_id in normalizados:
+                precio_unitario = precios.get(servicio_id, 0.0)
+                cursor.execute("""
+                    INSERT INTO EVENTO_SERVICIO_EVENTO (evento_id, servicio_evento_id, cantidad, precio_unitario)
+                    VALUES (%s, %s, 1, %s)
+                """, (evento_id, servicio_id, precio_unitario))
+
+        connection.commit()
+    finally:
+        connection.close()
+
+
 
 ######### MODULO TIPO SERVICIO EVENTO ###############
 # OBTENER LISTA DE TIPOS DE SERVICIO

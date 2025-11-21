@@ -1728,10 +1728,168 @@
             </div>
 
             <!-- Sección: Room Service -->
+            <style>
+                .roomservice-toast {
+                    position: relative;
+                    margin-bottom: 15px;
+                    padding: 14px 16px 14px 52px;
+                    border-radius: 12px;
+                    border-left: 4px solid #dc2626;
+                    background: #fee2e2;
+                    color: #991b1b;
+                    display: none;
+                    align-items: center;
+                    gap: 12px;
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                }
+
+                .roomservice-toast.show {
+                    display: flex;
+                    animation: fadeSlide 0.3s ease forwards;
+                }
+
+                @keyframes fadeSlide {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-8px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .roomservice-toast.hidden {
+                    display: none;
+                }
+
+                .roomservice-toast .roomservice-toast-icon {
+                    position: absolute;
+                    left: 16px;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(220, 38, 38, 0.12);
+                    color: inherit;
+                }
+
+                .roomservice-toast .roomservice-toast-title {
+                    margin: 0;
+                    font-size: 15px;
+                    font-weight: 600;
+                }
+
+                .roomservice-toast .roomservice-toast-message {
+                    margin: 2px 0 0;
+                    font-size: 13px;
+                    color: inherit;
+                }
+
+                .roomservice-toast .roomservice-toast-close {
+                    margin-left: auto;
+                    background: transparent;
+                    border: none;
+                    color: inherit;
+                    cursor: pointer;
+                    font-size: 16px;
+                }
+
+                .roomservice-toast--success {
+                    border-left-color: #16a34a;
+                    background: #ecfdf5;
+                    color: #065f46;
+                }
+
+                .roomservice-toast--warning {
+                    border-left-color: #f97316;
+                    background: #fff7ed;
+                    color: #9a3412;
+                }
+
+                .roomservice-toast--error {
+                    border-left-color: #dc2626;
+                    background: #fee2e2;
+                    color: #991b1b;
+                }
+
+                .roomservice-toast--info {
+                    border-left-color: #2563eb;
+                    background: #e0f2fe;
+                    color: #1d4ed8;
+                }
+            </style>
             <div class="section-content" id="room-service">
                 <h2 class="section-title">Room Service</h2>
+                <div id="roomservice-toast" class="roomservice-toast hidden">
+                    <div class="roomservice-toast-icon">
+                        <i class="fas fa-info"></i>
+                    </div>
+                    <div>
+                        <p class="roomservice-toast-title">Aviso</p>
+                        <p class="roomservice-toast-message">Mensaje</p>
+                    </div>
+                    <button class="roomservice-toast-close" type="button">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 <iframe src="/Roomservice/roomservice_perfil" style="width:100%; height:600px; border:none;"></iframe>
             </div>
+            <script>
+                (function () {
+                    const toast = document.getElementById('roomservice-toast');
+                    if (!toast) return;
+
+                    const icon = toast.querySelector('.roomservice-toast-icon i');
+                    const titleEl = toast.querySelector('.roomservice-toast-title');
+                    const messageEl = toast.querySelector('.roomservice-toast-message');
+                    const closeBtn = toast.querySelector('.roomservice-toast-close');
+                    let hideTimeout = null;
+
+                    const typeMap = {
+                        success: { icon: 'fas fa-check', modifier: 'roomservice-toast--success' },
+                        warning: { icon: 'fas fa-exclamation', modifier: 'roomservice-toast--warning' },
+                        error: { icon: 'fas fa-times', modifier: 'roomservice-toast--error' },
+                        info: { icon: 'fas fa-info', modifier: 'roomservice-toast--info' }
+                    };
+
+                    function hideToast() {
+                        toast.classList.remove('show');
+                        toast.classList.add('hidden');
+                        if (hideTimeout) {
+                            clearTimeout(hideTimeout);
+                            hideTimeout = null;
+                        }
+                    }
+
+                    closeBtn.addEventListener('click', hideToast);
+                    window.addEventListener('message', (event) => {
+                        if (event.origin !== window.location.origin) return;
+                        const data = event.data || {};
+                        if (data.type !== 'ROOMSERVICE_TOAST') return;
+
+                        const payload = data.payload || {};
+                        const tipo = payload.tipo || 'info';
+                        const titulo = payload.titulo || 'Aviso';
+                        const mensaje = payload.mensaje || '';
+                        const style = typeMap[tipo] || typeMap.info;
+
+                        icon.className = style.icon;
+                        toast.className = `roomservice-toast show ${style.modifier}`;
+                        toast.classList.remove('hidden');
+                        titleEl.textContent = titulo;
+                        messageEl.textContent = mensaje;
+
+                        if (hideTimeout) clearTimeout(hideTimeout);
+                        hideTimeout = setTimeout(hideToast, 4000);
+                    });
+
+                    window.hideRoomserviceToast = hideToast;
+                })();
+            </script>
 
             <!-- Sección: Gestionar Empleados -->
             {% if session.get('rol_id') == 1 %}

@@ -2,7 +2,7 @@ from datetime import date, datetime
 from bd import get_connection
 from flask import jsonify, request,url_for
 import pymysql
-def get_reserva_por_comprobante(numero_comprobante):
+def get_reserva_por_fecha_usuario(fecha_ingreso, usuario_id):
     connection = get_connection()
     reserva = None
     try:
@@ -19,11 +19,13 @@ def get_reserva_por_comprobante(numero_comprobante):
                 FROM RESERVA r
                 INNER JOIN RESERVA_HABITACION rh ON rh.reserva_id = r.reserva_id
                 INNER JOIN HABITACION h ON h.habitacion_id = rh.habitacion_id
-                INNER JOIN TRANSACCION t ON t.reserva_id = r.reserva_id
-                INNER JOIN COMPROBANTE c ON c.transaccion_id = t.transaccion_id
-                WHERE c.numero_comprobante = %s
+                INNER JOIN CLIENTE c ON c.cliente_id = r.cliente_id
+                INNER JOIN USUARIO u ON u.cliente_id = c.cliente_id
+                WHERE DATE(r.fecha_ingreso) = %s
+                  AND u.usuario_id = %s
                   AND r.tipo_reserva = 'H'
-            """, (numero_comprobante,))
+                  AND DATE(r.fecha_salida) >= CURDATE()
+            """, (fecha_ingreso, usuario_id))
 
             rows = cursor.fetchall()
             if rows:
@@ -71,8 +73,13 @@ def procesar_pago_roomservice(data):
         # =============================
         # 1️⃣ Datos base
         # =============================
-        tipo_cliente = data.get('tipo_cliente')
-        cliente_data = data.get('cliente')
+        usuario_id = data.get('usuario_id')
+        if not usuario_id:
+            return jsonify({
+                "success": False,
+                "error": "Usuario no autenticado."
+            }), 401
+
         metodo_pago_id = data.get('metodo_pago_id')
         tipo_comprobante = data.get('tipo_comprobante')
         total_general = data.get('total_general')
@@ -84,29 +91,24 @@ def procesar_pago_roomservice(data):
         hora_actual = datetime.now().strftime('%H:%M:%S')
 
         # =============================
-        # 2️⃣ Verificar o crear cliente
         # =============================
-        cursor.execute("SELECT cliente_id FROM CLIENTE WHERE num_doc = %s", (cliente_data['nro_doc'],))
+        # 2️⃣ Obtener cliente desde usuario autenticado
+        # =============================
+        cursor.execute("""
+            SELECT c.cliente_id, COALESCE(c.id_tipo_cliente, 'N')
+            FROM USUARIO u
+            INNER JOIN CLIENTE c ON c.cliente_id = u.cliente_id
+            WHERE u.usuario_id = %s
+        """, (usuario_id,))
         cliente = cursor.fetchone()
 
-        if cliente:
-            cliente_id = cliente[0]
-        else:
-            cursor.execute("""
-                INSERT INTO CLIENTE (f_registro,id_tipo_cliente, tipo_doc_id, num_doc, id_pais, telefono,
-                                     direccion, nombres, ape_paterno, ape_materno)
-                VALUES (CURDATE(),%s, %s, %s, %s, %s, '', %s, %s, %s)
-            """, (
-                tipo_cliente,
-                cliente_data['tipo_doc_id'],
-                cliente_data['nro_doc'],
-                cliente_data['pais_id'],
-                cliente_data['telefono'],
-                cliente_data['nombres'],
-                cliente_data['ape_paterno'],
-                cliente_data['ape_materno']
-            ))
-            cliente_id = cursor.lastrowid
+        if not cliente:
+            return jsonify({
+                "success": False,
+                "error": "No se encontró un cliente asociado al usuario."
+            }), 400
+
+        cliente_id = cliente[0]
 
         # =============================
         # 3️⃣ Crear reserva

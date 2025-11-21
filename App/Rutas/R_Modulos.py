@@ -1407,10 +1407,15 @@ def FilterEventos(filter):
 def ViewEvento(id_evento):
     evento = controlador_evento.get_evento_by_id(id_evento)
     tipos_eventos = controlador_evento.get_tipos_eventos2()
+    servicios_evento = controlador_servicios_evento.get_servicios_por_evento(id_evento)
+    servicios_evento_ids = [s['servicio_evento_id'] for s in servicios_evento]
     return render_template(
         '/MODULO_EVENTO/gestionar_evento.html',
         evento=evento,
         tipos_eventos=tipos_eventos,
+        servicios_evento=servicios_evento,
+        servicios_evento_ids=servicios_evento_ids,
+        servicios_catalogo=[],
         mode='view'
     )
 
@@ -1418,11 +1423,18 @@ def ViewEvento(id_evento):
 def EditEvento(id_evento):
     evento = controlador_evento.get_evento_by_id(id_evento)   
     tipos_eventos = controlador_evento.get_tipos_eventos2()
+    servicios_evento = controlador_servicios_evento.get_servicios_por_evento(id_evento)
+    servicios_catalogo = controlador_servicios_evento.get_todos_servicios_por_tipo_servicio()
+    servicios_evento_ids = [s['servicio_evento_id'] for s in servicios_evento]
     return render_template(
         '/MODULO_EVENTO/gestionar_evento.html',
         evento=evento,
         mode='edit',
-        tipos_eventos=tipos_eventos, current_date=date.today() + timedelta(days=1)
+        tipos_eventos=tipos_eventos, 
+        servicios_evento=servicios_evento,
+        servicios_catalogo=servicios_catalogo,
+        servicios_evento_ids=servicios_evento_ids,
+        current_date=date.today() + timedelta(days=1)
     )
 
 
@@ -1438,6 +1450,7 @@ def UpdateEvento():
 
         numero_horas = Decimal(str(request.form['numero_horas']))
         tipo_evento_id = int(request.form['tipo_evento_id'])
+        servicios_seleccionados = request.form.getlist('servicios')
 
         motivo = "Cambio de monto"  # puedes cambiarlo
 
@@ -1454,15 +1467,21 @@ def UpdateEvento():
         # Obtener precio base
         tipo = controlador_evento.get_tipo_evento_by_id(tipo_evento_id)
         precio_base = Decimal(str(tipo[2]))
-        precio_final = precio_base * numero_horas
+        monto_evento = precio_base * numero_horas
+        monto_servicios = controlador_servicios_evento.calcular_total_servicios(servicios_seleccionados)
+        precio_final = monto_evento + monto_servicios
 
         print("Precio base:", precio_base)
+        print("Monto por horas:", monto_evento)
+        print("Monto servicios:", monto_servicios)
         print("Precio final calculado:", precio_final)
 
         controlador_evento.update_evento(
             nombre_evento, fecha, hora_inicio, hora_fin, 
             numero_horas, precio_final, tipo_evento_id, id_evento, motivo
         )
+
+        controlador_servicios_evento.reemplazar_servicios_evento(id_evento, servicios_seleccionados)
 
         flash("Evento actualizado correctamente", "success")
 
