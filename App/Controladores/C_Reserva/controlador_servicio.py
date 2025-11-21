@@ -34,7 +34,11 @@ def get_services(limit=50, offset=0):
                 slug = _slugify(row[1])
                 image_map = {
                     "desayuno_buffet": "desayuno.jpg",
-                    "spa": "spa.jpg"
+                    "spa": "spa.jpg",
+                    "lavanderia": "lavanderia.jgp.jpg",
+                    "gimnasio": "gimansio.jpg",
+                    "wifi_premium": "wifi-premium.png",
+                    "estacionamiento": "estacionamiento.jpg",
                 }
                 image_name = image_map.get(slug, f"{slug}.jpg" if slug else "")
                 image_path = BASE_IMG_DIR / image_name if image_name else None
