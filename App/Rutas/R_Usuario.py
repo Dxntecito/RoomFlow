@@ -602,6 +602,7 @@ def RecuperarContrasena():
                 return render_template('RecuperarContrasena.html')
             
             usuario_id = usuario_data['usuario_id']
+            nombre_usuario = usuario_data.get('usuario', 'Usuario')  # Obtener el nombre de usuario
             
             # Generar código de recuperación
             resultado = controller_usuario.crear_codigo_recuperacion(usuario_id)
@@ -631,6 +632,7 @@ def RecuperarContrasena():
                         .code {{ font-size: 32px; font-weight: bold; color: #328336; text-align: center; padding: 20px; background: #f0f8f0; border-radius: 10px; letter-spacing: 10px; margin: 20px 0; }}
                         .warning {{ color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 5px; margin: 20px 0; }}
                         .footer {{ text-align: center; color: #666; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }}
+                        .username {{ font-weight: bold; color: #328336; }}
                     </style>
                 </head>
                 <body>
@@ -640,7 +642,7 @@ def RecuperarContrasena():
                             <p>Recuperación de Contraseña</p>
                         </div>
                         
-                        <p>Hola,</p>
+                        <p>Hola <span class="username">{nombre_usuario}</span>,</p>
                         <p>Has solicitado recuperar tu contraseña. Tu código de recuperación es:</p>
                         
                         <div class="code">{codigo}</div>

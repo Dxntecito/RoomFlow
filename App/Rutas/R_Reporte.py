@@ -228,3 +228,128 @@ def exportar_excel():
         traceback.print_exc()
         flash(f'Error al generar Excel: {str(e)}', 'error')
         return redirect(url_for('reportes.reportes'))
+
+@reportes_bp.route('/backup-database', methods=['GET'])
+@reportes_required
+def backup_database():
+    """
+    Genera y descarga un backup completo de la base de datos
+    """
+    try:
+        from datetime import datetime
+        from bd import get_connection
+        
+        # Generar nombre de archivo con fecha y hora
+        fecha = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'backup_roomflow_{fecha}.sql'
+        
+        # Obtener conexión
+        connection = get_connection()
+        
+        # Generar backup manual (más confiable que mysqldump en este entorno)
+        return generar_backup_manual(connection, filename)
+            
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        flash(f'Error al generar backup: {str(e)}', 'error')
+        return redirect(url_for('reportes.reportes'))
+
+def generar_backup_manual(connection, filename):
+    """
+    Genera un backup manual de la base de datos recorriendo todas las tablas
+    """
+    try:
+        from datetime import datetime, date
+        import pymysql.cursors
+        import datetime as dt_module
+        
+        backup_content = []
+        backup_content.append(f"-- Backup de Base de Datos RoomFlow")
+        backup_content.append(f"-- Generado el: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        backup_content.append(f"-- Base de datos: roomflow")
+        backup_content.append("")
+        backup_content.append("SET FOREIGN_KEY_CHECKS=0;")
+        backup_content.append("SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';")
+        backup_content.append("SET AUTOCOMMIT=0;")
+        backup_content.append("START TRANSACTION;")
+        backup_content.append("SET time_zone = '+00:00';")
+        backup_content.append("")
+        
+        with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+            # Obtener todas las tablas
+            cursor.execute("SHOW TABLES")
+            tables = cursor.fetchall()
+            
+            table_names = [list(table.values())[0] for table in tables]
+            
+            for table_name in table_names:
+                backup_content.append(f"-- --------------------------------------------------------")
+                backup_content.append(f"-- Estructura de tabla `{table_name}`")
+                backup_content.append(f"-- --------------------------------------------------------")
+                backup_content.append("")
+                
+                # Obtener estructura de la tabla
+                cursor.execute(f"SHOW CREATE TABLE `{table_name}`")
+                create_table = cursor.fetchone()
+                if create_table:
+                    create_statement = list(create_table.values())[1]
+                    backup_content.append(f"DROP TABLE IF EXISTS `{table_name}`;")
+                    backup_content.append(create_statement + ";")
+                    backup_content.append("")
+                
+                # Obtener datos de la tabla
+                cursor.execute(f"SELECT * FROM `{table_name}`")
+                rows = cursor.fetchall()
+                
+                if rows:
+                    backup_content.append(f"-- Volcado de datos para la tabla `{table_name}`")
+                    backup_content.append("")
+                    
+                    # Obtener nombres de columnas
+                    columns = list(rows[0].keys())
+                    columns_str = ', '.join([f"`{col}`" for col in columns])
+                    
+                    for row in rows:
+                        values = []
+                        for col in columns:
+                            value = row[col]
+                            if value is None:
+                                values.append('NULL')
+                            elif isinstance(value, bool):
+                                values.append('1' if value else '0')
+                            elif isinstance(value, (int, float)):
+                                values.append(str(value))
+                            elif isinstance(value, bytes):
+                                # Para BLOB, usar HEX
+                                values.append(f"0x{value.hex()}")
+                            elif isinstance(value, (date, datetime)):
+                                # Para fechas y datetime
+                                if isinstance(value, datetime):
+                                    values.append(f"'{value.strftime('%Y-%m-%d %H:%M:%S')}'")
+                                else:
+                                    values.append(f"'{value.strftime('%Y-%m-%d')}'")
+                            else:
+                                # Escapar comillas y caracteres especiales para strings
+                                escaped = str(value).replace('\\', '\\\\').replace("'", "\\'").replace('\n', '\\n').replace('\r', '\\r').replace('\x00', '')
+                                values.append(f"'{escaped}'")
+                        
+                        values_str = ', '.join(values)
+                        backup_content.append(f"INSERT INTO `{table_name}` ({columns_str}) VALUES ({values_str});")
+                    
+                    backup_content.append("")
+            
+            backup_content.append("COMMIT;")
+            backup_content.append("SET FOREIGN_KEY_CHECKS=1;")
+        
+        # Crear respuesta
+        backup_sql = '\n'.join(backup_content)
+        response = make_response(backup_sql)
+        response.headers['Content-Type'] = 'application/sql; charset=utf-8'
+        response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+        return response
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise e

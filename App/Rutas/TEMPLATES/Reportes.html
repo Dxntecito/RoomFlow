@@ -625,6 +625,12 @@
                 <div class="info-value" id="db-indices">0</div>
             </div>
         </div>
+        <div style="text-align: center; margin-top: 30px;">
+            <button onclick="descargarBackupBD()" class="btn btn-primary" style="padding: 15px 30px; font-size: 16px; background: #328336; color: white; border: none; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s;">
+                <i class="fas fa-download"></i>
+                Descargar Copia de Seguridad de la Base de Datos
+            </button>
+        </div>
     </div>
 
     <!-- Modal para Lista de Tablas -->
@@ -1327,6 +1333,24 @@
     }
 
     // Función para mostrar las conexiones activas
+    // Función para descargar backup de la base de datos
+    function descargarBackupBD() {
+        // Mostrar mensaje de carga
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando backup...';
+        
+        // Descargar el backup
+        window.location.href = '/Cruds/Reportes/backup-database';
+        
+        // Restaurar botón después de un tiempo
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }, 3000);
+    }
+
     async function mostrarConexiones() {
         const modal = document.getElementById('modalConexiones');
         const contenido = document.getElementById('contenido-conexiones');
