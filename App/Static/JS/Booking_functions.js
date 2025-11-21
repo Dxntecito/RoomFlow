@@ -56,6 +56,7 @@ let clientData = {};
 let selectedServices = [];
 // Objeto para almacenar cantidades de servicios: { serviceId: cantidad }
 let serviceQuantities = {};
+const SERVICE_MAX_QUANTITY = 5;
 // const tipoEmpresa = document.getElementById("tipo_empresa");
 // correo (opcional/global)
 const correoCliente = document.getElementById("correo_cliente");
@@ -116,8 +117,12 @@ function resetServicesSelection() {
     const serviceId = card.dataset.serviceId;
     const quantityDisplay = card.querySelector('.quantity-display');
     const totalDisplay = card.querySelector('.service-price-total');
+    const minusBtn = card.querySelector('.quantity-btn--minus');
+    const plusBtn = card.querySelector('.quantity-btn--plus');
     if (quantityDisplay) quantityDisplay.textContent = '0';
     if (totalDisplay) totalDisplay.textContent = '0.00';
+    if (minusBtn) minusBtn.disabled = true;
+    if (plusBtn) plusBtn.disabled = false;
     card.classList.remove('selected');
   });
 }
@@ -126,6 +131,7 @@ function resetServicesSelection() {
 document.addEventListener('DOMContentLoaded', () => {
   // Event listeners para botones de cantidad de servicios
   document.querySelectorAll('.quantity-btn--plus').forEach(btn => {
+    btn.disabled = false;
     btn.addEventListener('click', function() {
       if (selectedRooms.length === 0) {
         showBookingAlert('Por favor, selecciona al menos una habitación primero.', 'warning');
@@ -134,12 +140,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const serviceId = this.dataset.service;
       const card = document.querySelector(`.service-card-horizontal[data-service-id="${serviceId}"]`);
       if (!card) return;
+      const plusBtn = this;
       
       const quantityDisplay = card.querySelector('.quantity-display');
       const totalDisplay = card.querySelector('.service-price-total');
       const priceUnit = parseFloat(card.dataset.price) || 0;
       
       let currentQty = parseInt(quantityDisplay.textContent) || 0;
+      if (currentQty >= SERVICE_MAX_QUANTITY) {
+        showBookingAlert(`Solo puedes solicitar hasta ${SERVICE_MAX_QUANTITY} unidades por servicio.`, 'info');
+        return;
+      }
       currentQty++;
       
       quantityDisplay.textContent = currentQty;
@@ -149,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Actualizar estado del botón menos
       const minusBtn = card.querySelector('.quantity-btn--minus');
       if (minusBtn) minusBtn.disabled = false;
+      plusBtn.disabled = currentQty >= SERVICE_MAX_QUANTITY;
       
       // Actualizar arrays y totales
       if (!selectedServices.includes(serviceId)) {
@@ -181,6 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const quantityDisplay = card.querySelector('.quantity-display');
       const totalDisplay = card.querySelector('.service-price-total');
       const priceUnit = parseFloat(card.dataset.price) || 0;
+      const plusBtn = card.querySelector('.quantity-btn--plus');
       
       let currentQty = parseInt(quantityDisplay.textContent) || 0;
       if (currentQty > 0) {
@@ -191,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Actualizar estado del botón menos
         this.disabled = currentQty === 0;
+        if (plusBtn) plusBtn.disabled = false;
         
         if (currentQty === 0) {
           selectedServices = selectedServices.filter(id => id !== serviceId);

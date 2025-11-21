@@ -600,6 +600,7 @@
   window.BOOKING_HOME_URL = "{{ url_for('Index') }}";
 </script>
 <script src="{{ url_for('static', filename='JS/Booking_modals.js') }}"></script>
+<script src="{{ url_for('static', filename='JS/date_input_lock.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking_timer.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking.js') }}"></script>
 <script src="{{ url_for('static', filename='JS/Booking_payment.js') }}"></script>
@@ -1126,15 +1127,7 @@ function scrollToTop() {
 // --- Paso 1 → Paso 2 (Cliente) ---
 nextLink.addEventListener("click", e => {
   e.preventDefault();
-  if (selectedRooms.length === 0) {
-    showBookingAlert("Seleccione al menos una habitación antes de continuar.", "warning");
-    return;
-  }
-  if (usuarioId) {
-    step1.style.display = "none";
-    step3.style.display = "block";
-    generarFormulariosHuespedes();
-  } else {
+  if (!usuarioId) {
     saveBookingProgress('login');
     const currentUrl = window.location.pathname + window.location.search;
     const loginTarget = window.BOOKING_LOGIN_URL
@@ -1143,6 +1136,13 @@ nextLink.addEventListener("click", e => {
     window.location.href = loginTarget;
     return;
   }
+  if (selectedRooms.length === 0) {
+    showBookingAlert("Seleccione al menos una habitación antes de continuar.", "warning");
+    return;
+  }
+  step1.style.display = "none";
+  step3.style.display = "block";
+  generarFormulariosHuespedes();
   // Actualizar visibilidad del temporizador
   if (window.bookingTimer && typeof window.bookingTimer.updateVisibility === 'function') {
     window.bookingTimer.updateVisibility();

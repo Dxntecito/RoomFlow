@@ -3,6 +3,7 @@
 <!-- Para estilos exclusivamente para esta pagina -->
 {% block stiles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='CSS/Booking.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='CSS/Booking_modals.css') }}">
 <style>
 
 </style>
@@ -156,6 +157,8 @@
 
     <script src="{{ url_for('static', filename='JS/main.js') }}"></script>
     <script src="{{ url_for('static', filename='JS/home.js') }}"></script>
+    <script src="{{ url_for('static', filename='JS/Booking_modals.js') }}"></script>
+    <script src="{{ url_for('static', filename='JS/date_input_lock.js') }}"></script>
 
 <!-- <script>
 document.querySelector(".booking-form").addEventListener("submit", function(event) {
@@ -174,121 +177,77 @@ document.addEventListener("DOMContentLoaded", () => {
   const fechaEntrada = document.getElementById("fechaEntrada");
   const fechaSalida = document.getElementById("fechaSalida");
   const form = document.querySelector(".booking-card");
+  if (!fechaEntrada || !fechaSalida || !form) return;
 
-  // Poner la fecha mínima en la hora actual
-  const now = new Date();
+  const ONE_HOUR_MS = 60 * 60 * 1000;
   const pad = n => String(n).padStart(2, "0");
   const formatDateTimeLocal = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-  const ONE_HOUR_MS = 60 * 60 * 1000;
+  const warn = message => showBookingAlert(message, "warning");
 
-  const localNow = formatDateTimeLocal(now);
-  const initialSalidaMin = formatDateTimeLocal(new Date(now.getTime() + ONE_HOUR_MS));
-
-  fechaEntrada.min = localNow;
-  fechaSalida.min = initialSalidaMin;
-
-  fechaEntrada.addEventListener("change", () => {
-    if (fechaEntrada.value) {
-      const entradaDate = new Date(fechaEntrada.value);
-      const minSalidaDate = new Date(entradaDate.getTime() + ONE_HOUR_MS);
-      const minSalidaString = formatDateTimeLocal(minSalidaDate);
-
-      fechaSalida.min = minSalidaString;
-
-      if (fechaSalida.value) {
-        const salidaDate = new Date(fechaSalida.value);
-        if (salidaDate < minSalidaDate) {
-          fechaSalida.value = minSalidaString;
-        }
-      } else {
-        fechaSalida.value = minSalidaString;
-      }
-    } else {
-      fechaSalida.min = initialSalidaMin;
-      if (fechaSalida.value && fechaSalida.value < initialSalidaMin) {
-        fechaSalida.value = initialSalidaMin;
-      }
-    }
-  });
-
-  fechaSalida.addEventListener("change", () => {
-    if (fechaEntrada.value && fechaSalida.value) {
-      const entradaDate = new Date(fechaEntrada.value);
-      const minSalidaDate = new Date(entradaDate.getTime() + ONE_HOUR_MS);
-      const salidaDate = new Date(fechaSalida.value);
-
-      if (salidaDate < minSalidaDate) {
-        const minSalidaString = formatDateTimeLocal(minSalidaDate);
-        fechaSalida.value = minSalidaString;
-        fechaSalida.min = minSalidaString;
-      }
-    }
-  });
-
-  form.addEventListener("submit", (e) => {
-    const entrada = new Date(fechaEntrada.value);
-    const salida = new Date(fechaSalida.value);
-
-    if (!fechaEntrada.value || !fechaSalida.value) {
-      alert("⚠️ Debes seleccionar ambas fechas.");
-      e.preventDefault();
-      return;
-    }
-
-    if (entrada >= salida) {
-      alert("⚠️ La fecha de salida debe ser posterior a la fecha de entrada.");
-      e.preventDefault();
-      return;
-    }
-
-    const diffMs = salida.getTime() - entrada.getTime();
-    if (diffMs < ONE_HOUR_MS) {
-      alert("⚠️ La fecha de salida debe ser al menos una hora después de la fecha de entrada.");
-      e.preventDefault();
-      return;
-    }
-  });
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector(".booking-card");
-  const fechaEntrada = document.getElementById("fechaEntrada");
-  const fechaSalida = document.getElementById("fechaSalida");
-
-  form.addEventListener("submit", (e) => {
+  const applyInitialConstraints = () => {
     const now = new Date();
-    const entrada = new Date(fechaEntrada.value);
-    const salida = new Date(fechaSalida.value);
-    const ONE_HOUR_MS = 60 * 60 * 1000;
-
-    if (!fechaEntrada.value || !fechaSalida.value) {
-      alert("⚠️ Debes seleccionar ambas fechas.");
-      e.preventDefault();
-      return;
+    const localNow = formatDateTimeLocal(now);
+    const initialSalida = formatDateTimeLocal(new Date(now.getTime() + ONE_HOUR_MS));
+    fechaEntrada.min = localNow;
+    fechaSalida.min = initialSalida;
+    if (fechaEntrada.value && new Date(fechaEntrada.value) < new Date(localNow)) {
+      fechaEntrada.value = localNow;
     }
-
-    // Validar que la entrada sea después de la hora actual
-    if (entrada < now) {
-      alert("⚠️ La fecha de entrada debe ser posterior a la fecha y hora actuales.");
-      e.preventDefault();
-      return;
+    if (fechaSalida.value && new Date(fechaSalida.value) < new Date(initialSalida)) {
+      fechaSalida.value = initialSalida;
     }
+  };
 
-    // Validar que la salida sea posterior a la entrada
-    if (entrada >= salida) {
-      alert("⚠️ La fecha de salida debe ser posterior a la fecha de entrada.");
-      e.preventDefault();
-      return;
+  const syncExitWithEntry = () => {
+    if (!fechaEntrada.value) return;
+    const entradaDate = new Date(fechaEntrada.value);
+    const minSalidaDate = new Date(entradaDate.getTime() + ONE_HOUR_MS);
+    const minSalidaString = formatDateTimeLocal(minSalidaDate);
+    fechaSalida.min = minSalidaString;
+    if (!fechaSalida.value || new Date(fechaSalida.value) < minSalidaDate) {
+      fechaSalida.value = minSalidaString;
     }
+  };
 
-    const diffMs = salida.getTime() - entrada.getTime();
-    if (diffMs < ONE_HOUR_MS) {
-      alert("⚠️ La fecha de salida debe ser al menos una hora después de la fecha de entrada.");
-      e.preventDefault();
-      return;
+  fechaEntrada.addEventListener("change", syncExitWithEntry);
+  fechaSalida.addEventListener("change", () => {
+    if (!fechaEntrada.value || !fechaSalida.value) return;
+    const entradaDate = new Date(fechaEntrada.value);
+    const minSalidaDate = new Date(entradaDate.getTime() + ONE_HOUR_MS);
+    if (new Date(fechaSalida.value) < minSalidaDate) {
+      const minSalidaString = formatDateTimeLocal(minSalidaDate);
+      fechaSalida.value = minSalidaString;
+      fechaSalida.min = minSalidaString;
     }
   });
+
+  form.addEventListener("submit", event => {
+    const now = new Date();
+    if (!fechaEntrada.value || !fechaSalida.value) {
+      warn("⚠️ Debes seleccionar ambas fechas.");
+      event.preventDefault();
+      return;
+    }
+    const entrada = new Date(fechaEntrada.value);
+    const salida = new Date(fechaSalida.value);
+
+    if (entrada < now) {
+      warn("⚠️ La fecha de entrada debe ser posterior a la fecha y hora actuales.");
+      event.preventDefault();
+      return;
+    }
+    if (entrada >= salida) {
+      warn("⚠️ La fecha de salida debe ser posterior a la fecha de entrada.");
+      event.preventDefault();
+      return;
+    }
+    if ((salida.getTime() - entrada.getTime()) < ONE_HOUR_MS) {
+      warn("⚠️ La fecha de salida debe ser al menos una hora después de la fecha de entrada.");
+      event.preventDefault();
+    }
+  });
+
+  applyInitialConstraints();
 });
 </script>
 
