@@ -2,6 +2,7 @@ from flask import render_template, Blueprint, request, jsonify, session, redirec
 import App.Controladores.C_Turno.controlador_turno as controller_turno
 import App.Controladores.C_Turno.controlador_detalle_turno as controller_detalle_turno
 from functools import wraps
+import App.Rutas.R_Modulos as modulos_module
 
 turno_bp = Blueprint('turno', __name__, template_folder='TEMPLATES/MODULO_TURNO', url_prefix='/Cruds/Turno')
 
@@ -17,17 +18,18 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def admin_required(f):
+def empleado_module_required(f):
     """
-    Decorador para proteger rutas que requieren rol de administrador
+    Decorador para proteger rutas que requieren permiso al módulo de empleado
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'usuario_id' not in session:
             flash('Debes iniciar sesión para acceder a esta página', 'warning')
             return redirect(url_for('usuarios.Login'))
-        if session.get('rol_id') != 1:  # Asumiendo que rol_id=1 es administrador
-            flash('No tienes permisos para acceder a esta página. Solo administradores pueden gestionar turnos.', 'danger')
+        # Verificar permiso al módulo de empleado usando la función de R_Modulos
+        if not modulos_module._tiene_permiso_modulo('empleado'):
+            flash('No tienes permisos para acceder a esta página.', 'danger')
             return redirect(url_for('Index'))
         return f(*args, **kwargs)
     return decorated_function
@@ -35,7 +37,7 @@ def admin_required(f):
 # ============== RUTAS PARA TURNOS ==============
 
 @turno_bp.route('/GestionarTurno', methods=['GET'])
-@admin_required
+@empleado_module_required
 def GestionarTurno():
     """
     Página para gestionar turnos
@@ -44,7 +46,7 @@ def GestionarTurno():
     return render_template("Gestionar_Turno.html", turnos=turnos)
 
 @turno_bp.route('/crear-turno', methods=['POST'])
-@admin_required
+@empleado_module_required
 def crear_turno():
     """
     Crear nuevo turno
@@ -72,7 +74,7 @@ def crear_turno():
         })
 
 @turno_bp.route('/actualizar-turno/<int:turno_id>', methods=['POST'])
-@admin_required
+@empleado_module_required
 def actualizar_turno(turno_id):
     """
     Actualizar turno existente
@@ -100,7 +102,7 @@ def actualizar_turno(turno_id):
         })
 
 @turno_bp.route('/eliminar-turno/<int:turno_id>', methods=['POST'])
-@admin_required
+@empleado_module_required
 def eliminar_turno(turno_id):
     """
     Eliminar turno
@@ -118,7 +120,7 @@ def eliminar_turno(turno_id):
         })
 
 @turno_bp.route('/api/turno/<int:turno_id>', methods=['GET'])
-@admin_required
+@empleado_module_required
 def api_turno(turno_id):
     """
     Obtener un turno específico en formato JSON
@@ -149,7 +151,7 @@ def api_turno(turno_id):
 # ============== RUTAS PARA DETALLE DE TURNOS ==============
 
 @turno_bp.route('/GestionarDetalleTurno', methods=['GET'])
-@admin_required
+@empleado_module_required
 def GestionarDetalleTurno():
     """
     Página para gestionar detalles de turno (asignaciones)
@@ -157,7 +159,7 @@ def GestionarDetalleTurno():
     return render_template("Gestionar_Detalle_Turno.html")
 
 @turno_bp.route('/crear-detalle-turno', methods=['POST'])
-@admin_required
+@empleado_module_required
 def crear_detalle_turno():
     """
     Crear nuevo detalle de turno (asignar turno a empleado)
@@ -185,7 +187,7 @@ def crear_detalle_turno():
         })
 
 @turno_bp.route('/actualizar-detalle-turno', methods=['POST'])
-@admin_required
+@empleado_module_required
 def actualizar_detalle_turno():
     """
     Actualizar detalle de turno existente
@@ -225,7 +227,7 @@ def actualizar_detalle_turno():
         })
 
 @turno_bp.route('/eliminar-detalle-turno', methods=['POST'])
-@admin_required
+@empleado_module_required
 def eliminar_detalle_turno():
     """
     Eliminar detalle de turno (desasignar turno de empleado)
@@ -253,7 +255,7 @@ def eliminar_detalle_turno():
         })
 
 @turno_bp.route('/api/detalles-turno', methods=['GET'])
-@admin_required
+@empleado_module_required
 def api_detalles_turno():
     """
     Obtener todos los detalles de turno en formato JSON
@@ -292,7 +294,7 @@ def api_detalles_turno():
         })
 
 @turno_bp.route('/api/empleados-activos', methods=['GET'])
-@admin_required
+@empleado_module_required
 def api_empleados_activos():
     """
     Obtener lista de empleados activos para selectores
@@ -321,7 +323,7 @@ def api_empleados_activos():
         })
 
 @turno_bp.route('/api/turnos-disponibles', methods=['GET'])
-@admin_required
+@empleado_module_required
 def api_turnos_disponibles():
     """
     Obtener lista de turnos disponibles para selectores

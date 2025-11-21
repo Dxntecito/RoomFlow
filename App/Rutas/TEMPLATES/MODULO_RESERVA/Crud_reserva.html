@@ -12,6 +12,7 @@
     <!-- ===== SIDEBAR IZQUIERDA ===== -->
     <nav class="sidebar" id="nav-principal">
       <h2>Módulo Reserva</h2>
+      <a href="{{ url_for('modulos.modulos') }}" style="background: #328336; color: white; font-weight: 600; margin-bottom: 10px; border-radius: 8px; padding: 10px; text-align: center; display: block;">← Regresar a Módulos</a>
       <a href="{{ url_for('modulos.reserva_dashboard') }}" id="nav-dashboard">👤 Gestionar</a>
       <a href="{{ url_for('modulos.categorias') }}" id="nav-categorias">👤 Gestionar Categorías</a>
       <a href="{{ url_for('modulos.habitaciones') }}" id="nav-habitaciones">👤 Gestionar Habitaciones</a>

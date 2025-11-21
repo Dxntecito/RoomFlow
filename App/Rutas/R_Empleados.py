@@ -1,6 +1,7 @@
 from flask import render_template, Blueprint, request, jsonify, session, redirect, url_for, flash
 import App.Controladores.C_Empleado.controlador_empleado as controller_empleado
 from functools import wraps
+import App.Rutas.R_Modulos as modulos_module
 
 empleados_bp = Blueprint('empleados', __name__, url_prefix='/Cruds/Empleados')
 
@@ -16,24 +17,25 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def admin_required(f):
+def empleado_module_required(f):
     """
-    Decorador para proteger rutas que requieren rol de administrador
+    Decorador para proteger rutas que requieren permiso al módulo de empleado
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'usuario_id' not in session:
             flash('Debes iniciar sesión para acceder a esta página', 'warning')
             return redirect(url_for('usuarios.Login'))
-        if session.get('rol_id') != 1:  # Asumiendo que rol_id=1 es administrador
-            flash('No tienes permisos para acceder a esta página. Solo administradores pueden gestionar empleados.', 'danger')
+        # Verificar permiso al módulo de empleado usando la función de R_Modulos
+        if not modulos_module._tiene_permiso_modulo('empleado'):
+            flash('No tienes permisos para acceder a esta página.', 'danger')
             return redirect(url_for('Index'))
         return f(*args, **kwargs)
     return decorated_function
 
 @empleados_bp.route('/', methods=['GET'])
 @empleados_bp.route('/Empleados', methods=['GET'])
-@admin_required
+@empleado_module_required
 def Empleados():
     """
     Página principal del módulo de empleados
@@ -67,7 +69,7 @@ def Empleados():
     )
 
 @empleados_bp.route('/crear', methods=['GET', 'POST'])
-@admin_required
+@empleado_module_required
 def CrearEmpleado():
     """
     Crear nuevo empleado
@@ -107,7 +109,7 @@ def CrearEmpleado():
     return render_template("CrearEmpleado.html", tipos_empleado=tipos_empleado)
 
 @empleados_bp.route('/editar/<int:empleado_id>', methods=['GET', 'POST'])
-@admin_required
+@empleado_module_required
 def EditarEmpleado(empleado_id):
     """
     Editar empleado existente
@@ -152,7 +154,7 @@ def EditarEmpleado(empleado_id):
     return render_template("EditarEmpleado.html", empleado=empleado, tipos_empleado=tipos_empleado)
 
 @empleados_bp.route('/eliminar/<int:empleado_id>', methods=['POST'])
-@admin_required
+@empleado_module_required
 def EliminarEmpleado(empleado_id):
     """
     Eliminar empleado
@@ -164,7 +166,7 @@ def EliminarEmpleado(empleado_id):
         return jsonify({'success': False, 'message': f'Error: {str(ex)}'})
 
 @empleados_bp.route('/actualizar/<int:empleado_id>', methods=['GET', 'POST'])
-@admin_required
+@empleado_module_required
 def ActualizarEmpleado(empleado_id):
     """
     Actualizar datos de empleado (versión simplificada)
@@ -206,7 +208,7 @@ def ActualizarEmpleado(empleado_id):
     return render_template("ActualizarEmpleado.html", empleado=empleado, tipos_empleado=tipos_empleado)
 
 @empleados_bp.route('/registro', methods=['GET', 'POST'])
-@admin_required
+@empleado_module_required
 def RegistroEmpleado():
     """
     Registro de nuevo empleado (versión simplificada)
@@ -243,7 +245,7 @@ def RegistroEmpleado():
     return render_template("RegistroEmpleado.html", tipos_empleado=tipos_empleado)
 
 @empleados_bp.route('/asignar-turno/<int:empleado_id>', methods=['GET', 'POST'])
-@admin_required
+@empleado_module_required
 def AsignarTurno(empleado_id):
     """
     Asignar turno a empleado
@@ -277,7 +279,7 @@ def AsignarTurno(empleado_id):
     return render_template("AsignarTurno.html", empleado=empleado, turnos=turnos)
 
 @empleados_bp.route('/api/empleados', methods=['GET'])
-@admin_required
+@empleado_module_required
 def api_empleados():
     """
     API endpoint para obtener empleados en formato JSON
@@ -320,7 +322,7 @@ def api_empleados():
         }), 500
 
 @empleados_bp.route('/buscar/<dni>', methods=['GET'])
-@admin_required
+@empleado_module_required
 def buscar_empleado(dni):
     """
     Buscar empleado por DNI
@@ -348,7 +350,7 @@ def buscar_empleado(dni):
         })
 
 @empleados_bp.route('/asignar-turno', methods=['POST'])
-@admin_required
+@empleado_module_required
 def asignar_turno():
     """
     Asignar turno a empleado
@@ -377,7 +379,7 @@ def asignar_turno():
         })
 
 @empleados_bp.route('/turnos', methods=['GET'])
-@admin_required
+@empleado_module_required
 def get_turnos_api():
     """
     Obtener la lista de turnos para el frontend
@@ -396,7 +398,7 @@ def get_turnos_api():
         })
 
 @empleados_bp.route('/turno-actual/<int:empleado_id>', methods=['GET'])
-@admin_required
+@empleado_module_required
 def get_turno_actual_api(empleado_id):
     """
     Obtener el turno actual de un empleado

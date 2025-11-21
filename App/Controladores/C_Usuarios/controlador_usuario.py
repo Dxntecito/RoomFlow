@@ -21,7 +21,7 @@ def verificar_usuario(usuario, contrasena):
             contrasena_hash = hash_password(contrasena)
             sql = """
                 SELECT u.usuario_id, u.usuario, u.email, u.estado, r.rol_id, r.nombre_rol,
-                       r.modulos,
+                       r.modulos, r.editar, r.eliminar,
                        c.nombres, c.ape_paterno, c.ape_materno, c.num_doc, c.telefono
                 FROM USUARIO u
                 INNER JOIN ROL r ON u.id_rol = r.rol_id
@@ -40,11 +40,13 @@ def verificar_usuario(usuario, contrasena):
                     'rol_id': resultado[4],
                     'rol_nombre': resultado[5],
                     'rol_modulos': resultado[6] or 'SSSSSS',
-                    'nombres': resultado[7] or '',
-                    'apellido_paterno': resultado[8] or '',
-                    'apellido_materno': resultado[9] or '',
-                    'num_documento': resultado[10] or '',
-                    'telefono': resultado[11] or ''
+                    'rol_editar': resultado[7] if resultado[7] is not None else 1,
+                    'rol_eliminar': resultado[8] if resultado[8] is not None else 1,
+                    'nombres': resultado[9] or '',
+                    'apellido_paterno': resultado[10] or '',
+                    'apellido_materno': resultado[11] or '',
+                    'num_documento': resultado[12] or '',
+                    'telefono': resultado[13] or ''
                 }
                 
                 if resultado[7]:  # Si tiene nombres (datos de cliente)
@@ -400,7 +402,7 @@ def get_perfil_completo(usuario_id):
             # Primero obtener datos básicos del usuario para determinar si es cliente o empleado
             sql_usuario = """
                 SELECT u.usuario_id, u.usuario, u.email, u.estado, u.fecha_creacion,
-                       r.rol_id, r.nombre_rol, r.modulos, u.cliente_id, u.empleado_id
+                       r.rol_id, r.nombre_rol, r.modulos, r.editar, r.eliminar, u.cliente_id, u.empleado_id
                 FROM USUARIO u
                 INNER JOIN ROL r ON u.id_rol = r.rol_id
                 WHERE u.usuario_id = %s
@@ -421,6 +423,8 @@ def get_perfil_completo(usuario_id):
                 'rol_id': resultado_usuario[5],
                 'rol_nombre': resultado_usuario[6],
                 'rol_modulos': resultado_usuario[7] or 'SSSSSS',
+                'rol_editar': resultado_usuario[8] if resultado_usuario[8] is not None else 1,
+                'rol_eliminar': resultado_usuario[9] if resultado_usuario[9] is not None else 1,
                 'tipo_perfil': None,  # 'cliente' o 'empleado'
                 'nombres': '',
                 'apellido_paterno': '',
@@ -438,8 +442,8 @@ def get_perfil_completo(usuario_id):
                 'estado_empleado': ''
             }
             
-            cliente_id = resultado_usuario[8]
-            empleado_id = resultado_usuario[9]
+            cliente_id = resultado_usuario[10]
+            empleado_id = resultado_usuario[11]
             
             print(
                 f"✓ Usuario encontrado: {resultado_usuario[1]} "

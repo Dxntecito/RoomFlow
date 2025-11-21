@@ -51,11 +51,15 @@
                 <td class="col-precio text-end">{{ piso['precio'] }}</td>
                 <td class="col-accion text-center">
                     <div class="action-buttons2">
+                        {% if session.get('rol_editar', 1) == 1 %}
                         <button type="button" class="action-btn edit-btn" onclick="window.location.href='{{ url_for('modulos.EditPiso', piso_id=piso['piso_id']) }}'">
                             <i class="fa-solid fa-pen"></i>
                         </button>
+                        {% endif %}
                         <button type="button" class="action-btn calendar-btn" onclick="window.location.href='{{ url_for('modulos.ViewPiso', piso_id=piso['piso_id']) }}'">
                             <i class="fa-solid fa-eye"></i>
+                        </button>
+                        {% if session.get('rol_eliminar', 1) == 1 %}
                         <button 
                             class="action-btn delete-btn" 
                             data-id="{{ piso['piso_id'] }}" 
@@ -63,6 +67,7 @@
                             onclick="eliminarPiso(event)">
                             <i class="fas fa-trash"></i>
                         </button>
+                        {% endif %}
                     </div>
                 </td>
             </tr>
@@ -341,18 +346,18 @@ document.addEventListener("DOMContentLoaded", () => {
                         <td class="text-end">${piso.precio}</td>
                         <td class="text-center">
                             <div class="action-buttons2">
-                                <button type="button" class="action-btn edit-btn" 
+                                ${rolEditar == 1 ? `<button type="button" class="action-btn edit-btn" 
                                     onclick="window.location.href='/Cruds/EditPiso/${piso.piso_id}'">
                                     <i class="fa-solid fa-pen"></i>
-                                </button>
+                                </button>` : ''}
                                 <button type="button" class="action-btn calendar-btn" 
                                     onclick="window.location.href='/Cruds/ViewPiso/${piso.piso_id}'">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
-                                <button type="button" class="action-btn delete-btn" 
+                                ${rolEliminar == 1 ? `<button type="button" class="action-btn delete-btn" 
                                     data-bs-toggle="modal" data-id="${piso.piso_id}" onclick="eliminarPiso(event)">
                                     <i class="fa-solid fa-trash"></i>
-                                </button>
+                                </button>` : ''}
                             </div>
                         </td>
                     </tr>
@@ -404,26 +409,26 @@ async function cargarTodosLosPisos() {
                 <td class="col-precio text-end">${piso.precio}</td>
                 <td class="col-accion text-center">
                     <div class="action-buttons2">
-                        <button 
+                        ${rolEditar == 1 ? `<button 
                             type="button" 
                             class="action-btn edit-btn"
                             onclick="window.location.href='/Cruds/EditPiso/${piso.piso_id}'">
                             <i class="fa-solid fa-pen"></i>
-                        </button>
+                        </button>` : ''}
                         <button 
                             type="button" 
                             class="action-btn calendar-btn"
                             onclick="window.location.href='/Cruds/ViewPiso/${piso.piso_id}'">
                             <i class="fa-solid fa-eye"></i>
                         </button>
-                        <button 
+                        ${rolEliminar == 1 ? `<button 
                             type="button" 
                             class="action-btn delete-btn" 
                             data-id="${piso.piso_id}" 
                             title="Eliminar piso"
                             onclick="eliminarPiso(event)">
                             <i class="fas fa-trash"></i>
-                        </button>
+                        </button>` : ''}
                     </div>
                 </td>
             </tr>

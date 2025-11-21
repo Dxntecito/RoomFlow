@@ -79,15 +79,22 @@ def modulos():
     usuario_id = session.get('usuario_id')
     
     # Actualizar permisos desde la base de datos para asegurar que estén actualizados
+    rol_editar = session.get('rol_editar', 1)
+    rol_eliminar = session.get('rol_eliminar', 1)
+    
     if usuario_id:
         perfil_actualizado = controller_usuario.get_perfil_completo(usuario_id)
         if perfil_actualizado:
             session['rol_id'] = perfil_actualizado.get('rol_id', session.get('rol_id'))
             permisos_modulos = perfil_actualizado.get('rol_modulos', permisos_modulos)
             session['rol_modulos'] = permisos_modulos
+            rol_editar = perfil_actualizado.get('rol_editar', 1)
+            rol_eliminar = perfil_actualizado.get('rol_eliminar', 1)
+            session['rol_editar'] = rol_editar
+            session['rol_eliminar'] = rol_eliminar
     
     # Debug: mostrar permisos en consola
-    print(f"[MODULOS] Rol ID: {rol_id}, Permisos: {permisos_modulos}")
+    print(f"[MODULOS] Rol ID: {rol_id}, Permisos: {permisos_modulos}, Editar: {rol_editar}, Eliminar: {rol_eliminar}")
     
     # Los módulos accesibles dependen del campo modulos del rol, no se fuerza 'PPPPPP'
     return render_template("Modulos.html", permisos_modulos=permisos_modulos)
@@ -758,17 +765,9 @@ def incidencia():
 
 ###########    INICIO MODULO EMPLEADO    ###########
 @modulos_bp.route('/modulos/Empleado', methods=['GET'])
-@login_required
+@module_permission_required('empleado')
 def empleado():
-    usuario_id = session.get('usuario_id')
-    perfil = controller_usuario.get_perfil_completo(usuario_id)
-    tipos_documento = controller_usuario.get_tipos_documento()
-    
-    if not perfil:
-        flash('Usuario no encontrado', 'error')
-        return redirect(url_for('Index'))
-    
-    return render_template("/MODULO_EMPLEADO/gestionar_empleados.html", perfil=perfil, tipos_documento=tipos_documento)
+    return redirect(url_for('empleados.Empleados'))
 
 ###########    FIN MODULO EMPLEADO    ###########
 
@@ -1022,7 +1021,9 @@ def api_create_rol():
         return jsonify({'success': False, 'message': 'No autorizado'}), 403
     data = request.get_json()
     modulos = _normalizar_cadena_modulos(data.get('modulos'))
-    return jsonify(controlador_catalogos.insert_rol(data['nombre_rol'], data['descripcion'], data['estado'], modulos))
+    editar = int(data.get('editar', 1))
+    eliminar = int(data.get('eliminar', 1))
+    return jsonify(controlador_catalogos.insert_rol(data['nombre_rol'], data['descripcion'], data['estado'], modulos, editar, eliminar))
 
 @modulos_bp.route('/api/roles/<int:rol_id>', methods=['PUT'])
 @login_required
@@ -1031,7 +1032,9 @@ def api_update_rol(rol_id):
         return jsonify({'success': False, 'message': 'No autorizado'}), 403
     data = request.get_json()
     modulos = _normalizar_cadena_modulos(data.get('modulos'))
-    return jsonify(controlador_catalogos.update_rol(rol_id, data['nombre_rol'], data['descripcion'], data['estado'], modulos))
+    editar = int(data.get('editar', 1))
+    eliminar = int(data.get('eliminar', 1))
+    return jsonify(controlador_catalogos.update_rol(rol_id, data['nombre_rol'], data['descripcion'], data['estado'], modulos, editar, eliminar))
 
 @modulos_bp.route('/api/roles/<int:rol_id>', methods=['DELETE'])
 @login_required

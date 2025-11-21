@@ -11,6 +11,7 @@
     <!-- ===== SIDEBAR IZQUIERDA ===== -->
     <nav class="sidebar">
       <h2>Módulo Usuario</h2>
+      <a href="{{ url_for('modulos.modulos') }}" style="background: #328336; color: white; font-weight: 600; margin-bottom: 10px; border-radius: 8px; padding: 10px; text-align: center; display: block;">← Regresar a Módulos</a>
       <a href="{{ url_for('modulos.usuario') }}" class="{% if request.path == url_for('modulos.usuario') %}active{% endif %}">👤 Gestionar Usuarios</a>
       {% if session.get('rol_id') == 4 %}
       <a href="{{ url_for('modulos.gestionar_roles') }}" class="{% if request.path == url_for('modulos.gestionar_roles') %}active{% endif %}">🔐 Roles</a>

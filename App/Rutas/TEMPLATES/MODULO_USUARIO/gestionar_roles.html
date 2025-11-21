@@ -202,6 +202,21 @@
                         <option value="0">Inactivo</option>
                     </select>
                 </div>
+
+                <div class="form-group">
+                    <label>Permisos de acciones</label>
+                    <div class="permissions-grid">
+                        <label class="permission-item">
+                            <input type="checkbox" id="perm_editar" name="editar" value="1" checked>
+                            <span>Permitir Editar</span>
+                        </label>
+                        <label class="permission-item">
+                            <input type="checkbox" id="perm_eliminar" name="eliminar" value="1" checked>
+                            <span>Permitir Eliminar</span>
+                        </label>
+                    </div>
+                    <p class="permissions-helper">Controla si este rol puede editar o eliminar registros en los módulos.</p>
+                </div>
             </form>
         </div>
         <div class="modal-footer">
@@ -297,6 +312,8 @@ function abrirModalCrear() {
     document.getElementById('tituloModal').textContent = 'Crear Rol';
     document.getElementById('formRol').reset();
     document.getElementById('rol_id').value = '';
+    document.getElementById('perm_editar').checked = true;
+    document.getElementById('perm_eliminar').checked = true;
     aplicarPermisosForm('SSSSSS');
     const modal = document.getElementById('modalRol');
     modal.style.display = 'flex';
@@ -312,6 +329,8 @@ function editarRol(id) {
     document.getElementById('nombre_rol').value = rol.nombre_rol;
     document.getElementById('descripcion').value = rol.descripcion;
     document.getElementById('estado').value = rol.estado;
+    document.getElementById('perm_editar').checked = (rol.editar == 1);
+    document.getElementById('perm_eliminar').checked = (rol.eliminar == 1);
     aplicarPermisosForm(rol.modulos);
     const modal = document.getElementById('modalRol');
     modal.style.display = 'flex';
@@ -330,7 +349,9 @@ async function guardarRol(event) {
         nombre_rol: formData.get('nombre_rol'),
         descripcion: formData.get('descripcion'),
         estado: parseInt(formData.get('estado')),
-        modulos: obtenerPermisosCadena()
+        modulos: obtenerPermisosCadena(),
+        editar: document.getElementById('perm_editar').checked ? 1 : 0,
+        eliminar: document.getElementById('perm_eliminar').checked ? 1 : 0
     };
     
     try {

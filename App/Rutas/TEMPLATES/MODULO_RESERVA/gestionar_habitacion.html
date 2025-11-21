@@ -53,18 +53,22 @@
                         </td>
                         <td class="text-center">
                             <div class="action-buttons2">
+                                {% if session.get('rol_editar', 1) == 1 %}
                                 <button type="button" class="action-btn edit-btn"
                                     onclick="window.location.href='{{ url_for('modulos.edit_habitacion', habitacion_id=habitacion.id) }}'">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
+                                {% endif %}
                                 <button type="button" class="action-btn calendar-btn"
                                     onclick="window.location.href='{{ url_for('modulos.view_habitacion', habitacion_id=habitacion.id) }}'">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
+                                {% if session.get('rol_eliminar', 1) == 1 %}
                                 <button type="button" class="action-btn delete-btn" data-id="{{ habitacion.id }}"
                                     onclick="eliminarHabitacion(event)">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
@@ -182,6 +186,9 @@
 </div>
 
 <script>
+    // Permisos del rol
+    const rolEditar = {{ session.get('rol_editar', 1) }};
+    const rolEliminar = {{ session.get('rol_eliminar', 1) }};
     let habitacionIdToDelete = null;
 
     function eliminarHabitacion(event) {
@@ -254,18 +261,18 @@
                     </td>
                     <td class="text-center">
                         <div class="action-buttons2">
-                            <button type="button" class="action-btn edit-btn"
+                            ${rolEditar == 1 ? `<button type="button" class="action-btn edit-btn"
                                 onclick="window.location.href='/Cruds/EditHabitacion/${room.id}'">
                                 <i class="fa-solid fa-pen"></i>
-                            </button>
+                            </button>` : ''}
                             <button type="button" class="action-btn calendar-btn"
                                 onclick="window.location.href='/Cruds/ViewHabitacion/${room.id}'">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
-                            <button type="button" class="action-btn delete-btn" data-id="${room.id}"
+                            ${rolEliminar == 1 ? `<button type="button" class="action-btn delete-btn" data-id="${room.id}"
                                 onclick="eliminarHabitacion(event)">
                                 <i class="fa-solid fa-trash"></i>
-                            </button>
+                            </button>` : ''}
                         </div>
                     </td>
                 </tr>

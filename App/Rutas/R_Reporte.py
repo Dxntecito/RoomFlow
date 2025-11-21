@@ -15,22 +15,22 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def admin_required(f):
-    """Decorador para proteger rutas que requieren rol de administrador"""
+def reportes_required(f):
+    """Decorador para proteger rutas que requieren acceso a reportes (roles 1, 2 y 4)"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'usuario_id' not in session:
             flash('Debes iniciar sesión para acceder a esta página', 'warning')
             return redirect(url_for('usuarios.Login'))
-        if session.get('rol_id') != 1:  # Asumiendo que rol_id=1 es administrador
-            flash('No tienes permisos para acceder a esta página. Solo administradores pueden ver reportes.', 'danger')
+        if session.get('rol_id') not in [1, 2, 4]:
+            flash('No tienes permisos para acceder a esta página.', 'danger')
             return redirect(url_for('Index'))
         return f(*args, **kwargs)
     return decorated_function
 
 @reportes_bp.route('/', methods=['GET'])
 @reportes_bp.route('/reportes', methods=['GET'])
-@admin_required
+@reportes_required
 def reportes():
     """
     Página principal de reportes
@@ -38,7 +38,7 @@ def reportes():
     return render_template("Reportes.html")
 
 @reportes_bp.route('/api/estadisticas', methods=['GET'])
-@admin_required
+@reportes_required
 def api_estadisticas():
     """
     Obtener todas las estadísticas en formato JSON
@@ -58,7 +58,7 @@ def api_estadisticas():
         }), 500
 
 @reportes_bp.route('/api/tablas', methods=['GET'])
-@admin_required
+@reportes_required
 def api_tablas():
     """
     Obtener la lista de todas las tablas en la base de datos
@@ -77,7 +77,7 @@ def api_tablas():
         }), 500
 
 @reportes_bp.route('/api/tablas/<nombre_tabla>/atributos', methods=['GET'])
-@admin_required
+@reportes_required
 def api_atributos_tabla(nombre_tabla):
     """
     Obtener los atributos (columnas) de una tabla específica
@@ -98,7 +98,7 @@ def api_atributos_tabla(nombre_tabla):
         }), 500
 
 @reportes_bp.route('/api/conexiones', methods=['GET'])
-@admin_required
+@reportes_required
 def api_conexiones():
     """
     Obtener el detalle de todas las conexiones activas (SHOW PROCESSLIST)
@@ -117,7 +117,7 @@ def api_conexiones():
         }), 500
 
 @reportes_bp.route('/exportar/pdf', methods=['GET'])
-@admin_required
+@reportes_required
 def exportar_pdf():
     """
     Exportar reporte en formato PDF
@@ -172,7 +172,7 @@ def exportar_pdf():
         return redirect(url_for('reportes.reportes'))
 
 @reportes_bp.route('/exportar/excel', methods=['GET'])
-@admin_required
+@reportes_required
 def exportar_excel():
     """
     Exportar reporte en formato Excel

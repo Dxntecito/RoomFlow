@@ -102,7 +102,7 @@ def get_roles():
     try:
         conexion = get_connection()
         with conexion.cursor() as cursor:
-            sql = "SELECT rol_id, nombre_rol, descripcion, estado, modulos FROM ROL ORDER BY rol_id ASC"
+            sql = "SELECT rol_id, nombre_rol, descripcion, estado, modulos, editar, eliminar FROM ROL ORDER BY rol_id ASC"
             cursor.execute(sql)
             resultados = cursor.fetchall()
             
@@ -113,7 +113,9 @@ def get_roles():
                     'nombre_rol': row[1],
                     'descripcion': row[2],
                     'estado': row[3],
-                    'modulos': row[4] or 'SSSSSS'
+                    'modulos': row[4] or 'SSSSSS',
+                    'editar': row[5] if row[5] is not None else 1,
+                    'eliminar': row[6] if row[6] is not None else 1
                 })
             return {'success': True, 'roles': roles}
     except Exception as e:
@@ -122,14 +124,14 @@ def get_roles():
         if conexion:
             conexion.close()
 
-def insert_rol(nombre_rol, descripcion, estado, modulos='SSSSSS'):
+def insert_rol(nombre_rol, descripcion, estado, modulos='SSSSSS', editar=1, eliminar=1):
     """Inserta un nuevo rol"""
     conexion = None
     try:
         conexion = get_connection()
         with conexion.cursor() as cursor:
-            sql = "INSERT INTO ROL (nombre_rol, descripcion, estado, modulos) VALUES (%s, %s, %s, %s)"
-            cursor.execute(sql, (nombre_rol, descripcion, estado, modulos))
+            sql = "INSERT INTO ROL (nombre_rol, descripcion, estado, modulos, editar, eliminar) VALUES (%s, %s, %s, %s, %s, %s)"
+            cursor.execute(sql, (nombre_rol, descripcion, estado, modulos, editar, eliminar))
             conexion.commit()
             return {'success': True, 'message': 'Rol creado exitosamente'}
     except Exception as e:
@@ -140,14 +142,14 @@ def insert_rol(nombre_rol, descripcion, estado, modulos='SSSSSS'):
         if conexion:
             conexion.close()
 
-def update_rol(rol_id, nombre_rol, descripcion, estado, modulos='SSSSSS'):
+def update_rol(rol_id, nombre_rol, descripcion, estado, modulos='SSSSSS', editar=1, eliminar=1):
     """Actualiza un rol"""
     conexion = None
     try:
         conexion = get_connection()
         with conexion.cursor() as cursor:
-            sql = "UPDATE ROL SET nombre_rol = %s, descripcion = %s, estado = %s, modulos = %s WHERE rol_id = %s"
-            cursor.execute(sql, (nombre_rol, descripcion, estado, modulos, rol_id))
+            sql = "UPDATE ROL SET nombre_rol = %s, descripcion = %s, estado = %s, modulos = %s, editar = %s, eliminar = %s WHERE rol_id = %s"
+            cursor.execute(sql, (nombre_rol, descripcion, estado, modulos, editar, eliminar, rol_id))
             conexion.commit()
             return {'success': True, 'message': 'Rol actualizado exitosamente'}
     except Exception as e:

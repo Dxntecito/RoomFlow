@@ -11,6 +11,7 @@
     <!-- ===== SIDEBAR IZQUIERDA ===== -->
     <nav class="sidebar">
       <h2>Módulo Empleado</h2>
+      <a href="{{ url_for('modulos.modulos') }}" style="background: #328336; color: white; font-weight: 600; margin-bottom: 10px; border-radius: 8px; padding: 10px; text-align: center; display: block;">← Regresar a Módulos</a>
       <a href="{{ url_for('empleados.Empleados') }}" class="sidebar-link" id="link-gestionar-empleados">Gestionar Empleados</a>
       <a href="{{ url_for('turno.GestionarTurno') }}" class="sidebar-link" id="link-gestionar-turno">Gestionar Turno</a>
       <a href="{{ url_for('turno.GestionarDetalleTurno') }}" class="sidebar-link" id="link-gestionar-detalle-turno">Gestionar Detalle Turno</a>
